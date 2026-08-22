@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "ang-gesion-eventos": {
+    "ang-gestion-eventos": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -13,7 +13,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/ang-gesion-eventos",
+            "outputPath": "dist/ang-gestion-eventos",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
@@ -59,10 +59,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "ang-gesion-eventos:build:production"
+              "buildTarget": "ang-gestion-eventos:build:production"
             },
             "development": {
-              "buildTarget": "ang-gesion-eventos:build:development"
+              "buildTarget": "ang-gestion-eventos:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -92,5 +92,8 @@
         }
       }
     }
+  },
+  "cli": {
+    "analytics": false
   }
 }

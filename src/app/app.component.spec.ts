@@ -14,16 +14,16 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   });
 
-  it(`should have the 'ang-gesion-eventos' title`, () => {
+  it(`should have the 'ang-gestion-eventos' title`, () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
-    expect(app.title).toEqual('ang-gesion-eventos');
+    expect(app.title).toEqual('ang-gestion-eventos');
   });
 
   it('should render title', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, ang-gesion-eventos');
+    expect(compiled.querySelector('h1')?.textContent).toContain('ang-gestion-eventos');
   });
 });
