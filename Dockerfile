@@ -3,7 +3,7 @@ FROM node:20-alpine AS build
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm cisantiago.ospina11@correo.tdea.edu.co
+RUN npm ci
 
 COPY . .
 RUN npm run build
