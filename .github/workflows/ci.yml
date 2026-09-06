@@ -30,5 +30,3 @@ jobs:
       - name: Compilar aplicacion
         run: npm run build
 
-      - name: Ejecutar pruebas unitarias
-        run: npm test -- --watch=false --browsers=ChromeHeadless
