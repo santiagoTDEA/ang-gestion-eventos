@@ -3,6 +3,7 @@ import { GenericButtonComponent } from '../../../shared/atoms/generic-button/gen
 import { GenericFormComponent } from "../../../shared/organisms/generic-form/generic-form.component";
 import { GenericInputComponent } from "../../../shared/atoms/generic-input/generic-input.component";
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { CredencialLoginService } from './services/credencial-login.service';
 import { LoginCredentials } from './interfaces/login.interfaces';
 import { GenericInputIcon } from '../../../shared/atoms/generic-input/generic-input.component';
@@ -54,8 +55,19 @@ export class LoginComponent {
   }
 
 
-  postCredentials(credentials: LoginCredentials) {
-    return this.credencialLoginService.postCredentials(credentials).then(response => response);
+  async postCredentials(credentials: LoginCredentials) {
+    try {
+      const response = await this.credencialLoginService.postCredentials(credentials);
+      
+      console.log(response.accessToken);
+
+    } catch (error) {
+
+      const response = error as HttpErrorResponse;
+
+      console.log(response.status);
+      console.log(response.error.message);
+    }
 
   }
 }
