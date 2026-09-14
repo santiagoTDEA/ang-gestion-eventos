@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { GenericButtonComponent } from '../../../shared/atoms/generic-button/generic-button.component';
 import { GenericFormComponent } from "../../../shared/organisms/generic-form/generic-form.component";
 import { GenericInputComponent } from "../../../shared/atoms/generic-input/generic-input.component";
@@ -18,6 +19,7 @@ export class LoginComponent {
   typePassword: 'text' | 'password' = 'password';
   loginForm: FormGroup;
   loading = false;
+  private readonly  router:Router = inject(Router);
 
   constructor(private fb: FormBuilder, private credencialLoginService: CredencialLoginService) {
     this.loginForm = this.fb.group({
@@ -46,7 +48,6 @@ export class LoginComponent {
   onSubmit(formValue: any): void {
     if (this.loginForm.invalid) return;
     this.postCredentials(formValue);
-    console.log(formValue);
 
   }
   handleClick(): void {
@@ -58,15 +59,17 @@ export class LoginComponent {
   async postCredentials(credentials: LoginCredentials) {
     try {
       const response = await this.credencialLoginService.postCredentials(credentials);
-      
-      console.log(response.accessToken);
+      if (response.accessToken) {
+        localStorage.setItem('accessToken', response.accessToken);
+        this.router.navigate(['/inicio']);
+
+
+      }
 
     } catch (error) {
 
       const response = error as HttpErrorResponse;
 
-      console.log(response.status);
-      console.log(response.error.message);
     }
 
   }
