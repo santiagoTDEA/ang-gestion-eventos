@@ -1,1 +1,24 @@
-<p>inicio works!</p>
+<div class="gestion-modulos">
+
+    <div class="gestion-modulos__contenedor">
+
+        <div class="gestion-modulos__encabezado">
+            <h1 class="gestion-modulos__titulo">Gestión de Módulos</h1>
+            <p class="gestion-modulos__subtitulo">Selecciona un módulo para continuar</p>
+        </div>
+
+        <div class="gestion-modulos__lista">
+
+            @for (item of modulosRenderizados; track $index) {
+            <div class="modulo-card" (click)="seleccionarModulo(item)">
+                <span class="modulo-card__icono">{{ item.icono }}</span>
+                <span class="modulo-card__nombre">{{ item.nombre }}</span>
+            </div>
+
+            }
+
+        </div>
+
+    </div>
+
+</div>
