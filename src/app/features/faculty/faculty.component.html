@@ -1,0 +1,89 @@
+<div class="min-h-screen w-full flex items-center justify-center relative font-sans color-fondo py-10 px-10">
+    <div class="w-full  bg-white rounded-[10px] shadow-[0_10px_30px_rgba(0,0,0,0.15)] px-7 pt-8 pb-7">
+
+        <div class="flex items-center justify-center gap-2 mb-6">
+            <span class="text-2xl font-bold text-[#2f7d3f]">Registro de Facultad</span>
+        </div>
+
+        <app-generic-form [disabled]="facultyForm.invalid || loading"
+            (formSubmit)="onSubmit(facultyForm.getRawValue())">
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+
+                <app-generic-input label="Nombre" placeholder="Escribe el nombre de la facultad" icon="none"
+                    [control]="facultyForm.controls['name']"></app-generic-input>
+
+                <app-generic-input label="Departamento" placeholder="Escribe el departamento" icon="none"
+                    [control]="facultyForm.controls['department']"></app-generic-input>
+
+                <app-generic-input label="Correo" placeholder="Escribe el correo" type="text" icon="none"
+                    [control]="facultyForm.controls['email']"></app-generic-input>
+
+                <app-generic-input label="Teléfono" placeholder="Escribe el teléfono" type="tel" icon="none"
+                    [control]="facultyForm.controls['phone']"></app-generic-input>
+
+                <app-generic-select label="Estado" placeholder="Selecciona un estado"
+                    [control]="facultyForm.controls['statusId']" [options]="statusOptions" optionValue="idStatus"
+                    optionLabel="statusName">
+                </app-generic-select>
+
+            </div>
+
+            <div class="flex justify-center mt-3">
+                <app-generic-button label="Guardar" type="submit" [disabled]="facultyForm.invalid"
+                    customClass="w-full sm:w-1/2 rounded-md bg-[#1c4a30] hover:bg-[#163c27] text-white text-sm font-medium py-3"></app-generic-button>
+            </div>
+
+        </app-generic-form>
+
+        <!-- Tabla de facultades -->
+        <div class="mt-8">
+            <h3 class="text-lg font-semibold text-[#2f7d3f] mb-3">Facultades registradas</h3>
+
+            <div class="overflow-x-auto rounded-md border border-gray-200">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-[#e7edfb] text-gray-700">
+                        <tr>
+                            <th class="px-3 py-2 font-medium">Nombre</th>
+                            <th class="px-3 py-2 font-medium">Departamento</th>
+                            <th class="px-3 py-2 font-medium">Correo</th>
+                            <th class="px-3 py-2 font-medium">Teléfono</th>
+                            <th class="px-3 py-2 font-medium">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (item of faculties; track $index) {
+                             <tr class="border-t border-gray-200 hover:bg-gray-50">
+                            <td class="px-3 py-2">{{ item.name }}</td>
+                            <td class="px-3 py-2">{{ item.department }}</td>
+                            <td class="px-3 py-2">{{ item.email }}</td>
+                            <td class="px-3 py-2">{{ item.phone }}</td>
+                            <td class="px-3 py-2">
+                                <span class="px-2 py-1 rounded-full text-xs font-medium"
+                                    [class.bg-green-100]="item.status.idStatus === 1"
+                                    [class.text-green-700]="item.status.idStatus === 1"
+                                    [class.bg-red-100]="item.status.idStatus !== 1"
+                                    [class.text-red-700]="item.status.idStatus !== 1">
+                                    {{ item.status.statusName }}
+                                </span>
+                            </td>
+                        </tr>
+
+                        }
+                       
+
+                        @if (faculties.length === 0) {
+                             <tr>
+                            <td colspan="5" class="px-3 py-6 text-center text-gray-400">
+                                No hay facultades registradas
+                            </td>
+                        </tr>  
+                        }
+                     
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>

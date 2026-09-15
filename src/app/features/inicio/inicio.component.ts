@@ -2,6 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { ValidateRenderingService } from './services/validate-rendering.service';
 import { JwtService } from '../../core/services/jwt.service';
 import { Modulo, Role } from './interfaces/inicio.interfaces';
+import { Router } from '@angular/router';
 
 
 @Component({
@@ -14,6 +15,7 @@ export class InicioComponent implements OnInit {
 
   private readonly validateRenderingService: ValidateRenderingService = inject(ValidateRenderingService);
   private readonly jwtServices: JwtService = inject(JwtService);
+  private readonly router :Router = inject(Router)
 
   modulos: Modulo[] = [
     { nombre: 'Facultades', icono: '🏛️' },
@@ -36,7 +38,7 @@ export class InicioComponent implements OnInit {
   }
 
   seleccionarModulo(modulo: Modulo): void {
-    console.log('Módulo seleccionado:', modulo.nombre);
+    this.router.navigate([`/${modulo.nombre.toLowerCase()}`]);
   }
 
 

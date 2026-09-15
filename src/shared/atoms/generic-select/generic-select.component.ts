@@ -1,10 +1,8 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  EventEmitter,
   Input,
   OnInit,
-  Output
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -13,38 +11,36 @@ import {
   ReactiveFormsModule
 } from '@angular/forms';
 
-export type GenericInputIcon =
-  | 'user'
-  | 'eye'
-  | 'eye-off'
-  | 'eye-slash'
-  | 'none'
-  | 'mail'
-  | 'phone'
-  | 'layers'
-  | 'building';
-
 @Component({
-  selector: 'app-generic-input',
+  selector: 'app-generic-select',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './generic-input.component.html',
+  templateUrl: './generic-select.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class GenericInputComponent implements OnInit {
+export class GenericSelectComponent<T = any> implements OnInit {
 
   @Input() control!: AbstractControl;
   @Input() label = '';
-  @Input() placeholder = '';
-  @Input() type: 'text' | 'password' | 'email' | 'tel' = 'text';
-  @Input() icon: GenericInputIcon = 'none';
+  @Input() placeholder = 'Selecciona una opción';
+  @Input() options: T[] = [];
 
-  @Output() iconClick = new EventEmitter<void>();
+  // nombres de las propiedades que se usarán como value/label
+  @Input() optionValue: keyof T = 'value' as keyof T;
+  @Input() optionLabel: keyof T = 'label' as keyof T;
 
   ngOnInit(): void {
     if (!this.control) {
-      this.control = new FormControl('');
+      this.control = new FormControl(null);
     }
+  }
+
+  getValue(option: T): any {
+    return option[this.optionValue];
+  }
+
+  getLabel(option: T): string {
+    return option[this.optionLabel] as unknown as string;
   }
 
   get showError(): boolean {
@@ -62,22 +58,6 @@ export class GenericInputComponent implements OnInit {
       return 'Este campo es obligatorio';
     }
 
-    if (errors['minlength']) {
-      return `Debe tener mínimo ${errors['minlength'].requiredLength} caracteres`;
-    }
-
-    if (errors['maxlength']) {
-      return `Debe tener máximo ${errors['maxlength'].requiredLength} caracteres`;
-    }
-
-    if (errors['email']) {
-      return 'Ingrese un correo electrónico válido';
-    }
-
-    if (errors['pattern']) {
-      return 'El formato ingresado no es válido';
-    }
-
     if (errors['min']) {
       return `El valor mínimo es ${errors['min'].min}`;
     }
@@ -91,9 +71,5 @@ export class GenericInputComponent implements OnInit {
 
   handleBlur(): void {
     this.control.markAsTouched();
-  }
-
-  handleIconClick(): void {
-    this.iconClick.emit();
   }
 }
