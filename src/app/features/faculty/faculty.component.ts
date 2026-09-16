@@ -13,7 +13,7 @@ import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-faculty',
-  imports: [GenericFormComponent, GenericInputComponent, GenericButtonComponent, GenericSelectComponent,CommonModule],
+  imports: [GenericFormComponent, GenericInputComponent, GenericButtonComponent, GenericSelectComponent, CommonModule],
   templateUrl: './faculty.component.html',
   styleUrl: './faculty.component.css'
 })
@@ -21,11 +21,13 @@ export class FacultyComponent implements OnInit {
 
   facultyForm: FormGroup;
   loading = false;
+  updateMethod: boolean = false;
   private readonly router: Router = inject(Router);
   private readonly facultyServices: FacultyService = inject(FacultyService);
   private readonly statusServices: StatusService = inject(StatusService);
   statusOptions: Status[] = []
   faculties: ReturnFaculty[] = [];
+  id: number | null = null;
   constructor(private fb: FormBuilder) {
     this.facultyForm = this.fb.group({
       name: [
@@ -100,6 +102,17 @@ export class FacultyComponent implements OnInit {
     });
   }
 
+  obtenerDatos(facultades: ReturnFaculty): void {
+    this.updateMethod = true;
+    this.id = facultades.id;
+    this.facultyForm.patchValue({
+      name: facultades.name,
+      department: facultades.department,
+      email: facultades.email,
+      phone: facultades.phone,
+      statusId: facultades.status.idStatus
+    });
+  }
 
   getFaculties() {
     this.facultyServices.getFaculties().subscribe({
@@ -107,6 +120,28 @@ export class FacultyComponent implements OnInit {
         this.faculties = faculties;
       }
     });
+  }
+
+  goBack(): void {
+   this.router.navigate(['/inicio']);
+  }
+
+  updateFaculty(formValue: any): void {
+    if (this.facultyForm.invalid) return;
+    this.facultyServices.updateFaculty({ ...this.facultyForm.getRawValue(), id: this.id }).subscribe({
+      next: (response) => {
+        this.getFaculties();
+        this.facultyForm.reset({
+          name: '',
+          department: '',
+          email: '',
+          phone: '',
+          statusId: null
+        });
+        this.updateMethod = false;
+      }
+    });
+
   }
   onSubmit(formValue: any): void {
     if (this.facultyForm.invalid) return;

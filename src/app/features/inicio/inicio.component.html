@@ -12,7 +12,7 @@
             @for (item of modulosRenderizados; track $index) {
             <div class="modulo-card" (click)="seleccionarModulo(item)">
                 <span class="modulo-card__icono">{{ item.icono }}</span>
-                <span class="modulo-card__nombre">{{ item.nombre }}</span>
+                <span class="modulo-card__nombre">{{ item.label }}</span>
             </div>
 
             }

@@ -1,3 +1,6 @@
 .color-fondo{
     background-color:var(--background-primary);
 }
+.text-title {
+    color: var(--text-title);
+}

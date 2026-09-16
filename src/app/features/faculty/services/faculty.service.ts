@@ -15,6 +15,11 @@ export class FacultyService {
     return this.http.post<ReturnFaculty>(`${environment.apiUrl}faculties`, faculty);
   }
 
+  updateFaculty(faculty: ReturnFaculty): Observable<ReturnFaculty> {
+    const { id, ...facultyData } = faculty;
+    return this.http.patch<ReturnFaculty>(`${environment.apiUrl}faculties/${id}`, facultyData);
+  }
+
   getFaculties(): Observable<ReturnFaculty[]> {
     return this.http.get<ReturnFaculty[]>(`${environment.apiUrl}faculties`);
   }

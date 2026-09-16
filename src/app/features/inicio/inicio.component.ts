@@ -1,8 +1,10 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { ValidateRenderingService } from './services/validate-rendering.service';
 import { JwtService } from '../../core/services/jwt.service';
-import { Modulo, Role } from './interfaces/inicio.interfaces';
+import {  Role } from './interfaces/inicio.interfaces';
 import { Router } from '@angular/router';
+import { modulosAplicacion } from '../../../environments/environment';
+import { ModuleOption } from '../roles/interfaces/roles.interfaces';
 
 
 @Component({
@@ -17,17 +19,19 @@ export class InicioComponent implements OnInit {
   private readonly jwtServices: JwtService = inject(JwtService);
   private readonly router :Router = inject(Router)
 
-  modulos: Modulo[] = [
-    { nombre: 'Facultades', icono: '🏛️' },
-    { nombre: 'Usuarios', icono: '👤' },
-    // { nombre: 'Inventario', icono: '📦' },
-    // { nombre: 'Ventas', icono: '💰' },
-    // { nombre: 'Reportes', icono: '📊' },
-    // { nombre: 'Ajustes', icono: '⚙️' },
-    // { nombre: 'Soporte', icono: '🛟' }
-  ];
+  modulos: ModuleOption[] = modulosAplicacion
+  
+  // [
+  //   { nombre: 'Facultades', icono: '🏛️' },
+  //   { nombre: 'Usuarios', icono: '👤' },
+  //   // { nombre: 'Inventario', icono: '📦' },
+  //   // { nombre: 'Ventas', icono: '💰' },
+  //   // { nombre: 'Reportes', icono: '📊' },
+  //   // { nombre: 'Ajustes', icono: '⚙️' },
+  //   // { nombre: 'Soporte', icono: '🛟' }
+  // ];
 
-  modulosRenderizados: Modulo[] = [];
+  modulosRenderizados: ModuleOption[] = [];
 
   ngOnInit(): void {
     const token = localStorage.getItem('accessToken');
@@ -37,8 +41,8 @@ export class InicioComponent implements OnInit {
     this.modulosRenderizados = [...resultadoModulos];
   }
 
-  seleccionarModulo(modulo: Modulo): void {
-    this.router.navigate([`/${modulo.nombre.toLowerCase()}`]);
+  seleccionarModulo(modulo: ModuleOption): void {
+    this.router.navigate([`/${modulo.value.toLowerCase()}`]);
   }
 
 
