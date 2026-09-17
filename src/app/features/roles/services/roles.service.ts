@@ -18,4 +18,8 @@ export class RolesService {
   getRoles(): Observable<ReturnRole[]> {
     return this.http.get<ReturnRole[]>(`${environment.apiUrl}roles`);
   }
+
+  updateRole(id: string, payload: Role): Observable<Role> {
+    return this.http.patch<Role>(`${environment.apiUrl}roles/${id}`, payload);
+  }
 }

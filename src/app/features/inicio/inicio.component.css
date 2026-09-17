@@ -79,7 +79,7 @@
 
 .modulo-card:hover .modulo-card__icono,
 .modulo-card:hover .modulo-card__nombre {
-    color: #ffffff;
+    color: #000000;
 }
 
 .modulo-card__icono {

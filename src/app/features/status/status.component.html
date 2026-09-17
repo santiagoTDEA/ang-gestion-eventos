@@ -1,0 +1,76 @@
+<div class="min-h-screen w-full flex items-center justify-center relative font-sans py-6 px-4 sm:py-10 sm:px-10">
+    <div class="w-full max-w-4xl bg-white rounded-[10px] shadow-[0_10px_30px_rgba(0,0,0,0.15)] px-4 pt-8 pb-10 sm:px-8 sm:pt-10 sm:pb-12">
+
+        <!-- HEADER -->
+        <div class="flex items-center justify-between gap-2 mb-10 flex-wrap sm:flex-nowrap">
+
+            <button type="button" (click)="goBack()"
+                class="flex items-center gap-1.5 px-3 py-2 rounded-lg
+                       text-gray-500 hover:text-gray-700 hover:bg-gray-50
+                       text-sm font-medium transition-all duration-200
+                       cursor-pointer shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                    stroke="currentColor" class="w-5 h-5 shrink-0">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                </svg>
+                <span class="hidden xs:inline sm:inline">Volver</span>
+            </button>
+
+            <span class="order-3 sm:order-none w-full sm:w-auto text-center
+                         text-lg sm:text-xl md:text-2xl font-bold text-title truncate sm:whitespace-normal">
+                {{ updateMethod ? 'Editar Estado' : 'Registro de Estado' }}
+            </span>
+
+            <div class="w-16 shrink-0"></div>
+        </div>
+
+        <app-generic-form [disabled]="statusForm.invalid || loading"
+            (formSubmit)="onSubmit(statusForm.getRawValue())">
+
+            <div [formGroup]="statusForm" class="flex flex-col sm:flex-row sm:items-center gap-3">
+
+                <div class="flex-1">
+                    <app-generic-input label="Nombre del estado" placeholder="Escribe el nombre del estado" icon="none"
+                        [control]="statusForm.controls['statusName']"></app-generic-input>
+                </div>
+
+                <app-generic-button label="Guardar" type="submit" [disabled]="statusForm.invalid"
+                    customClass="w-full mt-2  sm:w-auto sm:px-8 rounded-md
+                                 bg-[#1c4a30] hover:bg-[#163c27]
+                                 disabled:bg-gray-300 disabled:cursor-not-allowed
+                                 text-white text-sm font-medium
+                                 py-3
+                                 transition-colors duration-200
+                                 cursor-pointer"></app-generic-button>
+
+            </div>
+
+        </app-generic-form>
+
+        <!-- LISTADO -->
+        <div class="mt-14">
+            <h3 class="text-lg font-semibold text-[#2f7d3f] mb-4">Estados registrados</h3>
+
+            <div class="rounded-md border border-gray-200 divide-y divide-gray-200">
+                @for (item of statuses; track $index) {
+                <div class="flex items-center justify-between px-4 py-4 hover:bg-gray-50 cursor-pointer"
+                    role="button" tabindex="0" (click)="obtenerDatos(item)">
+                    <span class="text-sm text-gray-800">{{ item.statusName }}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="w-4 h-4 text-gray-400">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                    </svg>
+                </div>
+                }
+
+                @if (statuses.length === 0) {
+                <div class="px-4 py-10 text-center text-gray-400 text-sm">
+                    No hay estados registrados
+                </div>
+                }
+            </div>
+
+        </div>
+
+    </div>
+</div>

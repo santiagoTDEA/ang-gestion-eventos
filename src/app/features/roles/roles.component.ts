@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Access, Role, ModuleOption, ReturnRole } from './interfaces/roles.interfaces';
@@ -13,14 +13,16 @@ import { DatePipe } from '@angular/common';
 
 @Component({
   selector: 'app-roles',
-  imports: [DatePipe, GenericFormComponent, GenericInputComponent, GenericCheckboxComponent, GenericButtonComponent, GenericSelectComponent, ReactiveFormsModule],
+  imports: [DatePipe, GenericFormComponent, GenericInputComponent, GenericCheckboxComponent, GenericSelectComponent, ReactiveFormsModule],
   templateUrl: './roles.component.html',
   styleUrl: './roles.component.css'
 })
 export class RolesComponent {
 
   private readonly roleServices: RolesService = inject(RolesService);
+  private readonly cdr = inject(ChangeDetectorRef);
   visibilityTablet = false;
+  idrole: string | null = null;
   viewRoles: ReturnRole[] = []
 
   private readonly fb = inject(FormBuilder);
@@ -28,7 +30,7 @@ export class RolesComponent {
 
   roleForm!: FormGroup;
   loading = false;
-
+  updateForm = false;
   moduleOptions: ModuleOption[] = [];
 
   ngOnInit(): void {
@@ -88,12 +90,26 @@ export class RolesComponent {
       }
     });
   }
+
+
+  verificarQueExistanAccesos(access:Access[],permisosFull:boolean): boolean {
+       if(permisosFull) {
+         return true;
+       }
+    return access.every(a => a.acciones.length > 0);
+
+  }
+
   onSubmit(): void {
     if (this.roleForm.invalid) {
       this.roleForm.markAllAsTouched();
       return;
     }
 
+    const validteExist = this.verificarQueExistanAccesos(this.buildAccesosPayload(), this.roleForm.value.permissionsFull);
+    if (!validteExist) {
+      return;
+    }
     const payload: Role = {
       name: this.roleForm.value.name,
       description: this.roleForm.value.description,
@@ -113,19 +129,100 @@ export class RolesComponent {
           isActive: true,
           accesos: [this.createAccesoGroup()],
         });
+         this.accesos.clear();
+        this.visibilityRoles()
         this.getRoles();
       },
 
     });
   }
 
+  updateRoles(): void {
+    if (!this.idrole) {
+      return;
+    }
+
+    if (this.roleForm.invalid) {
+      this.roleForm.markAllAsTouched();
+      return;
+    }
+     const validteExist = this.verificarQueExistanAccesos(this.buildAccesosPayload(), this.roleForm.value.permissionsFull);
+    if (!validteExist) {
+      alert('Debe existir al menos un acceso con acciones definidas.');
+      return;
+    }
+
+    const payload: Role = {
+      name: this.roleForm.value.name,
+      description: this.roleForm.value.description,
+      permissionsFull: this.roleForm.value.permissionsFull,
+      modulesFull: this.roleForm.value.modulesFull,
+      isActive: this.roleForm.value.isActive,
+      accesos: this.roleForm.value.modulesFull ? [] : this.buildAccesosPayload(),
+    };
+
+    this.roleServices.updateRole(this.idrole, payload).subscribe({
+      next: (response) => {
+        this.roleForm.reset({
+          name: '',
+          description: '',
+          permissionsFull: false,
+          modulesFull: false,
+          isActive: true,
+          accesos: [this.createAccesoGroup()],
+        });
+        this.roleForm.reset({
+          name: '',
+          description: '',
+          permissionsFull: false,
+          modulesFull: false,
+          isActive: true,
+          accesos: [this.createAccesoGroup()],
+        });
+        this.accesos.clear();
+        this.getRoles();
+        this.visibilityRoles()
+        this.idrole = null;
+        this.updateForm = false;
+      },
+    });
+  }
+
+  obtenerDatos(item: ReturnRole): void {
+    this.visibilityTablet = false;
+    this.updateForm = true;
+    this.cdr.detectChanges();
+    this.roleForm.patchValue({
+      name: item.name,
+      description: item.description,
+      permissionsFull: item.permissionsFull,
+      modulesFull: item.modulesFull,
+      isActive: item.isActive,
+    });
+    this.idrole = item.id;
+    this.accesos.clear();
+
+    if (item.accesos && item.accesos.length > 0) {
+      item.accesos.forEach(acceso => {
+        const group = this.createAccesoGroup();
+        group.patchValue({
+          modulo: acceso.modulo,
+          crear: acceso.acciones.includes('crear'),
+          editar: acceso.acciones.includes('editar'),
+          leer: acceso.acciones.includes('leer'),
+        });
+        this.accesos.push(group);
+      });
+    } else {
+      this.accesos.push(this.createAccesoGroup());
+    }
+  }
 
   renderFullAcceso(): boolean {
     const permissionsFull = this.roleForm.controls['permissionsFull'].value;
     const modulesFull = this.roleForm.controls['modulesFull'].value;
 
     if (permissionsFull && modulesFull) {
-      this.roleForm.controls['accesos'].disable();
       return false;
     }
     return true;
@@ -145,6 +242,6 @@ export class RolesComponent {
     return this.visibilityTablet;
   }
   goBack(): void {
-    this.router.navigate(['/roles']);
+    this.router.navigate(['/inicio']);
   }
 }

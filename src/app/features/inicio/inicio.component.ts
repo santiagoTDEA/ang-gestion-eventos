@@ -21,16 +21,6 @@ export class InicioComponent implements OnInit {
 
   modulos: ModuleOption[] = modulosAplicacion
   
-  // [
-  //   { nombre: 'Facultades', icono: '🏛️' },
-  //   { nombre: 'Usuarios', icono: '👤' },
-  //   // { nombre: 'Inventario', icono: '📦' },
-  //   // { nombre: 'Ventas', icono: '💰' },
-  //   // { nombre: 'Reportes', icono: '📊' },
-  //   // { nombre: 'Ajustes', icono: '⚙️' },
-  //   // { nombre: 'Soporte', icono: '🛟' }
-  // ];
-
   modulosRenderizados: ModuleOption[] = [];
 
   ngOnInit(): void {

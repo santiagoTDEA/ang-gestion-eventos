@@ -1,6 +1,8 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
+  HostListener,
   Input,
   OnInit,
 } from '@angular/core';
@@ -25,9 +27,12 @@ export class GenericSelectComponent<T = any> implements OnInit {
   @Input() placeholder = 'Selecciona una opción';
   @Input() options: T[] = [];
 
-  // nombres de las propiedades que se usarán como value/label
   @Input() optionValue: keyof T = 'value' as keyof T;
   @Input() optionLabel: keyof T = 'label' as keyof T;
+
+  isOpen = false;
+
+  constructor(private elementRef: ElementRef) {}
 
   ngOnInit(): void {
     if (!this.control) {
@@ -41,6 +46,39 @@ export class GenericSelectComponent<T = any> implements OnInit {
 
   getLabel(option: T): string {
     return option[this.optionLabel] as unknown as string;
+  }
+
+  get selectedLabel(): string {
+    const currentValue = this.control?.value;
+    if (currentValue === null || currentValue === undefined) {
+      return this.placeholder;
+    }
+    const match = this.options.find(opt => this.getValue(opt) === currentValue);
+    return match ? this.getLabel(match) : this.placeholder;
+  }
+
+  get hasValue(): boolean {
+    return this.control?.value !== null && this.control?.value !== undefined;
+  }
+
+  toggleOpen(): void {
+    this.isOpen = !this.isOpen;
+    if (!this.isOpen) {
+      this.handleBlur();
+    }
+  }
+
+  selectOption(option: T): void {
+    this.control.setValue(this.getValue(option));
+    this.isOpen = false;
+    this.handleBlur();
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.elementRef.nativeElement.contains(event.target)) {
+      this.isOpen = false;
+    }
   }
 
   get showError(): boolean {
