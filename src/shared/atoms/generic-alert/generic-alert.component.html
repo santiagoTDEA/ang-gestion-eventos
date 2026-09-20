@@ -1,0 +1,48 @@
+<div
+  [attr.role]="role()"
+  [class]="containerClasses()"
+  class="fixed right-4 top-4 z-50 w-[calc(100%-2rem)] max-w-sm overflow-hidden rounded-lg border shadow-lg transition-all duration-300 ease-out motion-reduce:transition-none"
+>
+  <div class="flex items-start gap-3 p-4">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke-width="1.5"
+      stroke="currentColor"
+      aria-hidden="true"
+      class="mt-0.5 h-6 w-6 shrink-0"
+      [class]="styles().icon"
+    >
+      <path stroke-linecap="round" stroke-linejoin="round" [attr.d]="styles().path" />
+    </svg>
+
+    <div class="min-w-0 flex-1 text-sm leading-5">
+      <ng-content />
+    </div>
+
+    @if (closable()) {
+      <button
+        type="button"
+        (click)="close()"
+        aria-label="Cerrar alerta"
+        class="-m-1 shrink-0 rounded p-1 opacity-60 transition-opacity hover:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-current"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="h-4 w-4">
+          <path
+            d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"
+          />
+        </svg>
+      </button>
+    }
+  </div>
+
+  <div class="h-1 w-full bg-black/5">
+    <div
+      class="h-full ease-linear transition-[width]"
+      [class]="styles().bar"
+      [style.width]="running() ? '0%' : '100%'"
+      [style.transition-duration.ms]="duration()"
+    ></div>
+  </div>
+</div>

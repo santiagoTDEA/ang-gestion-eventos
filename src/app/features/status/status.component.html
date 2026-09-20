@@ -1,7 +1,12 @@
 <div class="min-h-screen w-full flex items-center justify-center relative font-sans py-6 px-4 sm:py-10 sm:px-10">
     <div class="w-full max-w-4xl bg-white rounded-[10px] shadow-[0_10px_30px_rgba(0,0,0,0.15)] px-4 pt-8 pb-10 sm:px-8 sm:pt-10 sm:pb-12">
 
-        <!-- HEADER -->
+       @if (alertaResponse.alertVisible) {
+        <app-generic-alert [type]="alertaResponse.alertType" (closed)="alertaResponse.alertVisible = false">
+            <strong class="block font-semibold">{{ alertaResponse.alertTitle }}</strong>
+            <span>{{ alertaResponse.alertMessage }}</span>
+        </app-generic-alert>
+        }
         <div class="flex items-center justify-between gap-2 mb-10 flex-wrap sm:flex-nowrap">
 
             <button type="button" (click)="goBack()"

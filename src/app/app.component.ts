@@ -1,12 +1,27 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { GenericAlertComponent } from '../shared/atoms/generic-alert/generic-alert.component';
+import { MediatorAlertService } from './core/services/mediator-alert.service';
+import { inject, OnInit } from '@angular/core';
+import { GenericAlertResponse } from '../shared/atoms/generic-alert/utils/style';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, GenericAlertComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
-export class AppComponent {
+export class AppComponent  implements OnInit {
   title = 'ang-gestion-eventos';
+  private mediatorAlertService = inject(MediatorAlertService);
+  alertaResponse:GenericAlertResponse= { alertVisible: false, alertType: 'success', alertTitle: '', alertMessage: '' };
+
+  ngOnInit(): void {
+    this.mediatorAlertService.getAlert().subscribe(alert => {
+      if (alert) {
+        this.alertaResponse = alert;
+      }
+    });
+  }
+
 }

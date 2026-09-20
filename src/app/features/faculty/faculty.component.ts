@@ -10,10 +10,12 @@ import { GenericSelectComponent } from '../../../shared/atoms/generic-select/gen
 import { StatusService } from '../../core/services/status.service';
 import { Status } from '../../core/interfaces/status.interfaces';
 import { CommonModule } from '@angular/common';
+import { GenericAlertResponse } from '../../../shared/atoms/generic-alert/utils/style';
+import { GenericAlertComponent } from '../../../shared/atoms/generic-alert/generic-alert.component';
 
 @Component({
   selector: 'app-faculty',
-  imports: [GenericFormComponent, GenericInputComponent, GenericButtonComponent, GenericSelectComponent, CommonModule],
+  imports: [GenericFormComponent, GenericInputComponent, GenericButtonComponent, GenericSelectComponent, CommonModule, GenericAlertComponent],
   templateUrl: './faculty.component.html',
   styleUrl: './faculty.component.css'
 })
@@ -28,6 +30,7 @@ export class FacultyComponent implements OnInit {
   statusOptions: Status[] = []
   faculties: ReturnFaculty[] = [];
   id: number | null = null;
+  alertaResponse:GenericAlertResponse= { alertVisible: false, alertType: 'success', alertTitle: '', alertMessage: '' };
   constructor(private fb: FormBuilder) {
     this.facultyForm = this.fb.group({
       name: [
@@ -89,6 +92,21 @@ export class FacultyComponent implements OnInit {
   createFaculty(facultyData: Faculty) {
     this.facultyServices.postCreateFaculty(facultyData).subscribe({
       next: (response) => {
+        if (!response.id){
+          this.alertaResponse = {
+            alertVisible: true,
+            alertType: 'error',
+            alertTitle: 'Error',
+            alertMessage: 'Fallo al crear la facultad.'
+          };
+          return;
+        }
+        this.alertaResponse = {
+          alertVisible: true,
+          alertType: 'success',
+          alertTitle: 'Éxito',
+          alertMessage: 'Facultad creada correctamente.'
+        };
         this.getFaculties();
         this.facultyForm.reset({
           name: '',
@@ -130,6 +148,21 @@ export class FacultyComponent implements OnInit {
     if (this.facultyForm.invalid) return;
     this.facultyServices.updateFaculty({ ...this.facultyForm.getRawValue(), id: this.id }).subscribe({
       next: (response) => {
+        if (!response.id){
+         this.alertaResponse = {
+           alertVisible: true,
+           alertType: 'error',
+           alertTitle: 'Error',
+           alertMessage: 'Fallo al actualizar la facultad.'
+         };
+         return;
+        }
+        this.alertaResponse = {
+           alertVisible: true,
+           alertType: 'success',
+           alertTitle: 'Éxito',
+           alertMessage: 'Facultad actualizada correctamente.'
+         };
         this.getFaculties();
         this.facultyForm.reset({
           name: '',
@@ -140,6 +173,7 @@ export class FacultyComponent implements OnInit {
         });
         this.updateMethod = false;
       }
+
     });
 
   }

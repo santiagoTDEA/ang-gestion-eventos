@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { validateSessionGuard } from './core/guards/validate-session.guard';
 import { LoginComponent } from './features/login/login.component';
 import { InicioComponent } from './features/inicio/inicio.component';
 import { FacultyComponent } from './features/faculty/faculty.component';
@@ -15,26 +16,36 @@ export const routes: Routes = [
     },
     {
         path:'inicio',
-        component: InicioComponent
+        component: InicioComponent,
+        canActivate: [validateSessionGuard]
     },
     {
         path:'facultades',
-        component: FacultyComponent  
+        component: FacultyComponent ,
+        canActivate: [validateSessionGuard]
     },
     {
         path:'roles',
-        component: RolesComponent  
+        component: RolesComponent ,
+        canActivate: [validateSessionGuard]
     },
     {
         path:'usuarios',
-        component: UsersComponent  
+        component: UsersComponent ,
+        canActivate: [validateSessionGuard]
     },
     {
         path:'personas',
-        component: PeoplesComponent  
+        component: PeoplesComponent ,
+        canActivate: [validateSessionGuard]
     },
     {
         path:'estados',
-        component: StatusComponent  
+        component: StatusComponent ,
+        canActivate: [validateSessionGuard]
+    },
+    {
+        path:'**',
+        component: LoginComponent
     }
 ];

@@ -13,11 +13,13 @@ import { GenericSelectComponent } from '../../../shared/atoms/generic-select/gen
 import { GenericInputComponent } from '../../../shared/atoms/generic-input/generic-input.component';
 import { GenericFormComponent } from '../../../shared/organisms/generic-form/generic-form.component';
 import { StatusService } from '../../core/services/status.service';
+import { GenericAlertResponse } from '../../../shared/atoms/generic-alert/utils/style';
+import { GenericAlertComponent } from '../../../shared/atoms/generic-alert/generic-alert.component';
 
 
 @Component({
   selector: 'app-peoples',
- imports: [ReactiveFormsModule, GenericFormComponent, GenericInputComponent, GenericSelectComponent, GenericButtonComponent], 
+ imports: [ReactiveFormsModule, GenericFormComponent, GenericInputComponent, GenericSelectComponent, GenericButtonComponent, GenericAlertComponent], 
   templateUrl: './peoples.component.html',
   styleUrl: './peoples.component.css'
 })
@@ -28,6 +30,7 @@ export class PeoplesComponent {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly statusServices: StatusService = inject(StatusService);
+  alertaResponse:GenericAlertResponse= { alertVisible: false, alertType: 'success', alertTitle: '', alertMessage: '' };
 
   persons: Person[] = [];
   visibilityTablet = false;
@@ -65,7 +68,15 @@ export class PeoplesComponent {
   private getStatusOptions(): void {
     this.statusServices.getStatusOptions().subscribe({
       next: (statuses) => {
-        if (statuses.length === 0) return
+        if (statuses.length === 0) {
+          this.alertaResponse = {
+            alertVisible: true,
+            alertType: 'error',
+            alertTitle: 'Error',
+            alertMessage: 'No hay estados disponibles.'
+          };
+          return;
+        }
         this.statusOptions = statuses.filter(status => status.statusName.trim().toLowerCase() === "activo" || status.statusName.trim().toLowerCase() === "inactivo");
       },
 
@@ -77,6 +88,15 @@ export class PeoplesComponent {
   getPersons(): void {
     this.peoplesService.getPeoples().subscribe({
       next: (response: Person[]) => {
+        if (response.length === 0) {
+          this.alertaResponse = {
+            alertVisible: true,
+            alertType: 'error',
+            alertTitle: 'Error',
+            alertMessage: 'No hay personas disponibles.'
+          };
+          return;
+        }
         this.persons = response;
       },
       error: (err) => console.error(err),
@@ -86,6 +106,7 @@ export class PeoplesComponent {
   getFaculties(): void {
     this.facultiesService.getFaculties().subscribe({
       next: (response: ReturnFaculty[]) => {
+        
         this.facultyOptions = response;
       },
       error: (err) => console.error(err),
@@ -95,6 +116,15 @@ export class PeoplesComponent {
   getRoles(): void {
     this.rolesService.getRoles().subscribe({
       next: (response: ReturnRole[]) => {
+        if (response.length === 0) {
+          this.alertaResponse = {
+            alertVisible: true,
+            alertType: 'error',
+            alertTitle: 'Error',
+            alertMessage: 'No hay roles disponibles.'
+          };
+          return;
+        }
         this.roleOptions = response;
       },
       error: (err) => console.error(err),
@@ -148,6 +178,12 @@ export class PeoplesComponent {
     if (this.updateMethod && this.currentPersonId !== null) {
       this.peoplesService.updatePeople(String(this.currentPersonId), formValue).subscribe({
         next: () => {
+          this.alertaResponse = {
+            alertVisible: true,
+            alertType: 'success',
+            alertTitle: 'Éxito',
+            alertMessage: 'Persona actualizada correctamente.'
+          };
           this.getPersons();
           this.resetForm();
           this.visibilityTablet = true;
@@ -157,6 +193,12 @@ export class PeoplesComponent {
     } else {
       this.peoplesService.postPeople(formValue).subscribe({
         next: () => {
+          this.alertaResponse = {
+            alertVisible: true,
+            alertType: 'success',
+            alertTitle: 'Éxito',
+            alertMessage: 'Persona creada correctamente.'
+          };
           this.getPersons();
           this.resetForm();
           this.visibilityTablet = true;

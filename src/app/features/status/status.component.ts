@@ -6,10 +6,12 @@ import { CreateStatusDto, Status } from './interfaces/status.interfaces';
 import { GenericFormComponent } from '../../../shared/organisms/generic-form/generic-form.component';
 import { GenericInputComponent } from '../../../shared/atoms/generic-input/generic-input.component';
 import { GenericButtonComponent } from '../../../shared/atoms/generic-button/generic-button.component';
+import { GenericAlertResponse } from '../../../shared/atoms/generic-alert/utils/style';
+import { GenericAlertComponent } from '../../../shared/atoms/generic-alert/generic-alert.component';
 
 @Component({
   selector: 'app-status',
-  imports: [ReactiveFormsModule, GenericFormComponent, GenericInputComponent, GenericButtonComponent],
+  imports: [ReactiveFormsModule, GenericFormComponent, GenericInputComponent, GenericButtonComponent, GenericAlertComponent],
   templateUrl: './status.component.html',
   styleUrl: './status.component.css'
 })
@@ -18,6 +20,7 @@ export class StatusComponent implements OnInit {
   private readonly statusService: StatusService = inject(StatusService);
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  alertaResponse:GenericAlertResponse= { alertVisible: false, alertType: 'success', alertTitle: '', alertMessage: '' };
 
   statuses: Status[] = [];
   loading = false;
@@ -72,6 +75,12 @@ export class StatusComponent implements OnInit {
     if (this.updateMethod && this.currentStatusId !== null) {
       this.statusService.updateStatus(this.currentStatusId, formValue).subscribe({
         next: () => {
+          this.alertaResponse = {
+            alertVisible: true,
+            alertType: 'success',
+            alertTitle: 'Éxito',
+            alertMessage: 'El estado se ha actualizado correctamente.'
+          };
           this.getStatuses();
           this.resetForm();
         },
@@ -80,6 +89,12 @@ export class StatusComponent implements OnInit {
     } else {
       this.statusService.postStatus(formValue).subscribe({
         next: () => {
+          this.alertaResponse = {
+            alertVisible: true,
+            alertType: 'success',
+            alertTitle: 'Éxito',
+            alertMessage: 'El estado se ha creado correctamente.'
+          };
           this.getStatuses();
           this.resetForm();
         },

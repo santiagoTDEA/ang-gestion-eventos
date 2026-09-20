@@ -8,18 +8,22 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { CredencialLoginService } from './services/credencial-login.service';
 import { LoginCredentials } from './interfaces/login.interfaces';
 import { GenericInputIcon } from '../../../shared/atoms/generic-input/generic-input.component';
+import { GenericAlertResponse } from '../../../shared/atoms/generic-alert/utils/style';
+import { GenericAlertComponent } from '../../../shared/atoms/generic-alert/generic-alert.component';
 @Component({
   selector: 'app-login',
-  imports: [GenericButtonComponent, GenericFormComponent, GenericInputComponent],
+  imports: [GenericButtonComponent, GenericFormComponent, GenericInputComponent, GenericAlertComponent],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
 })
 export class LoginComponent {
   iconoPassword: GenericInputIcon = 'eye-slash' as GenericInputIcon;
+  alertaResponse: GenericAlertResponse = { alertVisible: false, alertType: 'success', alertTitle: '', alertMessage: '' };
+
   typePassword: 'text' | 'password' = 'password';
   loginForm: FormGroup;
   loading = false;
-  private readonly  router:Router = inject(Router);
+  private readonly router: Router = inject(Router);
 
   constructor(private fb: FormBuilder, private credencialLoginService: CredencialLoginService) {
     this.loginForm = this.fb.group({
@@ -60,16 +64,32 @@ export class LoginComponent {
     try {
       const response = await this.credencialLoginService.postCredentials(credentials);
       if (response.accessToken) {
+        this.alertaResponse = {
+          alertVisible: true,
+          alertType: 'success',
+          alertTitle: 'Éxito',
+          alertMessage: 'Inicio de sesión exitoso.'
+        };
         localStorage.setItem('accessToken', response.accessToken);
         this.router.navigate(['/inicio']);
 
 
+      } else {
+        this.alertaResponse = {
+          alertVisible: true,
+          alertType: 'error',
+          alertTitle: 'Error',
+          alertMessage: 'Credenciales incorrectas.'
+        };
       }
 
     } catch (error) {
-
-      const response = error as HttpErrorResponse;
-
+      this.alertaResponse = {
+        alertVisible: true,
+        alertType: 'error',
+        alertTitle: 'Error',
+        alertMessage: 'Error al iniciar sesión.'
+      };
     }
 
   }

@@ -1,11 +1,16 @@
 <div class="min-h-screen w-full flex items-center justify-center relative font-sans py-6 px-4 sm:py-10 sm:px-10">
-    <div class="w-full min-h-[70vh] bg-white rounded-[10px] shadow-[0_10px_30px_rgba(0,0,0,0.15)] px-4 pt-6 pb-6 sm:px-7 sm:pt-8 sm:pb-7">
+    <div
+        class="w-full min-h-[70vh] bg-white rounded-[10px] shadow-[0_10px_30px_rgba(0,0,0,0.15)] px-4 pt-6 pb-6 sm:px-7 sm:pt-8 sm:pb-7">
+        @if (alertaResponse.alertVisible) {
+        <app-generic-alert [type]="alertaResponse.alertType" (closed)="alertaResponse.alertVisible = false">
+            <strong class="block font-semibold">{{ alertaResponse.alertTitle }}</strong>
+            <span>{{ alertaResponse.alertMessage }}</span>
+        </app-generic-alert>
+        }
 
-        <!-- HEADER -->
         <div class="flex items-center justify-between gap-2 mb-6 flex-wrap sm:flex-nowrap">
 
-            <button type="button" (click)="goBack()"
-                class="flex items-center gap-1.5 px-3 py-2 rounded-lg
+            <button type="button" (click)="goBack()" class="flex items-center gap-1.5 px-3 py-2 rounded-lg
                        text-gray-500 hover:text-gray-700 hover:bg-gray-50
                        text-sm font-medium transition-all duration-200
                        cursor-pointer shrink-0">
@@ -24,7 +29,6 @@
             <div class="w-16 shrink-0"></div>
         </div>
 
-        <!-- FORMULARIO -->
         <app-generic-form [disabled]="facultyForm.invalid || loading"
             (formSubmit)="updateMethod ? updateFaculty(facultyForm.getRawValue()) : onSubmit(facultyForm.getRawValue())">
 
@@ -50,8 +54,7 @@
             </div>
 
             <div class="flex justify-center mt-6">
-                <app-generic-button label="Guardar" type="submit" [disabled]="facultyForm.invalid"
-                    customClass="w-full sm:w-1/2 md:w-1/3 rounded-md
+                <app-generic-button label="Guardar" type="submit" [disabled]="facultyForm.invalid" customClass="w-full sm:w-1/2 md:w-1/3 rounded-md
                                  bg-[#1c4a30] hover:bg-[#163c27]
                                  disabled:bg-gray-300 disabled:cursor-not-allowed
                                  text-white text-sm font-medium
@@ -109,11 +112,10 @@
                 </table>
             </div>
 
-            <!-- CARDS - mobile y tablet -->
             <div class="md:hidden space-y-3">
                 @for (item of faculties; track $index) {
-                <div class="rounded-md border border-gray-200 p-4 hover:bg-gray-50 cursor-pointer"
-                    role="button" tabindex="0" (click)="obtenerDatos(item)">
+                <div class="rounded-md border border-gray-200 p-4 hover:bg-gray-50 cursor-pointer" role="button"
+                    tabindex="0" (click)="obtenerDatos(item)">
 
                     <!-- Fila principal: Nombre + Estado -->
                     <div class="flex items-start justify-between gap-2">
@@ -127,7 +129,6 @@
                         </span>
                     </div>
 
-                    <!-- Departamento como subtítulo -->
                     @if (item.department) {
                     <p class="mt-1 text-sm text-gray-500">{{ item.department }}</p>
                     }

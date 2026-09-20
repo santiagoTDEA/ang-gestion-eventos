@@ -9,10 +9,12 @@ import { GenericSelectComponent } from '../../../shared/atoms/generic-select/gen
 import { GenericButtonComponent } from '../../../shared/atoms/generic-button/generic-button.component';
 import { StatusService } from '../../core/services/status.service';
 import { PeoplesService } from '../peoples/services/peoples.service';
+import { GenericAlertResponse } from '../../../shared/atoms/generic-alert/utils/style';
+import { GenericAlertComponent } from '../../../shared/atoms/generic-alert/generic-alert.component';
 
 @Component({
   selector: 'app-users',
-  imports: [ReactiveFormsModule, GenericFormComponent, GenericInputComponent, GenericSelectComponent, GenericButtonComponent],
+  imports: [ReactiveFormsModule, GenericFormComponent, GenericInputComponent, GenericSelectComponent, GenericButtonComponent, GenericAlertComponent],
   templateUrl: './users.component.html',
   styleUrl: './users.component.css'
 })
@@ -23,6 +25,8 @@ export class UsersComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly statusServices: StatusService = inject(StatusService);
   private readonly peopleService: PeoplesService = inject(PeoplesService);
+  alertaResponse: GenericAlertResponse = { alertVisible: false, alertType: 'success', alertTitle: '', alertMessage: '' };
+
   users: UserResponse[] = [];
   visibilityTablet = false;
   loading = false;
@@ -33,21 +37,29 @@ export class UsersComponent implements OnInit {
 
 
   userForm!: FormGroup;
-  personOptions: { id: number; label: string }[] = [];
-
+  personOptions: any[] = [];
+  allPersonOptions: any[] = [];
   statusOptions: Status[] = [];
 
   ngOnInit(): void {
+    this.buildForm();
     this.getUsers();
     this.getStatusOptions();
     this.getPeopleOptions();
-    this.buildForm();
   }
 
   private getStatusOptions(): void {
     this.statusServices.getStatusOptions().subscribe({
       next: (statuses) => {
-        if (statuses.length === 0) return
+        if (statuses.length === 0) {
+          this.alertaResponse = {
+            alertVisible: true,
+            alertType: 'error',
+            alertTitle: 'Error',
+            alertMessage: 'No hay estados disponibles.'
+          };
+          return
+        }
         this.statusOptions = statuses.filter(status => status.statusName.trim().toLowerCase() === "activo" || status.statusName.trim().toLowerCase() === "inactivo");
       },
 
@@ -64,16 +76,46 @@ export class UsersComponent implements OnInit {
   private getPeopleOptions(): void {
     this.peopleService.getPeoples().subscribe({
       next: (people) => {
-        console.log(people);
-        if (people.length === 0) return;
-        this.personOptions = people.filter(person => {
-          return person.user.id == null;
-        }).map(person => {
-          return { id: person.id, label: person.email };
-        });
+
+        if (people.length === 0) {
+          this.alertaResponse = {
+            alertVisible: true,
+            alertType: 'error',
+            alertTitle: 'Error',
+            alertMessage: 'No hay personas disponibles.'
+          };
+          return;
+        }
+        this.allPersonOptions = people;
+        this.updatePersonOptions();
       }
     });
   }
+
+  updatePersonOptions(): void {
+    if (!this.updateMethod) {
+      this.personOptions = this.allPersonOptions.filter((person) => person.user == null).map((person) => ({
+        id: person.id,
+        label: person.email
+      }));
+    } else {
+      const currentPersonOptions = this.allPersonOptions.filter(person => person?.user?.id === this.currentUserId);
+      if (currentPersonOptions.length > 0) {
+        this.personOptions = currentPersonOptions.map((person) => ({
+          id: person.id,
+          label: person.email
+        }));
+      } else {
+        this.personOptions = this.allPersonOptions.filter((person) => person.user == null).map((person) => ({
+          id: person.id,
+          label: person.email
+        }));
+      }
+    }
+
+  }
+
+
 
   private buildForm(): void {
     this.userForm = this.fb.group({
@@ -114,8 +156,10 @@ export class UsersComponent implements OnInit {
   }
 
   obtenerDatos(item: UserResponse): void {
+    console.log(item);
     this.updateMethod = true;
     this.currentUserId = item.id;
+    this.updatePersonOptions();
 
     this.userForm.get('password')?.clearValidators();
     this.userForm.get('password')?.setValidators([Validators.minLength(6), Validators.maxLength(100)]);
@@ -123,7 +167,7 @@ export class UsersComponent implements OnInit {
 
     this.userForm.patchValue({
       username: item.username,
-      password: '',
+      password: item.password,
       personId: item.person?.id ?? null,
       statusId: item.status?.idStatus ?? null,
     });
@@ -147,6 +191,12 @@ export class UsersComponent implements OnInit {
     if (this.updateMethod && this.currentUserId) {
       this.usersService.updateUser(this.currentUserId, payload).subscribe({
         next: () => {
+          this.alertaResponse = {
+            alertVisible: true,
+            alertType: 'success',
+            alertTitle: 'Éxito',
+            alertMessage: 'Usuario actualizado correctamente.'
+          };
           this.getUsers();
           this.visibilityTablet = true;
           this.resetForm();
@@ -156,6 +206,12 @@ export class UsersComponent implements OnInit {
     } else {
       this.usersService.postUser(payload).subscribe({
         next: () => {
+          this.alertaResponse = {
+            alertVisible: true,
+            alertType: 'success',
+            alertTitle: 'Éxito',
+            alertMessage: 'Usuario creado correctamente.'
+          };
           this.getUsers();
           this.visibilityTablet = true;
           this.resetForm();

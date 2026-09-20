@@ -10,10 +10,12 @@ import { GenericButtonComponent } from '../../../shared/atoms/generic-button/gen
 import { GenericSelectComponent } from '../../../shared/atoms/generic-select/generic-select.component';
 import { RolesService } from './services/roles.service';
 import { DatePipe } from '@angular/common';
+import { GenericAlertResponse } from '../../../shared/atoms/generic-alert/utils/style';
+import { GenericAlertComponent } from '../../../shared/atoms/generic-alert/generic-alert.component';
 
 @Component({
   selector: 'app-roles',
-  imports: [DatePipe, GenericFormComponent, GenericInputComponent, GenericCheckboxComponent, GenericSelectComponent, ReactiveFormsModule],
+  imports: [DatePipe, GenericFormComponent, GenericInputComponent, GenericCheckboxComponent, GenericSelectComponent, ReactiveFormsModule, GenericAlertComponent],
   templateUrl: './roles.component.html',
   styleUrl: './roles.component.css'
 })
@@ -24,6 +26,7 @@ export class RolesComponent {
   visibilityTablet = false;
   idrole: string | null = null;
   viewRoles: ReturnRole[] = []
+  alertaResponse:GenericAlertResponse= { alertVisible: false, alertType: 'success', alertTitle: '', alertMessage: '' };
 
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
@@ -108,6 +111,12 @@ export class RolesComponent {
 
     const validteExist = this.verificarQueExistanAccesos(this.buildAccesosPayload(), this.roleForm.value.permissionsFull);
     if (!validteExist) {
+      this.alertaResponse = {
+        alertVisible: true,
+        alertType: 'error',
+        alertTitle: 'Error',
+        alertMessage: 'Debe existir al menos un acceso con acciones definidas.'
+      };
       return;
     }
     const payload: Role = {
@@ -121,6 +130,12 @@ export class RolesComponent {
 
     this.roleServices.createRole(payload).subscribe({
       next: (response) => {
+        this.alertaResponse = {
+          alertVisible: true,
+          alertType: 'success',
+          alertTitle: 'Éxito',
+          alertMessage: 'El rol se ha creado correctamente.'
+        };
         this.roleForm.reset({
           name: '',
           description: '',
@@ -139,6 +154,12 @@ export class RolesComponent {
 
   updateRoles(): void {
     if (!this.idrole) {
+      this.alertaResponse = {
+        alertVisible: true,
+        alertType: 'error',
+        alertTitle: 'Error',
+        alertMessage: 'No se ha seleccionado ningún rol para actualizar.'
+      };
       return;
     }
 
@@ -148,7 +169,12 @@ export class RolesComponent {
     }
      const validteExist = this.verificarQueExistanAccesos(this.buildAccesosPayload(), this.roleForm.value.permissionsFull);
     if (!validteExist) {
-      alert('Debe existir al menos un acceso con acciones definidas.');
+      this.alertaResponse = {
+        alertVisible: true,
+        alertType: 'error',
+        alertTitle: 'Error',
+        alertMessage: 'Debe existir al menos un acceso con acciones definidas.'
+      };
       return;
     }
 
@@ -163,6 +189,12 @@ export class RolesComponent {
 
     this.roleServices.updateRole(this.idrole, payload).subscribe({
       next: (response) => {
+        this.alertaResponse = {
+          alertVisible: true,
+          alertType: 'success',
+          alertTitle: 'Éxito',
+          alertMessage: 'El rol se ha actualizado correctamente.'
+        };
         this.roleForm.reset({
           name: '',
           description: '',
