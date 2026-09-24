@@ -5,6 +5,7 @@ export const environment = {
 };
 
 export const modulosAplicacion = [
+  { value: 'eventos', label: 'Eventos', icono: '🎟️'  },
   { value: 'facultades', label: 'Facultades', icono: '🏛️'  },
   { value: 'usuarios', label: 'Usuarios', icono: '👤' },
   { value: 'roles', label: 'Roles', icono: '🔑' },

@@ -7,6 +7,7 @@ import { RolesComponent } from './features/roles/roles.component';
 import { UsersComponent } from './features/users/users.component';
 import { PeoplesComponent } from './features/peoples/peoples.component';
 import { StatusComponent } from './features/status/status.component';
+import { EventsComponent } from './features/events/events.component';
 
 export const routes: Routes = [
     {
@@ -17,6 +18,11 @@ export const routes: Routes = [
     {
         path:'inicio',
         component: InicioComponent,
+        canActivate: [validateSessionGuard]
+    },
+    {
+        path:'eventos',
+        component: EventsComponent,
         canActivate: [validateSessionGuard]
     },
     {

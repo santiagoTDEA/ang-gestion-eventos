@@ -1,0 +1,58 @@
+<header class="top-menu" (click)="$event.stopPropagation()">
+    <div class="top-menu__inner">
+        <a class="top-menu__brand" routerLink="/inicio" aria-label="Ir al inicio">
+            <span class="top-menu__brand-mark">GE</span>
+            <span class="top-menu__brand-name">Gestión de Eventos</span>
+        </a>
+
+        <div class="top-menu__action-group">
+            <div class="top-menu__search">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m21 21-4.35-4.35m1.35-5.65a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
+                </svg>
+                <input type="search" placeholder="Buscar evento, docente o módulo..." [value]="searchTerm"
+                    (input)="onSearch($event)" (keydown.enter)="navigateToMatch()" aria-label="Buscar en el sistema" />
+
+                @if (searchTerm.trim()) {
+                <div class="top-menu__search-results">
+                    @for (item of filteredMenuItems; track item.path) {
+                    <button type="button" (click)="goTo(item.path)">{{ item.label }}</button>
+                    } @empty {
+                    <span>No se encontraron módulos</span>
+                    }
+                </div>
+                }
+            </div>
+
+            <button type="button" class="top-menu__icon-button" (click)="toggleNotifications()"
+                aria-label="Ver notificaciones" title="Notificaciones">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8.5 13h5" />
+                </svg>
+                <span class="top-menu__notification-dot"></span>
+            </button>
+
+            <button type="button" class="top-menu__avatar" (click)="toggleUserMenu()" aria-label="Abrir menú de usuario"
+                title="Menú de usuario">S.O</button>
+
+            @if (showNotifications) {
+            <div class="top-menu__popover top-menu__notifications">
+                <strong>Notificaciones</strong>
+                <p>No tienes notificaciones nuevas.</p>
+            </div>
+            }
+
+            @if (showUserMenu) {
+            <div class="top-menu__popover top-menu__user-menu">
+                <span class="top-menu__user-label">Sesión activa</span>
+                <button type="button" (click)="logout()">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M10 17l5-5-5-5m5 5H3m9-9h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6" />
+                    </svg>
+                    Cerrar sesión
+                </button>
+            </div>
+            }
+        </div>
+    </div>
+</header>

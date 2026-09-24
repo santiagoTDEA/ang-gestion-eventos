@@ -2,8 +2,29 @@
 
 :root {
   --background-primary: #FFFFFF;
+  --background-page-start: #dff3e5;
+  --background-page-end: #ffffff;
   --background-hover: #e7edfb;
   --border-color: #4f5752;
   --text-color: #000000;
   --text-title: #2f7d3f;
+}
+
+html,
+body,
+app-root,
+router-outlet + * {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: linear-gradient(180deg, var(--background-page-start) 0%, var(--background-page-end) 100%);
+  color: var(--text-color);
+}
+
+router-outlet + * {
+  display: block;
+  min-height: 100vh;
+  background: linear-gradient(180deg, var(--background-page-start) 0%, var(--background-page-end) 100%);
 }

@@ -1,3 +1,7 @@
+@if (showTopMenu) {
+<app-top-menu />
+}
+
 @if (alertaResponse.alertVisible) {
 <app-generic-alert [type]="alertaResponse.alertType" (closed)="alertaResponse.alertVisible = false">
     <strong class="block font-semibold">{{ alertaResponse.alertTitle }}</strong>
