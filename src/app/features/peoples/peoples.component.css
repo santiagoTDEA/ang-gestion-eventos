@@ -1,6 +1,132 @@
+.peoples-page {
+    background: linear-gradient(180deg, var(--background-page-start) 0%, var(--background-page-end) 100%);
+}
+
+.peoples-shell {
+    max-width: 1240px;
+}
+
+.peoples-header {
+    padding-bottom: 18px;
+    border-bottom: 1px solid #e3eee6;
+}
+
+.peoples-header__title {
+    letter-spacing: -0.02em;
+}
+
+.peoples-form-card {
+    margin-top: 22px;
+    padding: 20px;
+    border: 1px solid #dfeae2;
+    border-radius: 10px;
+    background: #f8fcf9;
+}
+
+.peoples-form-card__heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.peoples-form-card__eyebrow {
+    display: block;
+    margin-bottom: 4px;
+    color: #6d8b78;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.peoples-form-card__heading h2 {
+    margin: 0;
+    color: #173b26;
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.peoples-form-card__required {
+    padding-top: 4px;
+    color: #789080;
+    font-size: 11px;
+}
+
+.peoples-form-grid {
+    gap: 16px 18px;
+}
+
+.peoples-form-actions {
+    padding-top: 16px;
+    border-top: 1px solid #e1ebe4;
+}
+
+.peoples-form-actions app-generic-button {
+    width: min(100%, 260px);
+}
+
+.peoples-list {
+    padding-top: 20px;
+    border-top: 1px solid #e3eee6;
+}
+
+.peoples-list table {
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.peoples-list thead {
+    background: #e6f4ea;
+}
+
+.peoples-list thead th {
+    padding-top: 11px;
+    padding-bottom: 11px;
+    color: #315340;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.peoples-list tbody tr {
+    transition: background-color 0.16s ease;
+}
+
+.peoples-list tbody tr:hover {
+    background: #f2faf4;
+}
+
+.peoples-list tbody td {
+    padding-top: 11px;
+    padding-bottom: 11px;
+    color: #506a5b;
+    font-size: 12px;
+}
+
 .color-fondo{
     background-color:var(--background-primary);
 }
+
 .text-title {
     color: var(--text-title);
+}
+
+@media (max-width: 640px) {
+    .peoples-form-card {
+        padding: 16px;
+    }
+
+    .peoples-form-card__heading {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .peoples-form-actions app-generic-button {
+        width: 100%;
+    }
 }

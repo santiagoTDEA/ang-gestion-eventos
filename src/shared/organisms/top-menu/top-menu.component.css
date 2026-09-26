@@ -1,0 +1,245 @@
+:host {
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.top-menu {
+    background: rgba(255, 255, 255, 0.92);
+    border-bottom: 1px solid #dcebe1;
+    box-shadow: 0 2px 12px rgba(20, 74, 42, 0.08);
+    backdrop-filter: blur(12px);
+}
+
+.top-menu__inner {
+    width: min(100%, 1440px);
+    min-height: 64px;
+    margin: 0 auto;
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.top-menu__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: #174d2f;
+    text-decoration: none;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.top-menu__brand-mark,
+.top-menu__avatar {
+    display: inline-grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+}
+
+.top-menu__brand-mark {
+    background: #1c7c45;
+    color: #fff;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+}
+
+.top-menu__action-group {
+    position: relative;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.top-menu__search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: min(360px, 42vw);
+    height: 38px;
+    padding: 0 12px;
+    background: #f5f8f6;
+    border: 1px solid #dfeae3;
+    border-radius: 9px;
+}
+
+.top-menu__search:focus-within {
+    border-color: #57a873;
+    box-shadow: 0 0 0 3px rgba(87, 168, 115, 0.15);
+}
+
+.top-menu__search svg,
+.top-menu__user-menu svg {
+    width: 17px;
+    height: 17px;
+    flex: 0 0 auto;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.8;
+}
+
+.top-menu__search svg {
+    color: #7d9385;
+    margin-right: 8px;
+}
+
+.top-menu__search input {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: #274334;
+    font-size: 12px;
+}
+
+.top-menu__search input::placeholder {
+    color: #8da096;
+}
+
+.top-menu__icon-button,
+.top-menu__avatar {
+    border: 0;
+    cursor: pointer;
+}
+
+.top-menu__icon-button {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    color: #507361;
+    background: transparent;
+}
+
+.top-menu__icon-button:hover {
+    background: #edf6ef;
+    border-radius: 50%;
+}
+
+.top-menu__icon-button svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.7;
+}
+
+.top-menu__notification-dot {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 6px;
+    height: 6px;
+    border: 1px solid #fff;
+    border-radius: 50%;
+    background: #ed9b32;
+}
+
+.top-menu__avatar {
+    background: #1caa63;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.top-menu__avatar:hover {
+    background: #168b50;
+}
+
+.top-menu__search-results,
+.top-menu__popover {
+    position: absolute;
+    top: calc(100% + 9px);
+    right: 0;
+    min-width: 220px;
+    padding: 8px;
+    border: 1px solid #dcebe1;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 12px 28px rgba(20, 74, 42, 0.16);
+}
+
+.top-menu__search-results {
+    left: 0;
+    right: auto;
+    min-width: 100%;
+}
+
+.top-menu__search-results button,
+.top-menu__user-menu button {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 8px;
+    padding: 9px 10px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: #315340;
+    cursor: pointer;
+    text-align: left;
+    font-size: 13px;
+}
+
+.top-menu__search-results button:hover,
+.top-menu__user-menu button:hover {
+    background: #edf6ef;
+}
+
+.top-menu__search-results span,
+.top-menu__notifications p,
+.top-menu__user-label {
+    display: block;
+    padding: 7px 9px;
+    color: #789080;
+    font-size: 12px;
+}
+
+.top-menu__notifications strong {
+    display: block;
+    padding: 7px 9px 2px;
+    color: #315340;
+    font-size: 13px;
+}
+
+.top-menu__notifications p {
+    margin: 0;
+}
+
+.top-menu__user-menu {
+    min-width: 170px;
+}
+
+@media (max-width: 640px) {
+    .top-menu__inner {
+        padding: 8px 12px;
+        gap: 10px;
+    }
+
+    .top-menu__brand-name {
+        display: none;
+    }
+
+    .top-menu__action-group {
+        gap: 4px;
+    }
+
+    .top-menu__search {
+        width: min(245px, 57vw);
+    }
+
+    .top-menu__search input {
+        font-size: 11px;
+    }
+}

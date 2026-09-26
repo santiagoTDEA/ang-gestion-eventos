@@ -1,12 +1,12 @@
-<div class="min-h-screen  w-full flex items-center justify-center relative font-sans py-10 px-10">
-    <div class="w-full min-h-[80vh] bg-white rounded-[10px] shadow-[0_10px_30px_rgba(0,0,0,0.15)] px-7 pt-8 pb-7">
+<div class="roles-page min-h-screen w-full flex items-center justify-center relative font-sans py-10 px-10">
+    <div class="roles-shell w-full min-h-[80vh] bg-white rounded-[10px] shadow-[0_10px_30px_rgba(0,0,0,0.15)] px-7 pt-8 pb-7">
     @if (alertaResponse.alertVisible) {
         <app-generic-alert [type]="alertaResponse.alertType" (closed)="alertaResponse.alertVisible = false">
             <strong class="block font-semibold">{{ alertaResponse.alertTitle }}</strong>
             <span>{{ alertaResponse.alertMessage }}</span>
         </app-generic-alert>
         }
-      <div class="flex items-center justify-between gap-2 mb-6 flex-wrap sm:flex-nowrap">
+    <div class="roles-header flex items-center justify-between gap-2 mb-6 flex-wrap sm:flex-nowrap">
 
     <button type="button" (click)="goBack()"
         class="flex items-center gap-1.5 px-3 py-2 rounded-lg
@@ -20,7 +20,7 @@
         <span class="hidden xs:inline sm:inline">Volver</span>
     </button>
 
-    <span class="order-3 sm:order-none w-full sm:w-auto text-center
+    <span class="roles-header__title order-3 sm:order-none w-full sm:w-auto text-center
              text-lg sm:text-xl md:text-2xl font-bold text-title
              truncate sm:whitespace-normal">
         {{ visibilityTablet ? 'Roles registrados' : 'Registro de Rol' }}
@@ -34,10 +34,19 @@
                border border-[#d5deef]
                transition-all duration-200
                shrink-0 cursor-pointer">
+        @if (visibilityTablet) {
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
             stroke="currentColor" class="w-4 h-4 shrink-0">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
         </svg>
+        } @else {
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+            stroke="currentColor" class="w-4 h-4 shrink-0">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                d="M2.25 12s3.75-6 9.75-6 9.75 6 9.75 6-3.75 6-9.75 6-9.75-6-9.75-6Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+        </svg>
+        }
         <span class="hidden xs:inline sm:inline">{{ visibilityTablet ? 'Registro de Rol' : 'Roles registrados' }}</span>
     </button>
 
@@ -45,7 +54,7 @@
 
         @if(visibilityTablet) {
 
-        <div class="mt-8">
+        <section class="roles-list mt-8">
 
             <div class="hidden md:block overflow-x-auto rounded-md border border-gray-200">
                 <table class="w-full text-sm text-left">
@@ -159,14 +168,23 @@
                 }
             </div>
 
-        </div>
+        </section>
 
         }@else {
+        <section class="roles-form-card">
+        <div class="roles-form-card__heading">
+            <div>
+                <span class="roles-form-card__eyebrow">Control de accesos</span>
+                <h2>{{ updateForm ? 'Editar rol' : 'Registrar nuevo rol' }}</h2>
+            </div>
+            <span class="roles-form-card__required">* Campos obligatorios</span>
+        </div>
+
         <app-generic-form [disabled]="roleForm.invalid || loading" (formSubmit)=" updateForm? updateRoles() : onSubmit()">
 
             <div [formGroup]="roleForm">
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                <div class="roles-form-grid grid grid-cols-1 sm:grid-cols-2 gap-x-4">
                     <app-generic-input label="Nombre" placeholder="Escribe el nombre del rol" icon="none"
                         [control]="roleForm.controls['name']"></app-generic-input>
 
@@ -174,7 +192,7 @@
                         [control]="roleForm.controls['description']"></app-generic-input>
                 </div>
 
-                <div class="flex flex-col gap-2 mt-2 mb-6 sm:flex-row sm:items-center sm:gap-6">
+                <div class="roles-permissions flex flex-col gap-2 mt-2 mb-6 sm:flex-row sm:items-center sm:gap-6">
                     <app-generic-checkbox label="Permisos completos"
                         [control]="roleForm.controls['permissionsFull']"></app-generic-checkbox>
                     <app-generic-checkbox label="Activo"
@@ -185,7 +203,7 @@
 
                 @if(renderFullAcceso()){
 
-                <div class="mb-3 flex items-center justify-between">
+                <div class="roles-access-heading mb-3 flex items-center justify-between">
                     <h3 class="text-sm font-bold text-[#2f7d3f]">Accesos por módulo</h3>
                     <button type="button" (click)="addAcceso()"
                         class="text-sm font-medium text-[#1c4a30] hover:text-[#163c27] cursor-pointer">
@@ -197,7 +215,7 @@
 
                     @for (item of accesos.controls; track $index) {
 
-                    <section [formGroupName]="$index" class="border border-gray-200 rounded-md p-4 relative">
+                    <section [formGroupName]="$index" class="roles-access-card border border-gray-200 rounded-md p-4 relative">
 
                         @if(accesos.length > 1){
                         <button type="button" (click)="removeAcceso($index)"
@@ -234,7 +252,7 @@
 
             </div>
 
-            <div class="flex justify-center mt-6">
+            <div class="roles-form-actions flex justify-center mt-6">
               <button type="submit" 
     class="flex items-center gap-2 px-4 py-2.5 rounded-lg
            bg-[#eef2fb] hover:bg-[#dde6f9]
@@ -247,11 +265,12 @@
         stroke="currentColor" class="w-4 h-4 shrink-0">
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
     </svg>
-    <span class="hidden xs:inline sm:inline">{{ visibilityTablet ? 'Registro de Rol' : 'Roles registrados' }}</span>
+    <span class="hidden xs:inline sm:inline">Guardar rol</span>
 </button>
             </div>
 
         </app-generic-form>
+    </section>
         }
 
     </div>

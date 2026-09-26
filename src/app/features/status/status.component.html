@@ -1,5 +1,5 @@
-<div class="min-h-screen w-full flex items-center justify-center relative font-sans py-6 px-4 sm:py-10 sm:px-10">
-    <div class="w-full max-w-4xl bg-white rounded-[10px] shadow-[0_10px_30px_rgba(0,0,0,0.15)] px-4 pt-8 pb-10 sm:px-8 sm:pt-10 sm:pb-12">
+<div class="status-page min-h-screen w-full flex items-center justify-center relative font-sans py-6 px-4 sm:py-10 sm:px-10">
+    <div class="status-shell w-full max-w-4xl bg-white rounded-[10px] shadow-[0_10px_30px_rgba(0,0,0,0.15)] px-4 pt-8 pb-10 sm:px-8 sm:pt-10 sm:pb-12">
 
        @if (alertaResponse.alertVisible) {
         <app-generic-alert [type]="alertaResponse.alertType" (closed)="alertaResponse.alertVisible = false">
@@ -7,7 +7,7 @@
             <span>{{ alertaResponse.alertMessage }}</span>
         </app-generic-alert>
         }
-        <div class="flex items-center justify-between gap-2 mb-10 flex-wrap sm:flex-nowrap">
+        <div class="status-header flex items-center justify-between gap-2 mb-10 flex-wrap sm:flex-nowrap">
 
             <button type="button" (click)="goBack()"
                 class="flex items-center gap-1.5 px-3 py-2 rounded-lg
@@ -21,12 +21,21 @@
                 <span class="hidden xs:inline sm:inline">Volver</span>
             </button>
 
-            <span class="order-3 sm:order-none w-full sm:w-auto text-center
+            <span class="status-header__title order-3 sm:order-none w-full sm:w-auto text-center
                          text-lg sm:text-xl md:text-2xl font-bold text-title truncate sm:whitespace-normal">
                 {{ updateMethod ? 'Editar Estado' : 'Registro de Estado' }}
             </span>
 
             <div class="w-16 shrink-0"></div>
+        </div>
+
+        <section class="status-form-card">
+        <div class="status-form-card__heading">
+            <div>
+                <span class="status-form-card__eyebrow">Catálogo del sistema</span>
+                <h2>{{ updateMethod ? 'Editar estado' : 'Registrar nuevo estado' }}</h2>
+            </div>
+            <span class="status-form-card__required">* Campo obligatorio</span>
         </div>
 
         <app-generic-form [disabled]="statusForm.invalid || loading"
@@ -39,24 +48,27 @@
                         [control]="statusForm.controls['statusName']"></app-generic-input>
                 </div>
 
+                <div class="status-form-actions">
                 <app-generic-button label="Guardar" type="submit" [disabled]="statusForm.invalid"
-                    customClass="w-full mt-2  sm:w-auto sm:px-8 rounded-md
+                    customClass="w-full mt-2 sm:w-auto sm:px-8 rounded-md
                                  bg-[#1c4a30] hover:bg-[#163c27]
                                  disabled:bg-gray-300 disabled:cursor-not-allowed
                                  text-white text-sm font-medium
                                  py-3
                                  transition-colors duration-200
                                  cursor-pointer"></app-generic-button>
+                </div>
 
             </div>
 
         </app-generic-form>
+        </section>
 
         <!-- LISTADO -->
-        <div class="mt-14">
+        <section class="status-list mt-14">
             <h3 class="text-lg font-semibold text-[#2f7d3f] mb-4">Estados registrados</h3>
 
-            <div class="rounded-md border border-gray-200 divide-y divide-gray-200">
+            <div class="status-list__items rounded-md border border-gray-200 divide-y divide-gray-200">
                 @for (item of statuses; track $index) {
                 <div class="flex items-center justify-between px-4 py-4 hover:bg-gray-50 cursor-pointer"
                     role="button" tabindex="0" (click)="obtenerDatos(item)">
@@ -75,7 +87,7 @@
                 }
             </div>
 
-        </div>
+        </section>
 
     </div>
 </div>
