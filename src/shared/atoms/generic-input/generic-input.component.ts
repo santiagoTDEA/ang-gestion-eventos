@@ -36,7 +36,7 @@ export class GenericInputComponent implements OnInit {
   @Input() control!: AbstractControl;
   @Input() label = '';
   @Input() placeholder = '';
-  @Input() type: 'text' | 'password' | 'email' | 'tel' = 'text';
+  @Input() type: 'text' | 'password' | 'email' | 'tel' | 'number' | 'date' | 'time' = 'text';
   @Input() icon: GenericInputIcon = 'none';
 
   @Output() iconClick = new EventEmitter<void>();

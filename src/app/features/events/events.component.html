@@ -1,5 +1,12 @@
 <main class="eventos">
     <section class="eventos__contenido">
+        @if (alertaResponse.alertVisible) {
+        <app-generic-alert [type]="alertaResponse.alertType" (closed)="alertaResponse.alertVisible = false">
+            <strong class="block font-semibold">{{ alertaResponse.alertTitle }}</strong>
+            <span>{{ alertaResponse.alertMessage }}</span>
+        </app-generic-alert>
+        }
+
         <button type="button" class="eventos__volver" (click)="goBack()" aria-label="Volver al inicio">
             <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M15.75 19.5 8.25 12l7.5-7.5" />
@@ -24,9 +31,9 @@
 
         <div class="eventos__estadisticas">
             <article><strong>0%</strong><span>Progreso del formulario</span></article>
-            <article><strong>0</strong><span>Objetivos específicos</span></article>
-            <article><strong>0</strong><span>Módulos de contenido</span></article>
-            <article><strong>Borrador</strong><span>Sin enviar</span></article>
+            <article><strong>{{ objectivesArray.length }}</strong><span>Objetivos específicos</span></article>
+            <article><strong>{{ modulesArray.length }}</strong><span>Módulos de contenido</span></article>
+            <article><strong>{{ reviewSent ? 'Enviado' : 'Borrador' }}</strong><span>{{ reviewSent ? '' : 'Sin enviar' }}</span></article>
         </div>
 
         <nav class="eventos__pasos" aria-label="Etapas del formulario">
@@ -38,147 +45,141 @@
             }
         </nav>
 
-        @if (activeStep === 0) {
-        <form class="generalidades" (ngSubmit)="nextStep()">
-            <div class="generalidades__campo generalidades__campo--completo">
-                <label>Tipo de evento <span>*</span></label>
-                <div class="generalidades__opciones">
-                    @for (type of eventTypes; track type) {
-                    <button type="button" [class.generalidades__opcion--activo]="form.eventType === type"
-                        (click)="selectEventType(type)">{{ type }}</button>
+        <!-- Un único app-generic-form envuelve todo el asistente. Los botones "Siguiente"
+             son type="button" (no disparan el submit); solo el botón final de Aprobaciones
+             es type="submit" y dispara (formSubmit)="sendForReview()". -->
+        <app-generic-form [disabled]="eventForm.invalid || loading" (formSubmit)="sendForReview()">
+
+            @if (activeStep === 0) {
+            <div class="generalidades">
+                <div class="generalidades__campo generalidades__campo--completo">
+                    <app-generic-select label="Tipo de evento" placeholder="Selecciona un tipo de evento"
+                        [control]="generalidadesGroup.controls['eventType']" [options]="eventTypeOptions"
+                        optionValue="value" optionLabel="label">
+                    </app-generic-select>
+
+                    @if (eventTypeValue === '¿Otro?') {
+                    <app-generic-input label="Especifica el tipo de evento" placeholder="Especifica el tipo de evento"
+                        icon="none" [control]="generalidadesGroup.controls['otherEventType']"></app-generic-input>
                     }
                 </div>
-                @if (form.eventType === '¿Otro?') {
-                <input class="generalidades__otro-tipo" type="text" name="otherEventType"
-                    [(ngModel)]="otherEventType" placeholder="Especifica el tipo de evento" />
-                    }
-            </div>
 
-            <div class="generalidades__campo generalidades__campo--completo">
-                <label for="event-name">Nombre del evento <span>*</span></label>
-                <input id="event-name" name="eventName" type="text" [(ngModel)]="form.name"
-                    placeholder="Ej. Diplomado en Analítica de Datos para Negocios" />
-            </div>
+                <app-generic-input label="Nombre del evento" placeholder="Ej. Diplomado en Analítica de Datos para Negocios"
+                    icon="none" [control]="generalidadesGroup.controls['name']"></app-generic-input>
 
-            <div class="generalidades__grid generalidades__grid--dos">
-                <div class="generalidades__campo">
-                    <label for="event-faculty">Facultad o dependencia responsable <span>*</span></label>
-                    <input id="event-faculty" name="eventFaculty" type="text" [(ngModel)]="form.faculty"
-                        placeholder="Ej. Facultad de Ingeniería" />
-                </div>
-                <div class="generalidades__campo">
-                    <label for="academic-program">Programa académico <small>(si aplica)</small></label>
-                    <input id="academic-program" name="academicProgram" type="text" [(ngModel)]="form.academicProgram"
-                        placeholder="Solo si el evento lo organiza una facultad" />
-                </div>
-            </div>
+                <div class="generalidades__grid generalidades__grid--dos">
+                    <app-generic-select label="Facultad" placeholder="Selecciona una facultad"
+                        [control]="generalidadesGroup.controls['facultyId']" [options]="facultyOptions" optionValue="id"
+                        optionLabel="name">
+                    </app-generic-select>
 
-            <div class="generalidades__campo generalidades__campo--completo">
-                <label for="teacher-profile">Perfil del docente responsable</label>
-                <textarea id="teacher-profile" name="teacherProfile" [(ngModel)]="form.teacherProfile"
-                    placeholder="Formación, experiencia y trayectoria relevante para el evento"></textarea>
-            </div>
+                    <app-generic-input label="Programa académico (si aplica)" placeholder="Solo si el evento lo organiza una facultad"
+                        icon="none" [control]="generalidadesGroup.controls['academicProgram']"></app-generic-input>
+                </div>
 
-            <div class="generalidades__grid generalidades__grid--tres">
-                <div class="generalidades__campo">
-                    <label for="duration">Duración total <small>(horas)</small></label>
-                    <input id="duration" name="duration" type="number" min="0" [(ngModel)]="form.duration" placeholder="Ej. 40" />
-                </div>
-                <div class="generalidades__campo">
-                    <label for="start-time">Hora de inicio</label>
-                    <input id="start-time" name="startTime" type="time" [(ngModel)]="form.startTime" />
-                </div>
-                <div class="generalidades__campo">
-                    <label for="end-time">Hora de fin</label>
-                    <input id="end-time" name="endTime" type="time" [(ngModel)]="form.endTime" />
-                </div>
-            </div>
-
-            <div class="generalidades__campo generalidades__campo--completo">
-                <label>Días de la semana</label>
-                <div class="generalidades__opciones">
-                    @for (day of weekDays; track day) {
-                    <button type="button" [class.generalidades__opcion--activo]="selectedDays.includes(day)"
-                        (click)="toggleDay(day)">{{ day }}</button>
+                <div class="generalidades__campo generalidades__campo--completo">
+                    <label for="teacher-profile">Perfil del docente responsable <span>*</span></label>
+                    <textarea id="teacher-profile" [formControl]="asControl(generalidadesGroup.controls['teacherProfile'])"
+                        placeholder="Formación, experiencia y trayectoria relevante para el evento"></textarea>
+                    @if (generalidadesGroup.controls['teacherProfile'].invalid && generalidadesGroup.controls['teacherProfile'].touched) {
+                    <small class="generalidades__error">Este campo es obligatorio.</small>
                     }
                 </div>
-            </div>
 
-            <div class="generalidades__campo generalidades__campo--completo">
-                <label>Modalidad <span>*</span></label>
-                <div class="generalidades__modalidades">
-                    @for (modality of modalities; track modality) {
-                    <label class="generalidades__modalidad">
-                        <input type="checkbox" [checked]="selectedModalities.includes(modality)"
-                            (change)="toggleModality(modality)" />
-                        <strong>{{ modality }}</strong>
-                    </label>
+                <div class="generalidades__grid generalidades__grid--tres">
+                    <app-generic-input label="Duración total (horas)" type="number" placeholder="Ej. 40" icon="none"
+                        [control]="generalidadesGroup.controls['duration']"></app-generic-input>
+
+                    <app-generic-input label="Hora de inicio" type="time" icon="none"
+                        [control]="generalidadesGroup.controls['startTime']"></app-generic-input>
+
+                    <app-generic-input label="Hora de fin" type="time" icon="none"
+                        [control]="generalidadesGroup.controls['endTime']"></app-generic-input>
+                </div>
+
+                <div class="generalidades__campo generalidades__campo--completo">
+                    <label>Días de la semana <span>*</span></label>
+                    <div class="generalidades__opciones">
+                        @for (day of weekDays; track day) {
+                        <button type="button" [class.generalidades__opcion--activo]="selectedDays.includes(day)"
+                            (click)="toggleDay(day)">{{ day }}</button>
+                        }
+                    </div>
+                    @if (generalidadesGroup.controls['selectedDays'].invalid && generalidadesGroup.controls['selectedDays'].touched) {
+                    <small class="generalidades__error">Selecciona al menos un día.</small>
                     }
                 </div>
+
+                <div class="generalidades__campo generalidades__campo--completo">
+                    <label>Modalidad <span>*</span></label>
+                    <div class="generalidades__modalidades">
+                         @for (modality of modalities; track modality) {
+                        <label class="generalidades__modalidad">
+                            <input type="radio" name="modality" [checked]="modality"
+                                (change)="selectModality(modality)" />
+                            <strong>{{ modality }}</strong>
+                        </label>
+                        }
+                    </div>
+                    @if (generalidadesGroup.controls['selectedModality'].invalid && generalidadesGroup.controls['selectedModality'].touched) {
+                    <small class="generalidades__error">Selecciona al menos una modalidad.</small>
+                    }
+                </div>
+
+                <div class="generalidades__grid generalidades__grid--dos">
+                    <app-generic-input label="Fecha de inicio" type="date" icon="none"
+                        [control]="generalidadesGroup.controls['startDate']"></app-generic-input>
+
+                    <app-generic-input label="Fecha de terminación" type="date" icon="none"
+                        [control]="generalidadesGroup.controls['endDate']"></app-generic-input>
+                </div>
+
+                <div class="generalidades__grid generalidades__grid--dos">
+                    <app-generic-input label="Cupo mínimo" type="number" placeholder="Ej. 15" icon="none"
+                        [control]="generalidadesGroup.controls['minimumCapacity']"></app-generic-input>
+
+                    <app-generic-input label="Cupo máximo" type="number" placeholder="Ej. 40" icon="none"
+                        [control]="generalidadesGroup.controls['maximumCapacity']"></app-generic-input>
+                </div>
+
+                <div class="generalidades__campo generalidades__campo--completo">
+                    <label for="participant-profile">Perfil de los participantes <span>*</span></label>
+                    <textarea id="participant-profile" [formControl]="asControl(generalidadesGroup.controls['participantProfile'])"
+                        placeholder="A quién va dirigido, competencias o conocimientos previos requeridos"></textarea>
+                    @if (generalidadesGroup.controls['participantProfile'].invalid && generalidadesGroup.controls['participantProfile'].touched) {
+                    <small class="generalidades__error">Este campo es obligatorio.</small>
+                    }
+                </div>
+
+                <footer class="generalidades__acciones">
+                    <div>
+                        <button type="button" class="generalidades__boton generalidades__boton--secundario" (click)="saveDraft()">Guardar borrador</button>
+                        <button type="button" class="generalidades__boton generalidades__boton--secundario" (click)="togglePreview()">Vista previa</button>
+                        <button type="button" class="generalidades__boton generalidades__boton--principal" (click)="nextStep()">Siguiente →</button>
+                    </div>
+                </footer>
+
+                @if (draftSaved) {
+                <p class="generalidades__confirmacion">Borrador guardado correctamente.</p>
+                }
             </div>
-
-            <div class="generalidades__grid generalidades__grid--dos">
-                <div class="generalidades__campo">
-                    <label for="start-date">Fecha de inicio <span>*</span></label>
-                    <input id="start-date" name="startDate" type="date" [(ngModel)]="form.startDate" />
-                </div>
-                <div class="generalidades__campo">
-                    <label for="end-date">Fecha de terminación <span>*</span></label>
-                    <input id="end-date" name="endDate" type="date" [(ngModel)]="form.endDate" />
-                </div>
-            </div>
-
-            <div class="generalidades__grid generalidades__grid--dos">
-                <div class="generalidades__campo">
-                    <label for="minimum-capacity">Cupo mínimo</label>
-                    <input id="minimum-capacity" name="minimumCapacity" type="number" min="0"
-                        [(ngModel)]="form.minimumCapacity" placeholder="Ej. 15" />
-                </div>
-                <div class="generalidades__campo">
-                    <label for="maximum-capacity">Cupo máximo</label>
-                    <input id="maximum-capacity" name="maximumCapacity" type="number" min="0"
-                        [(ngModel)]="form.maximumCapacity" placeholder="Ej. 40" />
-                </div>
-            </div>
-
-            <div class="generalidades__campo generalidades__campo--completo">
-                <label for="participant-profile">Perfil de los participantes</label>
-                <textarea id="participant-profile" name="participantProfile" [(ngModel)]="form.participantProfile"
-                    placeholder="A quién va dirigido, competencias o conocimientos previos requeridos"></textarea>
-            </div>
-
-            <footer class="generalidades__acciones">
-                <div>
-                    <button type="button" class="generalidades__boton generalidades__boton--secundario" (click)="saveDraft()">Guardar borrador</button>
-                    <button type="button" class="generalidades__boton generalidades__boton--secundario" (click)="togglePreview()">Vista previa</button>
-                    <button type="submit" class="generalidades__boton generalidades__boton--principal">Siguiente →</button>
-                </div>
-            </footer>
-
-            @if (draftSaved) {
-            <p class="generalidades__confirmacion">Borrador guardado correctamente.</p>
-            }
-            @if (previewVisible) {
-            <p class="generalidades__confirmacion">Vista previa activa para el evento: {{ form.name || 'Sin nombre' }}.</p>
-            }
-        </form>
             } @else if (activeStep === 1) {
-            <form class="contenido-formulario" (ngSubmit)="nextStep()">
+            <div class="contenido-formulario">
                 <div class="contenido-formulario__campo">
                     <label for="presentation">Introducción / Presentación <span>*</span></label>
-                    <textarea id="presentation" name="presentation" [(ngModel)]="contentForm.presentation"
+                    <textarea id="presentation" [formControl]="asControl(contenidoGroup.controls['presentation'])"
                         placeholder="Antecedentes, justificación y necesidad del evento"></textarea>
                 </div>
 
                 <div class="contenido-formulario__campo">
-                    <label for="scope">Alcance</label>
-                    <textarea id="scope" name="scope" [(ngModel)]="contentForm.scope"
+                    <label for="scope">Alcance <span>*</span></label>
+                    <textarea id="scope" [formControl]="asControl(contenidoGroup.controls['scope'])"
                         placeholder="Qué se espera al culminar el evento, impactos o aportes"></textarea>
                 </div>
 
                 <div class="contenido-formulario__campo">
                     <label for="general-objective">Objetivo general <span>*</span></label>
-                    <textarea id="general-objective" name="generalObjective" [(ngModel)]="contentForm.generalObjective"
+                    <textarea id="general-objective" [formControl]="asControl(contenidoGroup.controls['generalObjective'])"
                         placeholder="Propósito global del evento"></textarea>
                 </div>
 
@@ -188,33 +189,32 @@
                         <small>(entre 3 y 4, coherentes con el objetivo general)</small>
                     </div>
 
-                    @for (objective of objectives; track $index) {
+                    @for (objective of objectivesArray.controls; track $index) {
                     <div class="contenido-formulario__objetivo">
                         <span>{{ $index + 1 }}</span>
-                        <textarea [name]="'objective-' + $index" [(ngModel)]="objectives[$index]"
+                        <textarea [formControl]="asControl(objective)"
                             placeholder="Objetivo específico {{ $index + 1 }} (acción concreta y medible)"></textarea>
                         <button type="button" (click)="removeObjective($index)" aria-label="Eliminar objetivo">×</button>
                     </div>
                     }
 
                     <button type="button" class="contenido-formulario__agregar" (click)="addObjective()">+ Agregar objetivo</button>
-                    <small class="contenido-formulario__ayuda">Recomendado: agrega al menos 3 objetivos específicos (llevas {{ objectives.length }}).</small>
+                    <small class="contenido-formulario__ayuda">Mínimo 3 objetivos específicos (llevas {{ objectivesArray.length }}).</small>
                 </div>
 
                 <div class="contenido-formulario__campo">
-                    <label for="competencies">Aspiración de competencias</label>
-                    <textarea id="competencies" name="competencies" [(ngModel)]="contentForm.competencies"
+                    <label for="competencies">Aspiración de competencias <span>*</span></label>
+                    <textarea id="competencies" [formControl]="asControl(contenidoGroup.controls['competencies'])"
                         placeholder="Aprendizajes que se espera desarrollen los participantes"></textarea>
                 </div>
 
                 <div class="contenido-formulario__campo contenido-formulario__campo--modulos">
-                    <label>Contenidos por módulos o descripción temática</label>
-                    <small>Aún no has agregado módulos. Usa el botón de abajo para estructurar el contenido temático.</small>
+                    <label>Contenidos por módulos o descripción temática <span>*</span></label>
+                    <small>Agrega al menos un módulo para describir el contenido temático.</small>
 
-                    @for (module of modules; track $index) {
+                    @for (module of modulesArray.controls; track $index) {
                     <div class="contenido-formulario__modulo">
-                        <input [name]="'module-' + $index" [(ngModel)]="modules[$index]" type="text"
-                            placeholder="Nombre o descripción del módulo" />
+                        <input [formControl]="asControl(module)" type="text" placeholder="Nombre o descripción del módulo" />
                         <button type="button" (click)="removeModule($index)" aria-label="Eliminar módulo">×</button>
                     </div>
                     }
@@ -227,14 +227,14 @@
                     <div>
                         <button type="button" class="generalidades__boton generalidades__boton--secundario" (click)="saveDraft()">Guardar borrador</button>
                         <button type="button" class="generalidades__boton generalidades__boton--secundario" (click)="togglePreview()">Vista previa</button>
-                        <button type="submit" class="generalidades__boton generalidades__boton--principal">Siguiente →</button>
+                        <button type="button" class="generalidades__boton generalidades__boton--principal" (click)="nextStep()">Siguiente →</button>
                     </div>
                 </footer>
-            </form>
+            </div>
             } @else if (activeStep === 2) {
-            <form class="logistica-formulario" (ngSubmit)="nextStep()">
+            <div class="logistica-formulario">
                 <p class="logistica-formulario__pregunta">
-                    ¿El organizador del evento requiere apoyo logístico de la Dirección de Extensión Académica en alguno de los siguientes aspectos?
+                    ¿El organizador del evento requiere apoyo logístico de la Dirección de Extensión Académica en alguno de los siguientes aspectos? <span>*</span>
                 </p>
 
                 <div class="logistica-formulario__tabla" role="table" aria-label="Apoyos logísticos requeridos">
@@ -243,18 +243,18 @@
                         <strong role="columnheader">RESPUESTA</strong>
                     </div>
 
-                    @for (aspect of logisticsOptions; track aspect) {
+                    @for (aspect of logisticsOptions; track aspect; let index = $index) {
                     <div class="logistica-formulario__fila" role="row">
                         <span role="cell">{{ aspect }}</span>
                         <div class="logistica-formulario__respuestas" role="cell">
                             <label>
-                                <input [name]="'logistics-' + $index" type="radio" [value]="'Sí'"
-                                    [(ngModel)]="logisticsAnswers[aspect]" />
+                                <input type="radio" [name]="'logistics-' + index" [value]="'Sí'"
+                                    [formControl]="asControl(logisticaGroup.controls[aspect])" />
                                 Sí
                             </label>
                             <label>
-                                <input [name]="'logistics-' + $index" type="radio" [value]="'No'"
-                                    [(ngModel)]="logisticsAnswers[aspect]" />
+                                <input type="radio" [name]="'logistics-' + index" [value]="'No'"
+                                    [formControl]="asControl(logisticaGroup.controls[aspect])" />
                                 No
                             </label>
                         </div>
@@ -267,35 +267,26 @@
                     <div>
                         <button type="button" class="generalidades__boton generalidades__boton--secundario" (click)="saveDraft()">Guardar borrador</button>
                         <button type="button" class="generalidades__boton generalidades__boton--secundario" (click)="togglePreview()">Vista previa</button>
-                        <button type="submit" class="generalidades__boton generalidades__boton--principal">Siguiente →</button>
+                        <button type="button" class="generalidades__boton generalidades__boton--principal" (click)="nextStep()">Siguiente →</button>
                     </div>
                 </footer>
-            </form>
+            </div>
             } @else if (activeStep === 3) {
-            <form class="financiera-formulario" (ngSubmit)="nextStep()">
+            <div class="financiera-formulario">
                 <p class="financiera-formulario__nota">Espacio diligenciado por la Dirección de Extensión Académica.</p>
 
                 <div class="financiera-formulario__grid">
-                    <div class="financiera-formulario__campo">
-                        <label for="cost-per-participant">Costo por participante</label>
-                        <div class="financiera-formulario__moneda">
-                            <span>$</span>
-                            <input id="cost-per-participant" name="costPerParticipant" type="number" min="0"
-                                [(ngModel)]="financialForm.costPerParticipant" placeholder="0" />
-                        </div>
-                    </div>
+                    <app-generic-input label="Costo por participante" type="number" placeholder="0" icon="none"
+                        [control]="financieraGroup.controls['costPerParticipant']"></app-generic-input>
 
-                    <div class="financiera-formulario__campo">
-                        <label for="confirmed-minimum-capacity">Cupo mínimo (confirmado)</label>
-                        <input id="confirmed-minimum-capacity" name="confirmedMinimumCapacity" type="number" min="0"
-                            [(ngModel)]="financialForm.confirmedMinimumCapacity" placeholder="Se sincroniza con Generalidades" />
-                    </div>
+                    <app-generic-input label="Cupo mínimo (confirmado)" type="number"
+                        placeholder="Se sincroniza con Generalidades" icon="none"
+                        [control]="financieraGroup.controls['confirmedMinimumCapacity']"></app-generic-input>
                 </div>
 
                 <div class="financiera-formulario__campo">
                     <label for="financial-observations">Observaciones financieras <small>(opcional)</small></label>
-                    <textarea id="financial-observations" name="financialObservations"
-                        [(ngModel)]="financialForm.financialObservations"
+                    <textarea id="financial-observations" [formControl]="asControl(financieraGroup.controls['financialObservations'])"
                         placeholder="Notas sobre viabilidad, punto de equilibrio, becas, alianzas, etc."></textarea>
                 </div>
 
@@ -304,40 +295,34 @@
                     <div>
                         <button type="button" class="generalidades__boton generalidades__boton--secundario" (click)="saveDraft()">Guardar borrador</button>
                         <button type="button" class="generalidades__boton generalidades__boton--secundario" (click)="togglePreview()">Vista previa</button>
-                        <button type="submit" class="generalidades__boton generalidades__boton--principal">Siguiente →</button>
+                        <button type="button" class="generalidades__boton generalidades__boton--principal" (click)="nextStep()">Siguiente →</button>
                     </div>
                 </footer>
-            </form>
+            </div>
             } @else if (activeStep === 4) {
-            <form class="aprobaciones-formulario" (ngSubmit)="sendForReview()">
-                @for (approval of approvals; track approval.title; let index = $index) {
+            <div class="aprobaciones-formulario">
+                @for (approval of approvalsArray.controls; track approvalsMeta[$index].title; let index = $index) {
                 <article class="aprobaciones-formulario__bloque">
                     <div class="aprobaciones-formulario__titulo">
-                        <h2>{{ approval.title }}</h2>
-                        <p>{{ approval.description }}</p>
+                        <h2>{{ approvalsMeta[index].title }}</h2>
+                        <p>{{ approvalsMeta[index].description }}</p>
                     </div>
 
                     <div class="aprobaciones-formulario__datos">
-                        <div class="aprobaciones-formulario__campo">
-                            <label [for]="'approval-name-' + index">Nombre</label>
-                            <input [id]="'approval-name-' + index" [name]="'approval-name-' + index" type="text"
-                                [(ngModel)]="approval.name" />
-                        </div>
-                        <div class="aprobaciones-formulario__campo">
-                            <label [for]="'approval-role-' + index">Cargo o rol</label>
-                            <input [id]="'approval-role-' + index" [name]="'approval-role-' + index" type="text"
-                                [(ngModel)]="approval.role" />
-                        </div>
-                        <div class="aprobaciones-formulario__campo">
-                            <label [for]="'approval-date-' + index">Fecha</label>
-                            <input [id]="'approval-date-' + index" [name]="'approval-date-' + index" type="date"
-                                [(ngModel)]="approval.date" />
-                        </div>
+                        <app-generic-input label="Nombre" icon="none"
+                            [control]="asGroup(approval).controls['name']"></app-generic-input>
+
+                        <app-generic-input label="Cargo o rol" icon="none"
+                            [control]="asGroup(approval).controls['role']"></app-generic-input>
+
+                        <app-generic-input label="Fecha" type="date" icon="none"
+                            [control]="asGroup(approval).controls['date']"></app-generic-input>
+
                         <div class="aprobaciones-formulario__firma">
-                            <label [for]="'approval-signature-' + index">Firma</label>
-                            <textarea [id]="'approval-signature-' + index" [name]="'approval-signature-' + index"
-                                [(ngModel)]="approval.signature" placeholder="Firma aquí con el mouse o el dedo"></textarea>
-                            <button type="button" (click)="approval.signature = ''">Borrar firma</button>
+                            <label>Firma <span>*</span></label>
+                            <textarea [formControl]="asControl(asGroup(approval).controls['signature'])"
+                                placeholder="Firma aquí con el mouse o el dedo"></textarea>
+                            <button type="button" (click)="clearSignature(index)">Borrar firma</button>
                         </div>
                     </div>
                 </article>
@@ -348,19 +333,28 @@
                     <div>
                         <button type="button" class="generalidades__boton generalidades__boton--secundario" (click)="saveDraft()">Guardar borrador</button>
                         <button type="button" class="generalidades__boton generalidades__boton--secundario" (click)="togglePreview()">Vista previa</button>
-                        <button type="submit" class="generalidades__boton aprobaciones-formulario__enviar">{{ reviewSent ? 'Enviado' : 'Enviar para revisión →' }}</button>
+                        <app-generic-button [ngClass]="{
+                             'aprobaciones-formulario__enviar--disabled':eventForm.invalid,
+                             'aprobaciones-formulario__enviar--enabled':!eventForm.invalid
+                        }" label="{{ reviewSent ? 'Enviado' : 'Enviar para revisión →' }}" type="submit"
+                            [disabled]="eventForm.invalid" customClass="aprobaciones-formulario__enviar"></app-generic-button>
                     </div>
                 </footer>
-            </form>
-            } @else {
-        <section class="eventos__etapa">
-            <div>
-                <span class="eventos__etapa-numero">{{ steps[activeStep].number }}</span>
-                <h2>{{ steps[activeStep].label }}</h2>
+
+                @if (eventForm.invalid && !reviewSent) {
+                <p class="generalidades__confirmacion">Completa todos los campos obligatorios de los 5 pasos para habilitar el envío.</p>
+                }
             </div>
-            <p>{{ steps[activeStep].description }}</p>
-        </section>
-        }
+            } @else {
+            <section class="eventos__etapa">
+                <div>
+                    <span class="eventos__etapa-numero">{{ steps[activeStep].number }}</span>
+                    <h2>{{ steps[activeStep].label }}</h2>
+                </div>
+                <p>{{ steps[activeStep].description }}</p>
+            </section>
+            }
+        </app-generic-form>
 
         @if (previewVisible) {
         <div class="vista-previa__fondo" role="presentation" (click)="closePreview()">
@@ -383,29 +377,29 @@
                     <section class="vista-previa__seccion">
                         <h3>Generalidades del evento</h3>
                         <div class="vista-previa__datos">
-                            <div><strong>Tipo de evento</strong><span>{{ form.eventType === '¿Otro?' ? (otherEventType || 'Otro') : (form.eventType || '—') }}</span></div>
-                            <div><strong>Nombre del evento</strong><span>{{ form.name || '—' }}</span></div>
-                            <div><strong>Facultad o dependencia</strong><span>{{ form.faculty || '—' }}</span></div>
-                            <div><strong>Programa académico</strong><span>{{ form.academicProgram || '—' }}</span></div>
-                            <div><strong>Perfil del docente responsable</strong><span>{{ form.teacherProfile || '—' }}</span></div>
-                            <div><strong>Duración</strong><span>{{ form.duration || '—' }} horas</span></div>
+                            <div><strong>Tipo de evento</strong><span>{{ eventForm.value.generalidades.eventType === '¿Otro?' ? (eventForm.value.generalidades.otherEventType || 'Otro') : (eventForm.value.generalidades.eventType || '—') }}</span></div>
+                            <div><strong>Nombre del evento</strong><span>{{ eventForm.value.generalidades.name || '—' }}</span></div>
+                            <div><strong>Facultad o dependencia</strong><span>{{ eventForm.value.generalidades.faculty || '—' }}</span></div>
+                            <div><strong>Programa académico</strong><span>{{ eventForm.value.generalidades.academicProgram || '—' }}</span></div>
+                            <div><strong>Perfil del docente responsable</strong><span>{{ eventForm.value.generalidades.teacherProfile || '—' }}</span></div>
+                            <div><strong>Duración</strong><span>{{ eventForm.value.generalidades.duration || '—' }} horas</span></div>
                             <div><strong>Días de la semana</strong><span>{{ selectedDays.length ? selectedDays.join(', ') : '—' }}</span></div>
-                            <div><strong>Modalidad</strong><span>{{ selectedModalities.length ? selectedModalities.join(', ') : '—' }}</span></div>
-                            <div><strong>Fechas</strong><span>{{ form.startDate || '—' }} → {{ form.endDate || '—' }}</span></div>
-                            <div><strong>Cupo</strong><span>Mínimo {{ form.minimumCapacity || '—' }} · Máximo {{ form.maximumCapacity || '—' }}</span></div>
-                            <div><strong>Perfil de los participantes</strong><span>{{ form.participantProfile || '—' }}</span></div>
+                            <div><strong>Modalidad</strong><span>{{ generalidadesGroup.value.length ? generalidadesGroup.value.join(', ') : '—' }}</span></div>
+                            <div><strong>Fechas</strong><span>{{ eventForm.value.generalidades.startDate || '—' }} → {{ eventForm.value.generalidades.endDate || '—' }}</span></div>
+                            <div><strong>Cupo</strong><span>Mínimo {{ eventForm.value.generalidades.minimumCapacity || '—' }} · Máximo {{ eventForm.value.generalidades.maximumCapacity || '—' }}</span></div>
+                            <div><strong>Perfil de los participantes</strong><span>{{ eventForm.value.generalidades.participantProfile || '—' }}</span></div>
                         </div>
                     </section>
 
                     <section class="vista-previa__seccion">
                         <h3>Contenido del evento</h3>
                         <div class="vista-previa__datos">
-                            <div><strong>Introducción / Presentación</strong><span>{{ contentForm.presentation || '—' }}</span></div>
-                            <div><strong>Alcance</strong><span>{{ contentForm.scope || '—' }}</span></div>
-                            <div><strong>Objetivo general</strong><span>{{ contentForm.generalObjective || '—' }}</span></div>
-                            <div><strong>Objetivos específicos</strong><span>{{ objectives.join(' · ') || '—' }}</span></div>
-                            <div><strong>Aspiración de competencias</strong><span>{{ contentForm.competencies || '—' }}</span></div>
-                            <div><strong>Contenidos por módulos</strong><span>{{ modules.join(' · ') || '—' }}</span></div>
+                            <div><strong>Introducción / Presentación</strong><span>{{ eventForm.value.contenido.presentation || '—' }}</span></div>
+                            <div><strong>Alcance</strong><span>{{ eventForm.value.contenido.scope || '—' }}</span></div>
+                            <div><strong>Objetivo general</strong><span>{{ eventForm.value.contenido.generalObjective || '—' }}</span></div>
+                            <div><strong>Objetivos específicos</strong><span>{{ eventForm.value.contenido.objectives.join(' · ') || '—' }}</span></div>
+                            <div><strong>Aspiración de competencias</strong><span>{{ eventForm.value.contenido.competencies || '—' }}</span></div>
+                            <div><strong>Contenidos por módulos</strong><span>{{ eventForm.value.contenido.modules.join(' · ') || '—' }}</span></div>
                         </div>
                     </section>
 
@@ -413,7 +407,7 @@
                         <h3>Detalles logísticos</h3>
                         <div class="vista-previa__datos">
                             @for (aspect of logisticsOptions; track aspect) {
-                            <div><strong>{{ aspect }}</strong><span>{{ logisticsAnswers[aspect] || '—' }}</span></div>
+                            <div><strong>{{ aspect }}</strong><span>{{ eventForm.value.logistica[aspect] || '—' }}</span></div>
                             }
                         </div>
                     </section>
@@ -421,21 +415,21 @@
                     <section class="vista-previa__seccion">
                         <h3>Información financiera</h3>
                         <div class="vista-previa__datos">
-                            <div><strong>Costo por participante</strong><span>{{ financialForm.costPerParticipant ? '$ ' + financialForm.costPerParticipant : '—' }}</span></div>
-                            <div><strong>Cupo mínimo confirmado</strong><span>{{ financialForm.confirmedMinimumCapacity || '—' }}</span></div>
-                            <div><strong>Observaciones</strong><span>{{ financialForm.financialObservations || '—' }}</span></div>
+                            <div><strong>Costo por participante</strong><span>{{ eventForm.value.financiera.costPerParticipant ? '$ ' + eventForm.value.financiera.costPerParticipant : '—' }}</span></div>
+                            <div><strong>Cupo mínimo confirmado</strong><span>{{ eventForm.value.financiera.confirmedMinimumCapacity || '—' }}</span></div>
+                            <div><strong>Observaciones</strong><span>{{ eventForm.value.financiera.financialObservations || '—' }}</span></div>
                         </div>
                     </section>
 
                     <section class="vista-previa__seccion">
                         <h3>Cadena de aprobación</h3>
                         <div class="vista-previa__aprobaciones">
-                            @for (approval of approvals; track approval.title) {
+                            @for (meta of approvalsMeta; track meta.title; let index = $index) {
                             <article>
-                                <strong>{{ approval.title }}</strong>
-                                <span>{{ approval.name || 'Nombre pendiente' }} · {{ approval.role || 'Cargo pendiente' }}</span>
-                                <span>Fecha: {{ approval.date || '—' }}</span>
-                                <div>{{ approval.signature || 'Sin firma' }}</div>
+                                <strong>{{ meta.title }}</strong>
+                                <span>{{ eventForm.value.aprobaciones[index].name || 'Nombre pendiente' }} · {{ eventForm.value.aprobaciones[index].role || 'Cargo pendiente' }}</span>
+                                <span>Fecha: {{ eventForm.value.aprobaciones[index].date || '—' }}</span>
+                                <div>{{ eventForm.value.aprobaciones[index].signature || 'Sin firma' }}</div>
                             </article>
                             }
                         </div>
