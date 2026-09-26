@@ -18,14 +18,17 @@ export class AppComponent  implements OnInit {
   title = 'ang-gestion-eventos';
   private mediatorAlertService = inject(MediatorAlertService);
   private router = inject(Router);
-  showTopMenu = this.router.url !== '/';
+  showTopMenu :boolean =! ["/","/inicio"].includes(this.router.url);
   alertaResponse:GenericAlertResponse= { alertVisible: false, alertType: 'success', alertTitle: '', alertMessage: '' };
-
+  routerUrl :string ="";
   ngOnInit(): void {
+    console.log(this.router.url);
     this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe(event => {
-        this.showTopMenu = event.urlAfterRedirects !== '/';
+        console.log(event.urlAfterRedirects);
+        this.showTopMenu =! ["/","/inicio"].includes(event.urlAfterRedirects);
+        this.routerUrl = event.urlAfterRedirects;
       });
 
     this.mediatorAlertService.getAlert().subscribe(alert => {

@@ -1,4 +1,4 @@
-import { Component, HostListener, inject } from '@angular/core';
+import { Component, HostListener, inject, Input } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 interface MenuItem {
@@ -16,7 +16,7 @@ interface MenuItem {
 })
 export class TopMenuComponent {
   private readonly router = inject(Router);
-
+  @Input() routerUrl: string = '';
   searchTerm = '';
   showNotifications = false;
   showUserMenu = false;

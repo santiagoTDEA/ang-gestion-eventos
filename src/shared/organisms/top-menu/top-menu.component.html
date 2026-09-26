@@ -2,7 +2,7 @@
     <div class="top-menu__inner">
         <a class="top-menu__brand" routerLink="/inicio" aria-label="Ir al inicio">
             <span class="top-menu__brand-mark">GE</span>
-            <span class="top-menu__brand-name">Gestión de Eventos</span>
+            <span class="top-menu__brand-name" [innerHTML]="`Gestión de ${routerUrl.split('/')[1]}`"></span>
         </a>
 
         <div class="top-menu__action-group">
