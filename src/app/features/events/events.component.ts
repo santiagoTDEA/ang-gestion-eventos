@@ -51,6 +51,17 @@ function minFormArrayLength(min: number): ValidatorFn {
   };
 }
 
+function validTimeRange(control: AbstractControl): ValidationErrors | null {
+  const startTime = control.get('startTime')?.value;
+  const endTime = control.get('endTime')?.value;
+
+  if (!startTime || !endTime || endTime >= startTime) {
+    return null;
+  }
+
+  return { endTimeBeforeStartTime: true };
+}
+
 @Component({
   selector: 'app-events',
   standalone: true,
@@ -122,15 +133,13 @@ export class EventsComponent implements OnInit {
   readonly eventForm: FormGroup;
 
   constructor() {
-    // Solo se excluyen de "required" los campos que en el formato dicen
-    // explícitamente "(opcional)" o "(si aplica)": academicProgram y financialObservations.
     this.eventForm = this.fb.group({
       generalidades: this.fb.group({
         eventType: ['', Validators.required],
         otherEventType: [''], // required condicional, ver watchOtherEventType()
         name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(150)]],
-        faculty: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
-        academicProgram: [''], // opcional ("si aplica")
+        faculty: ['', Validators.required],
+        academicProgram: ['', Validators.required],
         teacherProfile: ['', Validators.required],
         duration: ['', [Validators.required, Validators.min(1)]],
         startTime: ['', Validators.required],
@@ -142,7 +151,7 @@ export class EventsComponent implements OnInit {
         minimumCapacity: ['', [Validators.required, Validators.min(1)]],
         maximumCapacity: ['', [Validators.required, Validators.min(1)]],
         participantProfile: ['', Validators.required]
-      }),
+      }, { validators: validTimeRange }),
       contenido: this.fb.group({
         presentation: ['', Validators.required],
         scope: ['', Validators.required],
@@ -161,9 +170,9 @@ export class EventsComponent implements OnInit {
         }, {} as Record<string, unknown[]>)
       ),
       financiera: this.fb.group({
-        costPerParticipant: ['', Validators.required],
-        confirmedMinimumCapacity: ['', Validators.required],
-        financialObservations: [''] // opcional
+        costPerParticipant: ['', [Validators.required, Validators.min(0)]],
+        confirmedMinimumCapacity: ['', [Validators.required, Validators.min(1)]],
+        financialObservations: ['', Validators.required]
       }),
       aprobaciones: this.fb.array(this.approvalsMeta.map(() => this.createApprovalGroup()))
     });
@@ -262,14 +271,19 @@ export class EventsComponent implements OnInit {
     const otherEventTypeControl = this.generalidadesGroup.get('otherEventType')!;
 
     eventTypeControl.valueChanges.subscribe(type => {
-      if (type === '¿Otro?') {
-        otherEventTypeControl.setValidators(Validators.required);
-      } else {
-        otherEventTypeControl.clearValidators();
-        otherEventTypeControl.setValue('', { emitEvent: false });
-      }
-      otherEventTypeControl.updateValueAndValidity({ emitEvent: false });
+      this.updateOtherEventTypeValidation(type, otherEventTypeControl);
     });
+    this.updateOtherEventTypeValidation(eventTypeControl.value, otherEventTypeControl);
+  }
+
+  private updateOtherEventTypeValidation(type: string, control: AbstractControl): void {
+    if (type === '¿Otro?') {
+      control.setValidators(Validators.required);
+    } else {
+      control.clearValidators();
+      control.setValue('', { emitEvent: false });
+    }
+    control.updateValueAndValidity({ emitEvent: false });
   }
 
   /** Criterio 1: autoguardado en localStorage ante cualquier cambio del formulario. */
@@ -298,6 +312,7 @@ export class EventsComponent implements OnInit {
       }
 
       this.eventForm.patchValue(draft, { emitEvent: false });
+      this.updateOtherEventTypeValidation(this.eventTypeValue, this.generalidadesGroup.get('otherEventType')!);
     } catch {
       // Borrador corrupto o ilegible: se ignora y se continúa con los valores por defecto.
     }
@@ -320,10 +335,13 @@ export class EventsComponent implements OnInit {
     const control = this.generalidadesGroup.get('selectedDays')!;
     const current: string[] = control.value ?? [];
     control.setValue(current.includes(day) ? current.filter(d => d !== day) : [...current, day]);
+    control.markAsTouched();
   }
 
-  selectModality(modality: string): void {
-    this.generalidadesGroup.get('selectedModality')!.setValue(modality);
+  toggleModality(modality: string): void {
+    const control = this.generalidadesGroup.get('selectedModality')!;
+    control.setValue(control.value === modality ? '' : modality);
+    control.markAsTouched();
   }
 
   private readonly stepGroups: Array<() => AbstractControl> = [
