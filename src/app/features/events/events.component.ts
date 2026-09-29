@@ -62,6 +62,17 @@ function validTimeRange(control: AbstractControl): ValidationErrors | null {
   return { endTimeBeforeStartTime: true };
 }
 
+function validDateRange(control: AbstractControl): ValidationErrors | null {
+  const startDate = control.get('startDate')?.value;
+  const endDate = control.get('endDate')?.value;
+
+  if (!startDate || !endDate || endDate >= startDate) {
+    return null;
+  }
+
+  return { endDateBeforeStartDate: true };
+}
+
 @Component({
   selector: 'app-events',
   standalone: true,
@@ -151,7 +162,7 @@ export class EventsComponent implements OnInit {
         minimumCapacity: ['', [Validators.required, Validators.min(1)]],
         maximumCapacity: ['', [Validators.required, Validators.min(1)]],
         participantProfile: ['', Validators.required]
-      }, { validators: validTimeRange }),
+      }, { validators: [validTimeRange, validDateRange] }),
       contenido: this.fb.group({
         presentation: ['', Validators.required],
         scope: ['', Validators.required],

@@ -136,11 +136,16 @@
 
                 <div class="generalidades__grid generalidades__grid--dos">
                     <app-generic-input label="Fecha de inicio" type="date" icon="none"
-                        [control]="generalidadesGroup.controls['startDate']"></app-generic-input>
+                        [control]="generalidadesGroup.controls['startDate']"
+                        [externalInvalid]="generalidadesGroup.hasError('endDateBeforeStartDate')"></app-generic-input>
 
                     <app-generic-input label="Fecha de terminación" type="date" icon="none"
-                        [control]="generalidadesGroup.controls['endDate']"></app-generic-input>
+                        [control]="generalidadesGroup.controls['endDate']"
+                        [externalInvalid]="generalidadesGroup.hasError('endDateBeforeStartDate')"></app-generic-input>
                 </div>
+                @if (generalidadesGroup.hasError('endDateBeforeStartDate') && (generalidadesGroup.controls['startDate'].touched || generalidadesGroup.controls['endDate'].touched)) {
+                <small class="generalidades__error">La fecha de terminación no puede ser anterior a la fecha de inicio.</small>
+                }
 
                 <div class="generalidades__grid generalidades__grid--dos">
                     <app-generic-input label="Cupo mínimo" type="number" placeholder="Ej. 15" icon="none"
