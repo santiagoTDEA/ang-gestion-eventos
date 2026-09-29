@@ -149,11 +149,16 @@
 
                 <div class="generalidades__grid generalidades__grid--dos">
                     <app-generic-input label="Cupo mínimo" type="number" placeholder="Ej. 15" icon="none"
-                        [control]="generalidadesGroup.controls['minimumCapacity']"></app-generic-input>
+                        [control]="generalidadesGroup.controls['minimumCapacity']"
+                        [externalInvalid]="generalidadesGroup.hasError('maximumCapacityBelowMinimum')"></app-generic-input>
 
                     <app-generic-input label="Cupo máximo" type="number" placeholder="Ej. 40" icon="none"
-                        [control]="generalidadesGroup.controls['maximumCapacity']"></app-generic-input>
+                        [control]="generalidadesGroup.controls['maximumCapacity']"
+                        [externalInvalid]="generalidadesGroup.hasError('maximumCapacityBelowMinimum')"></app-generic-input>
                 </div>
+                @if (generalidadesGroup.hasError('maximumCapacityBelowMinimum') && (generalidadesGroup.controls['minimumCapacity'].touched || generalidadesGroup.controls['maximumCapacity'].touched)) {
+                <small class="generalidades__error">El cupo máximo no puede ser menor que el cupo mínimo.</small>
+                }
 
                 <div class="generalidades__campo generalidades__campo--completo">
                     <label for="participant-profile">Perfil de los participantes <span>*</span></label>

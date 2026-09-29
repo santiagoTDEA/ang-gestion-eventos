@@ -73,6 +73,23 @@ function validDateRange(control: AbstractControl): ValidationErrors | null {
   return { endDateBeforeStartDate: true };
 }
 
+function validCapacityRange(control: AbstractControl): ValidationErrors | null {
+  const minimumCapacity = control.get('minimumCapacity')?.value;
+  const maximumCapacity = control.get('maximumCapacity')?.value;
+
+  if (minimumCapacity === null || minimumCapacity === '' || maximumCapacity === null || maximumCapacity === '') {
+    return null;
+  }
+
+  const minimum = Number(minimumCapacity);
+  const maximum = Number(maximumCapacity);
+  if (!Number.isFinite(minimum) || !Number.isFinite(maximum) || maximum >= minimum) {
+    return null;
+  }
+
+  return { maximumCapacityBelowMinimum: true };
+}
+
 @Component({
   selector: 'app-events',
   standalone: true,
@@ -162,7 +179,7 @@ export class EventsComponent implements OnInit {
         minimumCapacity: ['', [Validators.required, Validators.min(1)]],
         maximumCapacity: ['', [Validators.required, Validators.min(1)]],
         participantProfile: ['', Validators.required]
-      }, { validators: [validTimeRange, validDateRange] }),
+      }, { validators: [validTimeRange, validDateRange, validCapacityRange] }),
       contenido: this.fb.group({
         presentation: ['', Validators.required],
         scope: ['', Validators.required],
