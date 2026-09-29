@@ -69,11 +69,11 @@
 
                 <div class="generalidades__grid generalidades__grid--dos">
                     <app-generic-select label="Facultad" placeholder="Selecciona una facultad"
-                        [control]="generalidadesGroup.controls['facultyId']" [options]="facultyOptions" optionValue="id"
+                        [control]="generalidadesGroup.controls['faculty']" [options]="facultyOptions" optionValue="id"
                         optionLabel="name">
                     </app-generic-select>
 
-                    <app-generic-input label="Programa académico (si aplica)" placeholder="Solo si el evento lo organiza una facultad"
+                    <app-generic-input label="Programa académico" placeholder="Programa asociado al evento"
                         icon="none" [control]="generalidadesGroup.controls['academicProgram']"></app-generic-input>
                 </div>
 
@@ -91,15 +91,21 @@
                         [control]="generalidadesGroup.controls['duration']"></app-generic-input>
 
                     <app-generic-input label="Hora de inicio" type="time" icon="none"
-                        [control]="generalidadesGroup.controls['startTime']"></app-generic-input>
+                        [control]="generalidadesGroup.controls['startTime']"
+                        [externalInvalid]="generalidadesGroup.hasError('endTimeBeforeStartTime')"></app-generic-input>
 
                     <app-generic-input label="Hora de fin" type="time" icon="none"
-                        [control]="generalidadesGroup.controls['endTime']"></app-generic-input>
+                        [control]="generalidadesGroup.controls['endTime']"
+                        [externalInvalid]="generalidadesGroup.hasError('endTimeBeforeStartTime')"></app-generic-input>
                 </div>
+                @if (generalidadesGroup.hasError('endTimeBeforeStartTime') && (generalidadesGroup.controls['startTime'].touched || generalidadesGroup.controls['endTime'].touched)) {
+                <small class="generalidades__error">La hora de fin no puede ser anterior a la hora de inicio.</small>
+                }
 
                 <div class="generalidades__campo generalidades__campo--completo">
                     <label>Días de la semana <span>*</span></label>
-                    <div class="generalidades__opciones">
+                    <div class="generalidades__opciones"
+                        [class.generalidades__opciones--error]="generalidadesGroup.controls['selectedDays'].invalid && generalidadesGroup.controls['selectedDays'].touched">
                         @for (day of weekDays; track day) {
                         <button type="button" [class.generalidades__opcion--activo]="selectedDays.includes(day)"
                             (click)="toggleDay(day)">{{ day }}</button>
@@ -112,13 +118,15 @@
 
                 <div class="generalidades__campo generalidades__campo--completo">
                     <label>Modalidad <span>*</span></label>
-                    <div class="generalidades__modalidades">
-                         @for (modality of modalities; track modality) {
-                        <label class="generalidades__modalidad">
-                            <input type="radio" name="modality" [checked]="modality"
-                                (change)="selectModality(modality)" />
+                    <div class="generalidades__modalidades"
+                        [class.generalidades__modalidades--error]="generalidadesGroup.controls['selectedModality'].invalid && generalidadesGroup.controls['selectedModality'].touched">
+                        @for (modality of modalities; track modality) {
+                        <button type="button" class="generalidades__modalidad"
+                            [class.generalidades__modalidad--activa]="selectedModality === modality"
+                            [attr.aria-pressed]="selectedModality === modality"
+                            (click)="toggleModality(modality)">
                             <strong>{{ modality }}</strong>
-                        </label>
+                        </button>
                         }
                     </div>
                     @if (generalidadesGroup.controls['selectedModality'].invalid && generalidadesGroup.controls['selectedModality'].touched) {
@@ -128,11 +136,16 @@
 
                 <div class="generalidades__grid generalidades__grid--dos">
                     <app-generic-input label="Fecha de inicio" type="date" icon="none"
-                        [control]="generalidadesGroup.controls['startDate']"></app-generic-input>
+                        [control]="generalidadesGroup.controls['startDate']"
+                        [externalInvalid]="generalidadesGroup.hasError('endDateBeforeStartDate')"></app-generic-input>
 
                     <app-generic-input label="Fecha de terminación" type="date" icon="none"
-                        [control]="generalidadesGroup.controls['endDate']"></app-generic-input>
+                        [control]="generalidadesGroup.controls['endDate']"
+                        [externalInvalid]="generalidadesGroup.hasError('endDateBeforeStartDate')"></app-generic-input>
                 </div>
+                @if (generalidadesGroup.hasError('endDateBeforeStartDate') && (generalidadesGroup.controls['startDate'].touched || generalidadesGroup.controls['endDate'].touched)) {
+                <small class="generalidades__error">La fecha de terminación no puede ser anterior a la fecha de inicio.</small>
+                }
 
                 <div class="generalidades__grid generalidades__grid--dos">
                     <app-generic-input label="Cupo mínimo" type="number" placeholder="Ej. 15" icon="none"
@@ -169,21 +182,31 @@
                     <label for="presentation">Introducción / Presentación <span>*</span></label>
                     <textarea id="presentation" [formControl]="asControl(contenidoGroup.controls['presentation'])"
                         placeholder="Antecedentes, justificación y necesidad del evento"></textarea>
+                    @if (contenidoGroup.controls['presentation'].invalid && contenidoGroup.controls['presentation'].touched) {
+                    <small class="eventos__error">Este campo es obligatorio.</small>
+                    }
                 </div>
 
                 <div class="contenido-formulario__campo">
                     <label for="scope">Alcance <span>*</span></label>
                     <textarea id="scope" [formControl]="asControl(contenidoGroup.controls['scope'])"
                         placeholder="Qué se espera al culminar el evento, impactos o aportes"></textarea>
+                    @if (contenidoGroup.controls['scope'].invalid && contenidoGroup.controls['scope'].touched) {
+                    <small class="eventos__error">Este campo es obligatorio.</small>
+                    }
                 </div>
 
                 <div class="contenido-formulario__campo">
                     <label for="general-objective">Objetivo general <span>*</span></label>
                     <textarea id="general-objective" [formControl]="asControl(contenidoGroup.controls['generalObjective'])"
                         placeholder="Propósito global del evento"></textarea>
+                    @if (contenidoGroup.controls['generalObjective'].invalid && contenidoGroup.controls['generalObjective'].touched) {
+                    <small class="eventos__error">Este campo es obligatorio.</small>
+                    }
                 </div>
 
-                <div class="contenido-formulario__campo contenido-formulario__campo--objetivos">
+                <div class="contenido-formulario__campo contenido-formulario__campo--objetivos"
+                    [class.contenido-formulario__campo--error]="objectivesArray.hasError('minArrayLength') && objectivesArray.touched">
                     <div class="contenido-formulario__etiqueta">
                         <label>Objetivos específicos <span>*</span></label>
                         <small>(entre 3 y 4, coherentes con el objetivo general)</small>
@@ -195,7 +218,14 @@
                         <textarea [formControl]="asControl(objective)"
                             placeholder="Objetivo específico {{ $index + 1 }} (acción concreta y medible)"></textarea>
                         <button type="button" (click)="removeObjective($index)" aria-label="Eliminar objetivo">×</button>
+                        @if (objective.invalid && objective.touched) {
+                        <small class="eventos__error">Este objetivo es obligatorio.</small>
+                        }
                     </div>
+                    }
+
+                    @if (objectivesArray.hasError('minArrayLength') && objectivesArray.touched) {
+                    <small class="eventos__error">Registra al menos tres objetivos específicos.</small>
                     }
 
                     <button type="button" class="contenido-formulario__agregar" (click)="addObjective()">+ Agregar objetivo</button>
@@ -206,9 +236,13 @@
                     <label for="competencies">Aspiración de competencias <span>*</span></label>
                     <textarea id="competencies" [formControl]="asControl(contenidoGroup.controls['competencies'])"
                         placeholder="Aprendizajes que se espera desarrollen los participantes"></textarea>
+                    @if (contenidoGroup.controls['competencies'].invalid && contenidoGroup.controls['competencies'].touched) {
+                    <small class="eventos__error">Este campo es obligatorio.</small>
+                    }
                 </div>
 
-                <div class="contenido-formulario__campo contenido-formulario__campo--modulos">
+                <div class="contenido-formulario__campo contenido-formulario__campo--modulos"
+                    [class.contenido-formulario__campo--error]="modulesArray.invalid && modulesArray.touched">
                     <label>Contenidos por módulos o descripción temática <span>*</span></label>
                     <small>Agrega al menos un módulo para describir el contenido temático.</small>
 
@@ -216,9 +250,15 @@
                     <div class="contenido-formulario__modulo">
                         <input [formControl]="asControl(module)" type="text" placeholder="Nombre o descripción del módulo" />
                         <button type="button" (click)="removeModule($index)" aria-label="Eliminar módulo">×</button>
+                        @if (module.invalid && module.touched) {
+                        <small class="eventos__error">Este campo es obligatorio.</small>
+                        }
                     </div>
                     }
 
+                    @if (modulesArray.hasError('minArrayLength') && modulesArray.touched) {
+                    <small class="eventos__error">Agrega al menos un módulo.</small>
+                    }
                     <button type="button" class="contenido-formulario__agregar" (click)="addModule()">+ Agregar módulo</button>
                 </div>
 
@@ -244,7 +284,8 @@
                     </div>
 
                     @for (aspect of logisticsOptions; track aspect; let index = $index) {
-                    <div class="logistica-formulario__fila" role="row">
+                    <div class="logistica-formulario__fila" role="row"
+                        [class.logistica-formulario__fila--error]="logisticaGroup.controls[aspect].invalid && logisticaGroup.controls[aspect].touched">
                         <span role="cell">{{ aspect }}</span>
                         <div class="logistica-formulario__respuestas" role="cell">
                             <label>
@@ -261,6 +302,9 @@
                     </div>
                     }
                 </div>
+                @if (logisticaGroup.invalid && logisticaGroup.touched) {
+                <small class="eventos__error">Selecciona Sí o No para cada aspecto logístico.</small>
+                }
 
                 <footer class="logistica-formulario__acciones">
                     <button type="button" class="generalidades__boton generalidades__boton--secundario" (click)="previousStep()">← Atrás</button>
@@ -285,9 +329,12 @@
                 </div>
 
                 <div class="financiera-formulario__campo">
-                    <label for="financial-observations">Observaciones financieras <small>(opcional)</small></label>
+                    <label for="financial-observations">Observaciones financieras <span>*</span></label>
                     <textarea id="financial-observations" [formControl]="asControl(financieraGroup.controls['financialObservations'])"
                         placeholder="Notas sobre viabilidad, punto de equilibrio, becas, alianzas, etc."></textarea>
+                    @if (financieraGroup.controls['financialObservations'].invalid && financieraGroup.controls['financialObservations'].touched) {
+                    <small class="eventos__error">Este campo es obligatorio.</small>
+                    }
                 </div>
 
                 <footer class="financiera-formulario__acciones">
@@ -322,6 +369,9 @@
                             <label>Firma <span>*</span></label>
                             <textarea [formControl]="asControl(asGroup(approval).controls['signature'])"
                                 placeholder="Firma aquí con el mouse o el dedo"></textarea>
+                            @if (asGroup(approval).controls['signature'].invalid && asGroup(approval).controls['signature'].touched) {
+                            <small class="eventos__error">La firma es obligatoria.</small>
+                            }
                             <button type="button" (click)="clearSignature(index)">Borrar firma</button>
                         </div>
                     </div>

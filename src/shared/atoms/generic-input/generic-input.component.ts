@@ -38,6 +38,7 @@ export class GenericInputComponent implements OnInit {
   @Input() placeholder = '';
   @Input() type: 'text' | 'password' | 'email' | 'tel' | 'number' | 'date' | 'time' = 'text';
   @Input() icon: GenericInputIcon = 'none';
+  @Input() externalInvalid = false;
 
   @Output() iconClick = new EventEmitter<void>();
 
@@ -49,6 +50,10 @@ export class GenericInputComponent implements OnInit {
 
   get showError(): boolean {
     return this.control.invalid && this.control.touched;
+  }
+
+  get hasErrorState(): boolean {
+    return this.showError || (this.externalInvalid && this.control.touched);
   }
 
   get errorMessage(): string {

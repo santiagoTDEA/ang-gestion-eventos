@@ -355,8 +355,14 @@
     color: #15532e;
 }
 
+.generalidades__opciones--error button,
+.generalidades__opciones--error button:hover {
+    border-color: #d64b58;
+}
+
 .generalidades__modalidades {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
 }
 
@@ -372,17 +378,18 @@
     color: #315340;
     cursor: pointer;
     font-size: 12px;
+    font-family: inherit;
 }
 
-.generalidades__modalidad:has(input:checked) {
+.generalidades__modalidad:hover,
+.generalidades__modalidad--activa {
     border-color: #55a875;
     background: #f3fbf5;
 }
 
-.generalidades__modalidad input {
-    width: 15px;
-    height: 15px;
-    accent-color: #1c7c45;
+.generalidades__modalidades--error .generalidades__modalidad,
+.generalidades__modalidades--error .generalidades__modalidad:hover {
+    border-color: #d64b58;
 }
 
 .generalidades__acciones {
@@ -437,6 +444,15 @@
     color: #237442;
     font-size: 12px;
     font-weight: 700;
+}
+
+.eventos__error,
+.generalidades__error {
+    display: block;
+    margin: 0;
+    color: #d64b58;
+    font-size: 11px;
+    font-weight: 600;
 }
 
 .contenido-formulario {
@@ -641,6 +657,15 @@
 
 .logistica-formulario__fila:last-child {
     border-bottom: 0;
+}
+
+.logistica-formulario__fila--error {
+    background: #fff6f6;
+    box-shadow: inset 3px 0 #d64b58;
+}
+
+.logistica-formulario__fila--error input {
+    accent-color: #d64b58;
 }
 
 .logistica-formulario__fila>span,
@@ -1407,4 +1432,20 @@
     .eventos__estadisticas article {
         padding: 11px;
     }
+}
+
+.generalidades textarea.ng-invalid.ng-touched,
+.contenido-formulario textarea.ng-invalid.ng-touched,
+.contenido-formulario__modulo input.ng-invalid.ng-touched,
+.financiera-formulario textarea.ng-invalid.ng-touched,
+.aprobaciones-formulario__firma textarea.ng-invalid.ng-touched {
+    border-color: #d64b58;
+    background-color: #fffafa;
+    box-shadow: 0 0 0 2px rgba(214, 75, 88, 0.12);
+}
+
+.contenido-formulario__campo--error {
+    outline: 1px solid #d64b58;
+    outline-offset: 6px;
+    border-radius: 4px;
 }
