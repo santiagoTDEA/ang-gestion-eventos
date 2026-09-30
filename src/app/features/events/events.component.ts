@@ -24,7 +24,10 @@ import { RolesService } from '../roles/services/roles.service';
 import { ReturnRole } from '../roles/interfaces/roles.interfaces';
 import { Person } from '../peoples/interfaces/people.interfaces';
 import { PeoplesService } from '../peoples/services/peoples.service';
- import { DOCUMENT } from '@angular/common';
+import { DOCUMENT } from '@angular/common';
+import { ValidateRenderingService } from '../inicio/services/validate-rendering.service';
+import { JwtService } from '../../core/services/jwt.service';
+import { Role } from '../inicio/interfaces/inicio.interfaces';
 
 const DRAFT_STORAGE_KEY = 'eventDraft';
 
@@ -99,6 +102,10 @@ export class EventsComponent implements OnInit {
   private readonly facultiesService = inject(FacultyService);
   private readonly roleServices: RolesService = inject(RolesService);
   private readonly peoplesService: PeoplesService = inject(PeoplesService);
+  private readonly validateRenderingService: ValidateRenderingService = inject(ValidateRenderingService);
+  private readonly jwtServices: JwtService = inject(JwtService);
+
+
   persons: { value: string; label: string }[] = [];
   approvalOptions: { value: string; label: string }[][] = [];
   activeStep = 0;
@@ -106,7 +113,7 @@ export class EventsComponent implements OnInit {
   previewVisible = false;
   reviewSent = false;
   loading = false;
-  impirmir:boolean = false;
+  impirmir: boolean = false;
   readonly eventTypes = ['Curso', 'Diplomado', 'Seminario', '¿Otro?'];
   readonly eventTypeOptions = this.eventTypes.map(type => ({ value: type, label: type }));
   readonly weekDays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -119,7 +126,7 @@ export class EventsComponent implements OnInit {
     'Constancia de participación',
     '¿Otro?'
   ];
-private readonly document = inject(DOCUMENT);
+  private readonly document = inject(DOCUMENT);
 
   facultyOptions: ReturnFaculty[] = [];
 
@@ -285,6 +292,14 @@ private readonly document = inject(DOCUMENT);
       .trim();
   }
 
+
+  validarModulos(): void {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+    const Roles = this.jwtServices.cargarDesdeToken(token) as Role | null;
+
+    this.validateRenderingService.devolverAccesosPermitidos("eventos", Roles);
+  }
 
   getPersons(): void {
     this.peoplesService.getPeoples().subscribe({
@@ -456,7 +471,7 @@ private readonly document = inject(DOCUMENT);
   }
 
   togglePreview(): void {
-     this.impirmir=!this.impirmir;
+    this.impirmir = !this.impirmir;
     this.previewVisible = !this.previewVisible;
   }
 
@@ -465,11 +480,11 @@ private readonly document = inject(DOCUMENT);
     this.previewVisible = false;
   }
 
- 
 
-printPreview(): void {
-  this.document.defaultView?.print();
-}
+
+  printPreview(): void {
+    this.document.defaultView?.print();
+  }
 
 
   clearSignature(index: number): void {
