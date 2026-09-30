@@ -20,13 +20,18 @@ import { GenericButtonComponent } from '../../../shared/atoms/generic-button/gen
 import { CommonModule } from '@angular/common';
 import { ReturnFaculty } from '../faculty/interfaces/faculty.interfaces';
 import { FacultyService } from '../faculty/services/faculty.service';
-
+import { RolesService } from '../roles/services/roles.service';
+import { ReturnRole } from '../roles/interfaces/roles.interfaces';
+import { Person } from '../peoples/interfaces/people.interfaces';
+import { PeoplesService } from '../peoples/services/peoples.service';
+ import { DOCUMENT } from '@angular/common';
 
 const DRAFT_STORAGE_KEY = 'eventDraft';
 
 interface ApprovalMeta {
   title: string;
   description: string;
+  roleName: string;
 }
 
 type AlertType = 'success' | 'error' | 'info' | 'warning';
@@ -92,13 +97,16 @@ export class EventsComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   private readonly facultiesService = inject(FacultyService);
-
+  private readonly roleServices: RolesService = inject(RolesService);
+  private readonly peoplesService: PeoplesService = inject(PeoplesService);
+  persons: { value: string; label: string }[] = [];
+  approvalOptions: { value: string; label: string }[][] = [];
   activeStep = 0;
   draftSaved = false;
   previewVisible = false;
   reviewSent = false;
   loading = false;
-
+  impirmir:boolean = false;
   readonly eventTypes = ['Curso', 'Diplomado', 'Seminario', '¿Otro?'];
   readonly eventTypeOptions = this.eventTypes.map(type => ({ value: type, label: type }));
   readonly weekDays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -111,14 +119,15 @@ export class EventsComponent implements OnInit {
     'Constancia de participación',
     '¿Otro?'
   ];
+private readonly document = inject(DOCUMENT);
 
   facultyOptions: ReturnFaculty[] = [];
 
   readonly approvalsMeta: ApprovalMeta[] = [
-    { title: 'Responsable de elaboración', description: 'Persona que diligenció el formato.' },
-    { title: 'Responsable de revisión', description: 'Enlace de Extensión, director o coordinador de la dependencia.' },
-    { title: 'Responsable de verificación', description: 'Modalidad de Educación Continua.' },
-    { title: 'Responsable de validación', description: 'Dirección de Extensión Académica.' }
+    { title: 'Responsable de elaboración', description: 'Persona que diligenció el formato.', roleName: 'Elaboración' },
+    { title: 'Responsable de revisión', description: 'Enlace de Extensión, director o coordinador de la dependencia.', roleName: 'Revisión' },
+    { title: 'Responsable de verificación', description: 'Modalidad de Educación Continua.', roleName: 'Verificación' },
+    { title: 'Responsable de validación', description: 'Dirección de Extensión Académica.', roleName: 'Validación' }
   ];
 
   readonly steps = [
@@ -128,18 +137,18 @@ export class EventsComponent implements OnInit {
     { number: '04', label: 'Información financiera', description: 'Registra el presupuesto del evento.' },
     { number: '05', label: 'Aprobaciones', description: 'Revisa y envía el evento.' }
   ];
-
+  viewRoles: ReturnRole[] = []
   alertaResponse: {
     alertVisible: boolean;
     alertType: AlertType;
     alertTitle: string;
     alertMessage: string;
   } = {
-    alertVisible: false,
-    alertType: 'success',
-    alertTitle: '',
-    alertMessage: ''
-  };
+      alertVisible: false,
+      alertType: 'success',
+      alertTitle: '',
+      alertMessage: ''
+    };
 
   readonly eventForm: FormGroup;
 
@@ -195,6 +204,8 @@ export class EventsComponent implements OnInit {
   ngOnInit(): void {
     this.loadDraft();
     this.getFaculties();
+    this.getRoles();
+    this.getPersons();
   }
 
   // --- Getters de acceso rápido a los grupos/arreglos del formulario ---
@@ -265,16 +276,59 @@ export class EventsComponent implements OnInit {
     });
   }
 
-   getFaculties(): void {
-      this.facultiesService.getFaculties().subscribe({
-        next: (response: ReturnFaculty[]) => {
-          
-          this.facultyOptions = response;
-        },
-        error: (err) => console.error(err),
-      });
-    }
-  
+  /** Normaliza texto para comparar sin importar mayúsculas ni tildes. */
+  private normalize(value?: string): string {
+    return (value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  }
+
+
+  getPersons(): void {
+    this.peoplesService.getPeoples().subscribe({
+      next: (response: Person[]) => {
+        this.persons = response.filter(person =>
+          person.status?.statusName?.toLowerCase().trim() === 'activo'
+        ).map(type => ({ value: type.id.toString(), label: `${type.email} - ${type.role?.name ?? ''}` }))
+
+        // Opciones por bloque de aprobación (mismo orden que approvalsMeta)
+        this.approvalOptions = this.approvalsMeta.map(meta =>
+          response
+            .filter(person =>
+              person.status?.statusName?.toLowerCase().trim() === 'activo' &&
+              this.normalize(person.role?.name) === this.normalize(meta.roleName)
+            )
+            .map(person => ({ value: person.id.toString(), label: `${person.email} - ${person.role?.name ?? ''}` }))
+        );
+      },
+      error: (err) => console.error(err),
+    });
+  }
+  getFaculties(): void {
+    this.facultiesService.getFaculties().subscribe({
+      next: (response: ReturnFaculty[]) => {
+
+        this.facultyOptions = response;
+      },
+      error: (err) => console.error(err),
+    });
+  }
+
+
+  asignarRoles(name: string): ReturnRole | undefined {
+    return this.viewRoles.find(role => role.name === name);
+  }
+
+  getRoles(): void {
+    this.roleServices.getRoles().subscribe({
+      next: (roles) => {
+        console.log(roles);
+        this.viewRoles = roles;
+      }
+    });
+  }
 
   /** otherEventType solo es obligatorio si eventType === '¿Otro?'. */
   private watchOtherEventType(): void {
@@ -402,16 +456,21 @@ export class EventsComponent implements OnInit {
   }
 
   togglePreview(): void {
+     this.impirmir=!this.impirmir;
     this.previewVisible = !this.previewVisible;
   }
 
   closePreview(): void {
+    this.impirmir = false;
     this.previewVisible = false;
   }
 
-  printPreview(): void {
-    window.print();
-  }
+ 
+
+printPreview(): void {
+  this.document.defaultView?.print();
+}
+
 
   clearSignature(index: number): void {
     this.approvalsArray.at(index).get('signature')!.setValue('');
@@ -423,6 +482,19 @@ export class EventsComponent implements OnInit {
   }
 
   sendForReview(): void {
+    const elaboracionRole = this.asignarRoles("Elaboración");
+    if (!elaboracionRole) {
+      this.alertaResponse = {
+        alertVisible: true,
+        alertType: 'error',
+        alertTitle: 'Formulario incompleto',
+        alertMessage: 'No se encontró el rol de Elaboración.'
+      };
+      return;
+    }
+    this.approvalsArray.at(0).get('role')?.setValue(elaboracionRole.id);
+
+
     if (this.eventForm.invalid) {
       this.eventForm.markAllAsTouched();
       this.alertaResponse = {

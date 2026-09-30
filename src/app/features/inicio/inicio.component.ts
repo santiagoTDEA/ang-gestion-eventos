@@ -28,6 +28,7 @@ export class InicioComponent implements OnInit {
     if (!token) return
     const Roles = this.jwtServices.cargarDesdeToken(token) as Role | null;
     const resultadoModulos = this.validateRenderingService.validateRendering(Roles, this.modulos);
+    this.validateRenderingService.devolverAccesosPermitidos('usuarios', Roles);
     this.modulosRenderizados = [...resultadoModulos];
   }
 

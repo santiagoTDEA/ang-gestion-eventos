@@ -1,5 +1,6 @@
 <main class="eventos">
     <section class="eventos__contenido">
+
         @if (alertaResponse.alertVisible) {
         <app-generic-alert [type]="alertaResponse.alertType" (closed)="alertaResponse.alertVisible = false">
             <strong class="block font-semibold">{{ alertaResponse.alertTitle }}</strong>
@@ -33,7 +34,10 @@
             <article><strong>0%</strong><span>Progreso del formulario</span></article>
             <article><strong>{{ objectivesArray.length }}</strong><span>Objetivos específicos</span></article>
             <article><strong>{{ modulesArray.length }}</strong><span>Módulos de contenido</span></article>
-            <article><strong>{{ reviewSent ? 'Enviado' : 'Borrador' }}</strong><span>{{ reviewSent ? '' : 'Sin enviar' }}</span></article>
+            <article>
+                <strong>{{ reviewSent ? 'Enviado' : 'Borrador' }}</strong>
+                <span>{{ reviewSent ? '' : 'Sin enviar' }}</span>
+            </article>
         </div>
 
         <nav class="eventos__pasos" aria-label="Etapas del formulario">
@@ -50,8 +54,10 @@
              es type="submit" y dispara (formSubmit)="sendForReview()". -->
         <app-generic-form [disabled]="eventForm.invalid || loading" (formSubmit)="sendForReview()">
 
+            <!-- ===================== PASO 0: GENERALIDADES ===================== -->
             @if (activeStep === 0) {
             <div class="generalidades">
+
                 <div class="generalidades__campo generalidades__campo--completo">
                     <app-generic-select label="Tipo de evento" placeholder="Selecciona un tipo de evento"
                         [control]="generalidadesGroup.controls['eventType']" [options]="eventTypeOptions"
@@ -60,12 +66,15 @@
 
                     @if (eventTypeValue === '¿Otro?') {
                     <app-generic-input label="Especifica el tipo de evento" placeholder="Especifica el tipo de evento"
-                        icon="none" [control]="generalidadesGroup.controls['otherEventType']"></app-generic-input>
+                        icon="none" [control]="generalidadesGroup.controls['otherEventType']">
+                    </app-generic-input>
                     }
                 </div>
 
-                <app-generic-input label="Nombre del evento" placeholder="Ej. Diplomado en Analítica de Datos para Negocios"
-                    icon="none" [control]="generalidadesGroup.controls['name']"></app-generic-input>
+                <app-generic-input label="Nombre del evento"
+                    placeholder="Ej. Diplomado en Analítica de Datos para Negocios" icon="none"
+                    [control]="generalidadesGroup.controls['name']">
+                </app-generic-input>
 
                 <div class="generalidades__grid generalidades__grid--dos">
                     <app-generic-select label="Facultad" placeholder="Selecciona una facultad"
@@ -73,32 +82,38 @@
                         optionLabel="name">
                     </app-generic-select>
 
-                    <app-generic-input label="Programa académico" placeholder="Programa asociado al evento"
-                        icon="none" [control]="generalidadesGroup.controls['academicProgram']"></app-generic-input>
+                    <app-generic-input label="Programa académico" placeholder="Programa asociado al evento" icon="none"
+                        [control]="generalidadesGroup.controls['academicProgram']">
+                    </app-generic-input>
                 </div>
 
                 <div class="generalidades__campo generalidades__campo--completo">
                     <label for="teacher-profile">Perfil del docente responsable <span>*</span></label>
-                    <textarea id="teacher-profile" [formControl]="asControl(generalidadesGroup.controls['teacherProfile'])"
+                    <textarea id="teacher-profile"
+                        [formControl]="asControl(generalidadesGroup.controls['teacherProfile'])"
                         placeholder="Formación, experiencia y trayectoria relevante para el evento"></textarea>
-                    @if (generalidadesGroup.controls['teacherProfile'].invalid && generalidadesGroup.controls['teacherProfile'].touched) {
+                    @if (generalidadesGroup.controls['teacherProfile'].invalid &&
+                    generalidadesGroup.controls['teacherProfile'].touched) {
                     <small class="generalidades__error">Este campo es obligatorio.</small>
                     }
                 </div>
 
                 <div class="generalidades__grid generalidades__grid--tres">
                     <app-generic-input label="Duración total (horas)" type="number" placeholder="Ej. 40" icon="none"
-                        [control]="generalidadesGroup.controls['duration']"></app-generic-input>
+                        [control]="generalidadesGroup.controls['duration']">
+                    </app-generic-input>
 
                     <app-generic-input label="Hora de inicio" type="time" icon="none"
-                        [control]="generalidadesGroup.controls['startTime']"
-                        [externalInvalid]="generalidadesGroup.hasError('endTimeBeforeStartTime')"></app-generic-input>
+                        [control]="generalidadesGroup.controls['startTime']">
+                    </app-generic-input>
 
                     <app-generic-input label="Hora de fin" type="time" icon="none"
-                        [control]="generalidadesGroup.controls['endTime']"
-                        [externalInvalid]="generalidadesGroup.hasError('endTimeBeforeStartTime')"></app-generic-input>
+                        [control]="generalidadesGroup.controls['endTime']">
+                    </app-generic-input>
                 </div>
-                @if (generalidadesGroup.hasError('endTimeBeforeStartTime') && (generalidadesGroup.controls['startTime'].touched || generalidadesGroup.controls['endTime'].touched)) {
+                @if (generalidadesGroup.hasError('endTimeBeforeStartTime') &&
+                (generalidadesGroup.controls['startTime'].touched ||
+                generalidadesGroup.controls['endTime'].touched)) {
                 <small class="generalidades__error">La hora de fin no puede ser anterior a la hora de inicio.</small>
                 }
 
@@ -111,7 +126,8 @@
                             (click)="toggleDay(day)">{{ day }}</button>
                         }
                     </div>
-                    @if (generalidadesGroup.controls['selectedDays'].invalid && generalidadesGroup.controls['selectedDays'].touched) {
+                    @if (generalidadesGroup.controls['selectedDays'].invalid &&
+                    generalidadesGroup.controls['selectedDays'].touched) {
                     <small class="generalidades__error">Selecciona al menos un día.</small>
                     }
                 </div>
@@ -123,71 +139,87 @@
                         @for (modality of modalities; track modality) {
                         <button type="button" class="generalidades__modalidad"
                             [class.generalidades__modalidad--activa]="selectedModality === modality"
-                            [attr.aria-pressed]="selectedModality === modality"
-                            (click)="toggleModality(modality)">
+                            [attr.aria-pressed]="selectedModality === modality" (click)="toggleModality(modality)">
                             <strong>{{ modality }}</strong>
                         </button>
                         }
                     </div>
-                    @if (generalidadesGroup.controls['selectedModality'].invalid && generalidadesGroup.controls['selectedModality'].touched) {
+                    @if (generalidadesGroup.controls['selectedModality'].invalid &&
+                    generalidadesGroup.controls['selectedModality'].touched) {
                     <small class="generalidades__error">Selecciona al menos una modalidad.</small>
                     }
                 </div>
 
                 <div class="generalidades__grid generalidades__grid--dos">
                     <app-generic-input label="Fecha de inicio" type="date" icon="none"
-                        [control]="generalidadesGroup.controls['startDate']"
-                        [externalInvalid]="generalidadesGroup.hasError('endDateBeforeStartDate')"></app-generic-input>
+                        [control]="generalidadesGroup.controls['startDate']">
+                    </app-generic-input>
 
                     <app-generic-input label="Fecha de terminación" type="date" icon="none"
-                        [control]="generalidadesGroup.controls['endDate']"
-                        [externalInvalid]="generalidadesGroup.hasError('endDateBeforeStartDate')"></app-generic-input>
+                        [control]="generalidadesGroup.controls['endDate']">
+                    </app-generic-input>
                 </div>
-                @if (generalidadesGroup.hasError('endDateBeforeStartDate') && (generalidadesGroup.controls['startDate'].touched || generalidadesGroup.controls['endDate'].touched)) {
-                <small class="generalidades__error">La fecha de terminación no puede ser anterior a la fecha de inicio.</small>
+                @if (generalidadesGroup.hasError('endDateBeforeStartDate') &&
+                (generalidadesGroup.controls['startDate'].touched ||
+                generalidadesGroup.controls['endDate'].touched)) {
+                <small class="generalidades__error">La fecha de terminación no puede ser anterior a la fecha de
+                    inicio.</small>
                 }
 
                 <div class="generalidades__grid generalidades__grid--dos">
                     <app-generic-input label="Cupo mínimo" type="number" placeholder="Ej. 15" icon="none"
-                        [control]="generalidadesGroup.controls['minimumCapacity']"
-                        [externalInvalid]="generalidadesGroup.hasError('maximumCapacityBelowMinimum')"></app-generic-input>
+                        [control]="generalidadesGroup.controls['minimumCapacity']">
+                    </app-generic-input>
 
                     <app-generic-input label="Cupo máximo" type="number" placeholder="Ej. 40" icon="none"
-                        [control]="generalidadesGroup.controls['maximumCapacity']"
-                        [externalInvalid]="generalidadesGroup.hasError('maximumCapacityBelowMinimum')"></app-generic-input>
+                        [control]="generalidadesGroup.controls['maximumCapacity']">
+                    </app-generic-input>
                 </div>
-                @if (generalidadesGroup.hasError('maximumCapacityBelowMinimum') && (generalidadesGroup.controls['minimumCapacity'].touched || generalidadesGroup.controls['maximumCapacity'].touched)) {
+                @if (generalidadesGroup.hasError('maximumCapacityBelowMinimum') &&
+                (generalidadesGroup.controls['minimumCapacity'].touched ||
+                generalidadesGroup.controls['maximumCapacity'].touched)) {
                 <small class="generalidades__error">El cupo máximo no puede ser menor que el cupo mínimo.</small>
                 }
 
                 <div class="generalidades__campo generalidades__campo--completo">
                     <label for="participant-profile">Perfil de los participantes <span>*</span></label>
-                    <textarea id="participant-profile" [formControl]="asControl(generalidadesGroup.controls['participantProfile'])"
+                    <textarea id="participant-profile"
+                        [formControl]="asControl(generalidadesGroup.controls['participantProfile'])"
                         placeholder="A quién va dirigido, competencias o conocimientos previos requeridos"></textarea>
-                    @if (generalidadesGroup.controls['participantProfile'].invalid && generalidadesGroup.controls['participantProfile'].touched) {
+                    @if (generalidadesGroup.controls['participantProfile'].invalid &&
+                    generalidadesGroup.controls['participantProfile'].touched) {
                     <small class="generalidades__error">Este campo es obligatorio.</small>
                     }
                 </div>
 
+                @if(!impirmir){
                 <footer class="generalidades__acciones">
                     <div>
-                        <button type="button" class="generalidades__boton generalidades__boton--secundario" (click)="saveDraft()">Guardar borrador</button>
-                        <button type="button" class="generalidades__boton generalidades__boton--secundario" (click)="togglePreview()">Vista previa</button>
-                        <button type="button" class="generalidades__boton generalidades__boton--principal" (click)="nextStep()">Siguiente →</button>
+                        <button type="button" class="generalidades__boton generalidades__boton--secundario"
+                            (click)="saveDraft()">Guardar borrador</button>
+                        <button type="button" class="generalidades__boton generalidades__boton--secundario"
+                            (click)="togglePreview()">Vista previa</button>
+                        <button type="button" class="generalidades__boton generalidades__boton--principal"
+                            (click)="nextStep()">Siguiente →</button>
                     </div>
                 </footer>
+                }
 
                 @if (draftSaved) {
                 <p class="generalidades__confirmacion">Borrador guardado correctamente.</p>
                 }
             </div>
+
+            <!-- ===================== PASO 1: CONTENIDO ===================== -->
             } @else if (activeStep === 1) {
             <div class="contenido-formulario">
+
                 <div class="contenido-formulario__campo">
                     <label for="presentation">Introducción / Presentación <span>*</span></label>
                     <textarea id="presentation" [formControl]="asControl(contenidoGroup.controls['presentation'])"
                         placeholder="Antecedentes, justificación y necesidad del evento"></textarea>
-                    @if (contenidoGroup.controls['presentation'].invalid && contenidoGroup.controls['presentation'].touched) {
+                    @if (contenidoGroup.controls['presentation'].invalid &&
+                    contenidoGroup.controls['presentation'].touched) {
                     <small class="eventos__error">Este campo es obligatorio.</small>
                     }
                 </div>
@@ -196,16 +228,19 @@
                     <label for="scope">Alcance <span>*</span></label>
                     <textarea id="scope" [formControl]="asControl(contenidoGroup.controls['scope'])"
                         placeholder="Qué se espera al culminar el evento, impactos o aportes"></textarea>
-                    @if (contenidoGroup.controls['scope'].invalid && contenidoGroup.controls['scope'].touched) {
+                    @if (contenidoGroup.controls['scope'].invalid &&
+                    contenidoGroup.controls['scope'].touched) {
                     <small class="eventos__error">Este campo es obligatorio.</small>
                     }
                 </div>
 
                 <div class="contenido-formulario__campo">
                     <label for="general-objective">Objetivo general <span>*</span></label>
-                    <textarea id="general-objective" [formControl]="asControl(contenidoGroup.controls['generalObjective'])"
+                    <textarea id="general-objective"
+                        [formControl]="asControl(contenidoGroup.controls['generalObjective'])"
                         placeholder="Propósito global del evento"></textarea>
-                    @if (contenidoGroup.controls['generalObjective'].invalid && contenidoGroup.controls['generalObjective'].touched) {
+                    @if (contenidoGroup.controls['generalObjective'].invalid &&
+                    contenidoGroup.controls['generalObjective'].touched) {
                     <small class="eventos__error">Este campo es obligatorio.</small>
                     }
                 </div>
@@ -222,7 +257,8 @@
                         <span>{{ $index + 1 }}</span>
                         <textarea [formControl]="asControl(objective)"
                             placeholder="Objetivo específico {{ $index + 1 }} (acción concreta y medible)"></textarea>
-                        <button type="button" (click)="removeObjective($index)" aria-label="Eliminar objetivo">×</button>
+                        <button type="button" (click)="removeObjective($index)"
+                            aria-label="Eliminar objetivo">×</button>
                         @if (objective.invalid && objective.touched) {
                         <small class="eventos__error">Este objetivo es obligatorio.</small>
                         }
@@ -233,15 +269,19 @@
                     <small class="eventos__error">Registra al menos tres objetivos específicos.</small>
                     }
 
-                    <button type="button" class="contenido-formulario__agregar" (click)="addObjective()">+ Agregar objetivo</button>
-                    <small class="contenido-formulario__ayuda">Mínimo 3 objetivos específicos (llevas {{ objectivesArray.length }}).</small>
+                    <button type="button" class="contenido-formulario__agregar" (click)="addObjective()">+ Agregar
+                        objetivo</button>
+                    <small class="contenido-formulario__ayuda">
+                        Mínimo 3 objetivos específicos (llevas {{ objectivesArray.length }}).
+                    </small>
                 </div>
 
                 <div class="contenido-formulario__campo">
                     <label for="competencies">Aspiración de competencias <span>*</span></label>
                     <textarea id="competencies" [formControl]="asControl(contenidoGroup.controls['competencies'])"
                         placeholder="Aprendizajes que se espera desarrollen los participantes"></textarea>
-                    @if (contenidoGroup.controls['competencies'].invalid && contenidoGroup.controls['competencies'].touched) {
+                    @if (contenidoGroup.controls['competencies'].invalid &&
+                    contenidoGroup.controls['competencies'].touched) {
                     <small class="eventos__error">Este campo es obligatorio.</small>
                     }
                 </div>
@@ -253,7 +293,8 @@
 
                     @for (module of modulesArray.controls; track $index) {
                     <div class="contenido-formulario__modulo">
-                        <input [formControl]="asControl(module)" type="text" placeholder="Nombre o descripción del módulo" />
+                        <input [formControl]="asControl(module)" type="text"
+                            placeholder="Nombre o descripción del módulo" />
                         <button type="button" (click)="removeModule($index)" aria-label="Eliminar módulo">×</button>
                         @if (module.invalid && module.touched) {
                         <small class="eventos__error">Este campo es obligatorio.</small>
@@ -264,22 +305,31 @@
                     @if (modulesArray.hasError('minArrayLength') && modulesArray.touched) {
                     <small class="eventos__error">Agrega al menos un módulo.</small>
                     }
-                    <button type="button" class="contenido-formulario__agregar" (click)="addModule()">+ Agregar módulo</button>
+
+                    <button type="button" class="contenido-formulario__agregar" (click)="addModule()">+ Agregar
+                        módulo</button>
                 </div>
 
                 <footer class="contenido-formulario__acciones">
-                    <button type="button" class="generalidades__boton generalidades__boton--secundario" (click)="previousStep()">← Atrás</button>
+                    <button type="button" class="generalidades__boton generalidades__boton--secundario"
+                        (click)="previousStep()">← Atrás</button>
                     <div>
-                        <button type="button" class="generalidades__boton generalidades__boton--secundario" (click)="saveDraft()">Guardar borrador</button>
-                        <button type="button" class="generalidades__boton generalidades__boton--secundario" (click)="togglePreview()">Vista previa</button>
-                        <button type="button" class="generalidades__boton generalidades__boton--principal" (click)="nextStep()">Siguiente →</button>
+                        <button type="button" class="generalidades__boton generalidades__boton--secundario"
+                            (click)="saveDraft()">Guardar borrador</button>
+                        <button type="button" class="generalidades__boton generalidades__boton--secundario"
+                            (click)="togglePreview()">Vista previa</button>
+                        <button type="button" class="generalidades__boton generalidades__boton--principal"
+                            (click)="nextStep()">Siguiente →</button>
                     </div>
                 </footer>
             </div>
+
+            <!-- ===================== PASO 2: LOGÍSTICA ===================== -->
             } @else if (activeStep === 2) {
             <div class="logistica-formulario">
                 <p class="logistica-formulario__pregunta">
-                    ¿El organizador del evento requiere apoyo logístico de la Dirección de Extensión Académica en alguno de los siguientes aspectos? <span>*</span>
+                    ¿El organizador del evento requiere apoyo logístico de la Dirección de Extensión Académica
+                    en alguno de los siguientes aspectos? <span>*</span>
                 </p>
 
                 <div class="logistica-formulario__tabla" role="table" aria-label="Apoyos logísticos requeridos">
@@ -312,47 +362,64 @@
                 }
 
                 <footer class="logistica-formulario__acciones">
-                    <button type="button" class="generalidades__boton generalidades__boton--secundario" (click)="previousStep()">← Atrás</button>
+                    <button type="button" class="generalidades__boton generalidades__boton--secundario"
+                        (click)="previousStep()">← Atrás</button>
                     <div>
-                        <button type="button" class="generalidades__boton generalidades__boton--secundario" (click)="saveDraft()">Guardar borrador</button>
-                        <button type="button" class="generalidades__boton generalidades__boton--secundario" (click)="togglePreview()">Vista previa</button>
-                        <button type="button" class="generalidades__boton generalidades__boton--principal" (click)="nextStep()">Siguiente →</button>
+                        <button type="button" class="generalidades__boton generalidades__boton--secundario"
+                            (click)="saveDraft()">Guardar borrador</button>
+                        <button type="button" class="generalidades__boton generalidades__boton--secundario"
+                            (click)="togglePreview()">Vista previa</button>
+                        <button type="button" class="generalidades__boton generalidades__boton--principal"
+                            (click)="nextStep()">Siguiente →</button>
                     </div>
                 </footer>
             </div>
+
+            <!-- ===================== PASO 3: FINANCIERA ===================== -->
             } @else if (activeStep === 3) {
             <div class="financiera-formulario">
                 <p class="financiera-formulario__nota">Espacio diligenciado por la Dirección de Extensión Académica.</p>
 
                 <div class="financiera-formulario__grid">
                     <app-generic-input label="Costo por participante" type="number" placeholder="0" icon="none"
-                        [control]="financieraGroup.controls['costPerParticipant']"></app-generic-input>
+                        [control]="financieraGroup.controls['costPerParticipant']">
+                    </app-generic-input>
 
                     <app-generic-input label="Cupo mínimo (confirmado)" type="number"
                         placeholder="Se sincroniza con Generalidades" icon="none"
-                        [control]="financieraGroup.controls['confirmedMinimumCapacity']"></app-generic-input>
+                        [control]="financieraGroup.controls['confirmedMinimumCapacity']">
+                    </app-generic-input>
                 </div>
 
                 <div class="financiera-formulario__campo">
                     <label for="financial-observations">Observaciones financieras <span>*</span></label>
-                    <textarea id="financial-observations" [formControl]="asControl(financieraGroup.controls['financialObservations'])"
+                    <textarea id="financial-observations"
+                        [formControl]="asControl(financieraGroup.controls['financialObservations'])"
                         placeholder="Notas sobre viabilidad, punto de equilibrio, becas, alianzas, etc."></textarea>
-                    @if (financieraGroup.controls['financialObservations'].invalid && financieraGroup.controls['financialObservations'].touched) {
+                    @if (financieraGroup.controls['financialObservations'].invalid &&
+                    financieraGroup.controls['financialObservations'].touched) {
                     <small class="eventos__error">Este campo es obligatorio.</small>
                     }
                 </div>
 
                 <footer class="financiera-formulario__acciones">
-                    <button type="button" class="generalidades__boton generalidades__boton--secundario" (click)="previousStep()">← Atrás</button>
+                    <button type="button" class="generalidades__boton generalidades__boton--secundario"
+                        (click)="previousStep()">← Atrás</button>
                     <div>
-                        <button type="button" class="generalidades__boton generalidades__boton--secundario" (click)="saveDraft()">Guardar borrador</button>
-                        <button type="button" class="generalidades__boton generalidades__boton--secundario" (click)="togglePreview()">Vista previa</button>
-                        <button type="button" class="generalidades__boton generalidades__boton--principal" (click)="nextStep()">Siguiente →</button>
+                        <button type="button" class="generalidades__boton generalidades__boton--secundario"
+                            (click)="saveDraft()">Guardar borrador</button>
+                        <button type="button" class="generalidades__boton generalidades__boton--secundario"
+                            (click)="togglePreview()">Vista previa</button>
+                        <button type="button" class="generalidades__boton generalidades__boton--principal"
+                            (click)="nextStep()">Siguiente →</button>
                     </div>
                 </footer>
             </div>
+
+            <!-- ===================== PASO 4: APROBACIONES ===================== -->
             } @else if (activeStep === 4) {
             <div class="aprobaciones-formulario">
+
                 @for (approval of approvalsArray.controls; track approvalsMeta[$index].title; let index = $index) {
                 <article class="aprobaciones-formulario__bloque">
                     <div class="aprobaciones-formulario__titulo">
@@ -361,20 +428,25 @@
                     </div>
 
                     <div class="aprobaciones-formulario__datos">
-                        <app-generic-input label="Nombre" icon="none"
-                            [control]="asGroup(approval).controls['name']"></app-generic-input>
+                        
+                        <app-generic-select label="Persona" placeholder="Selecciona una persona"
+                            [control]="asGroup(approval).controls['name']" [options]="approvalOptions[index] ?? []" optionValue="value"
+                            optionLabel="label">
+                        </app-generic-select>
 
-                        <app-generic-input label="Cargo o rol" icon="none"
-                            [control]="asGroup(approval).controls['role']"></app-generic-input>
+                        <!-- <app-generic-input label="Cargo o rol" icon="none"
+                                    [control]="asGroup(approval).controls['role']"></app-generic-input> -->
 
                         <app-generic-input label="Fecha" type="date" icon="none"
-                            [control]="asGroup(approval).controls['date']"></app-generic-input>
+                            [control]="asGroup(approval).controls['date']">
+                        </app-generic-input>
 
                         <div class="aprobaciones-formulario__firma">
                             <label>Firma <span>*</span></label>
                             <textarea [formControl]="asControl(asGroup(approval).controls['signature'])"
                                 placeholder="Firma aquí con el mouse o el dedo"></textarea>
-                            @if (asGroup(approval).controls['signature'].invalid && asGroup(approval).controls['signature'].touched) {
+                            @if (asGroup(approval).controls['signature'].invalid &&
+                            asGroup(approval).controls['signature'].touched) {
                             <small class="eventos__error">La firma es obligatoria.</small>
                             }
                             <button type="button" (click)="clearSignature(index)">Borrar firma</button>
@@ -384,22 +456,29 @@
                 }
 
                 <footer class="aprobaciones-formulario__acciones">
-                    <button type="button" class="generalidades__boton generalidades__boton--secundario" (click)="previousStep()">← Atrás</button>
+                    <button type="button" class="generalidades__boton generalidades__boton--secundario"
+                        (click)="previousStep()">← Atrás</button>
                     <div>
-                        <button type="button" class="generalidades__boton generalidades__boton--secundario" (click)="saveDraft()">Guardar borrador</button>
-                        <button type="button" class="generalidades__boton generalidades__boton--secundario" (click)="togglePreview()">Vista previa</button>
+                        <button type="button" class="generalidades__boton generalidades__boton--secundario"
+                            (click)="saveDraft()">Guardar borrador</button>
+                        <button type="button" class="generalidades__boton generalidades__boton--secundario"
+                            (click)="togglePreview()">Vista previa</button>
                         <app-generic-button [ngClass]="{
-                             'aprobaciones-formulario__enviar--disabled':eventForm.invalid,
-                             'aprobaciones-formulario__enviar--enabled':!eventForm.invalid
-                        }" label="{{ reviewSent ? 'Enviado' : 'Enviar para revisión →' }}" type="submit"
-                            [disabled]="eventForm.invalid" customClass="aprobaciones-formulario__enviar"></app-generic-button>
+                                    'aprobaciones-formulario__enviar--disabled': eventForm.invalid,
+                                    'aprobaciones-formulario__enviar--enabled': !eventForm.invalid
+                                }" label="{{ reviewSent ? 'Enviado' : 'Enviar para revisión →' }}" type="submit"
+                            [disabled]="eventForm.invalid" customClass="aprobaciones-formulario__enviar">
+                        </app-generic-button>
                     </div>
                 </footer>
 
                 @if (eventForm.invalid && !reviewSent) {
-                <p class="generalidades__confirmacion">Completa todos los campos obligatorios de los 5 pasos para habilitar el envío.</p>
+                <p class="generalidades__confirmacion">
+                    Completa todos los campos obligatorios de los 5 pasos para habilitar el envío.
+                </p>
                 }
             </div>
+
             } @else {
             <section class="eventos__etapa">
                 <div>
@@ -409,18 +488,22 @@
                 <p>{{ steps[activeStep].description }}</p>
             </section>
             }
+
         </app-generic-form>
 
+        <!-- ===================== VISTA PREVIA ===================== -->
         @if (previewVisible) {
         <div class="vista-previa__fondo" role="presentation" (click)="closePreview()">
             <section class="vista-previa" role="dialog" aria-modal="true" aria-labelledby="preview-title"
                 (click)="$event.stopPropagation()">
+
                 <header class="vista-previa__encabezado">
                     <div>
                         <h2 id="preview-title">Vista previa del formato FO-EPS-03</h2>
                         <p>Diseño o desarrollo de eventos de educación continua</p>
                     </div>
-                    <button type="button" class="vista-previa__cerrar" (click)="closePreview()" aria-label="Cerrar vista previa">×</button>
+                    <button type="button" class="vista-previa__cerrar" (click)="closePreview()"
+                        aria-label="Cerrar vista previa">×</button>
                 </header>
 
                 <div class="vista-previa__contenido">
@@ -432,29 +515,85 @@
                     <section class="vista-previa__seccion">
                         <h3>Generalidades del evento</h3>
                         <div class="vista-previa__datos">
-                            <div><strong>Tipo de evento</strong><span>{{ eventForm.value.generalidades.eventType === '¿Otro?' ? (eventForm.value.generalidades.otherEventType || 'Otro') : (eventForm.value.generalidades.eventType || '—') }}</span></div>
-                            <div><strong>Nombre del evento</strong><span>{{ eventForm.value.generalidades.name || '—' }}</span></div>
-                            <div><strong>Facultad o dependencia</strong><span>{{ eventForm.value.generalidades.faculty || '—' }}</span></div>
-                            <div><strong>Programa académico</strong><span>{{ eventForm.value.generalidades.academicProgram || '—' }}</span></div>
-                            <div><strong>Perfil del docente responsable</strong><span>{{ eventForm.value.generalidades.teacherProfile || '—' }}</span></div>
-                            <div><strong>Duración</strong><span>{{ eventForm.value.generalidades.duration || '—' }} horas</span></div>
-                            <div><strong>Días de la semana</strong><span>{{ selectedDays.length ? selectedDays.join(', ') : '—' }}</span></div>
-                            <div><strong>Modalidad</strong><span>{{ generalidadesGroup.value.length ? generalidadesGroup.value.join(', ') : '—' }}</span></div>
-                            <div><strong>Fechas</strong><span>{{ eventForm.value.generalidades.startDate || '—' }} → {{ eventForm.value.generalidades.endDate || '—' }}</span></div>
-                            <div><strong>Cupo</strong><span>Mínimo {{ eventForm.value.generalidades.minimumCapacity || '—' }} · Máximo {{ eventForm.value.generalidades.maximumCapacity || '—' }}</span></div>
-                            <div><strong>Perfil de los participantes</strong><span>{{ eventForm.value.generalidades.participantProfile || '—' }}</span></div>
+                            <div>
+                                <strong>Tipo de evento</strong>
+                                <span>{{ eventForm.value.generalidades.eventType === '¿Otro?' ?
+                                    (eventForm.value.generalidades.otherEventType || 'Otro') :
+                                    (eventForm.value.generalidades.eventType || '—') }}</span>
+                            </div>
+                            <div>
+                                <strong>Nombre del evento</strong>
+                                <span>{{ eventForm.value.generalidades.name || '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Facultad o dependencia</strong>
+                                <span>{{ eventForm.value.generalidades.faculty || '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Programa académico</strong>
+                                <span>{{ eventForm.value.generalidades.academicProgram || '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Perfil del docente responsable</strong>
+                                <span>{{ eventForm.value.generalidades.teacherProfile || '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Duración</strong>
+                                <span>{{ eventForm.value.generalidades.duration || '—' }} horas</span>
+                            </div>
+                            <div>
+                                <strong>Días de la semana</strong>
+                                <span>{{ selectedDays.length ? selectedDays.join(', ') : '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Modalidad</strong>
+                                <span>{{ generalidadesGroup.value.length ? generalidadesGroup.value.join(', ') : '—'
+                                    }}</span>
+                            </div>
+                            <div>
+                                <strong>Fechas</strong>
+                                <span>{{ eventForm.value.generalidades.startDate || '—' }} → {{
+                                    eventForm.value.generalidades.endDate || '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Cupo</strong>
+                                <span>Mínimo {{ eventForm.value.generalidades.minimumCapacity || '—' }} · Máximo {{
+                                    eventForm.value.generalidades.maximumCapacity || '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Perfil de los participantes</strong>
+                                <span>{{ eventForm.value.generalidades.participantProfile || '—' }}</span>
+                            </div>
                         </div>
                     </section>
 
                     <section class="vista-previa__seccion">
                         <h3>Contenido del evento</h3>
                         <div class="vista-previa__datos">
-                            <div><strong>Introducción / Presentación</strong><span>{{ eventForm.value.contenido.presentation || '—' }}</span></div>
-                            <div><strong>Alcance</strong><span>{{ eventForm.value.contenido.scope || '—' }}</span></div>
-                            <div><strong>Objetivo general</strong><span>{{ eventForm.value.contenido.generalObjective || '—' }}</span></div>
-                            <div><strong>Objetivos específicos</strong><span>{{ eventForm.value.contenido.objectives.join(' · ') || '—' }}</span></div>
-                            <div><strong>Aspiración de competencias</strong><span>{{ eventForm.value.contenido.competencies || '—' }}</span></div>
-                            <div><strong>Contenidos por módulos</strong><span>{{ eventForm.value.contenido.modules.join(' · ') || '—' }}</span></div>
+                            <div>
+                                <strong>Introducción / Presentación</strong>
+                                <span>{{ eventForm.value.contenido.presentation || '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Alcance</strong>
+                                <span>{{ eventForm.value.contenido.scope || '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Objetivo general</strong>
+                                <span>{{ eventForm.value.contenido.generalObjective || '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Objetivos específicos</strong>
+                                <span>{{ eventForm.value.contenido.objectives.join(' · ') || '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Aspiración de competencias</strong>
+                                <span>{{ eventForm.value.contenido.competencies || '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Contenidos por módulos</strong>
+                                <span>{{ eventForm.value.contenido.modules.join(' · ') || '—' }}</span>
+                            </div>
                         </div>
                     </section>
 
@@ -462,7 +601,10 @@
                         <h3>Detalles logísticos</h3>
                         <div class="vista-previa__datos">
                             @for (aspect of logisticsOptions; track aspect) {
-                            <div><strong>{{ aspect }}</strong><span>{{ eventForm.value.logistica[aspect] || '—' }}</span></div>
+                            <div>
+                                <strong>{{ aspect }}</strong>
+                                <span>{{ eventForm.value.logistica[aspect] || '—' }}</span>
+                            </div>
                             }
                         </div>
                     </section>
@@ -470,9 +612,19 @@
                     <section class="vista-previa__seccion">
                         <h3>Información financiera</h3>
                         <div class="vista-previa__datos">
-                            <div><strong>Costo por participante</strong><span>{{ eventForm.value.financiera.costPerParticipant ? '$ ' + eventForm.value.financiera.costPerParticipant : '—' }}</span></div>
-                            <div><strong>Cupo mínimo confirmado</strong><span>{{ eventForm.value.financiera.confirmedMinimumCapacity || '—' }}</span></div>
-                            <div><strong>Observaciones</strong><span>{{ eventForm.value.financiera.financialObservations || '—' }}</span></div>
+                            <div>
+                                <strong>Costo por participante</strong>
+                                <span>{{ eventForm.value.financiera.costPerParticipant ? '$ ' +
+                                    eventForm.value.financiera.costPerParticipant : '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Cupo mínimo confirmado</strong>
+                                <span>{{ eventForm.value.financiera.confirmedMinimumCapacity || '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Observaciones</strong>
+                                <span>{{ eventForm.value.financiera.financialObservations || '—' }}</span>
+                            </div>
                         </div>
                     </section>
 
@@ -482,7 +634,8 @@
                             @for (meta of approvalsMeta; track meta.title; let index = $index) {
                             <article>
                                 <strong>{{ meta.title }}</strong>
-                                <span>{{ eventForm.value.aprobaciones[index].name || 'Nombre pendiente' }} · {{ eventForm.value.aprobaciones[index].role || 'Cargo pendiente' }}</span>
+                                <span>{{ eventForm.value.aprobaciones[index].name || 'Nombre pendiente' }} · {{
+                                    eventForm.value.aprobaciones[index].role || 'Cargo pendiente' }}</span>
                                 <span>Fecha: {{ eventForm.value.aprobaciones[index].date || '—' }}</span>
                                 <div>{{ eventForm.value.aprobaciones[index].signature || 'Sin firma' }}</div>
                             </article>
@@ -497,7 +650,8 @@
                     <button type="button" class="vista-previa__boton vista-previa__boton--principal"
                         (click)="printPreview()">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v7H6z" />
+                            <path
+                                d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v7H6z" />
                         </svg>
                         Imprimir / Guardar PDF
                     </button>
@@ -505,5 +659,6 @@
             </section>
         </div>
         }
+
     </section>
 </main>
