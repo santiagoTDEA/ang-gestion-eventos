@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, Input, OnChanges, SimpleChange } from '@angular/core';
 @Component({
   selector: 'app-generic-button',
+  standalone: true,
   imports: [CommonModule],
   templateUrl: './generic-button.component.html',
   styleUrl: './generic-button.component.css'

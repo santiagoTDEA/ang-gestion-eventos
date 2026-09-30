@@ -1,0 +1,304 @@
+<main class="approvals">
+    <section class="approvals__contenido">
+        <!-- Alerta -->
+        @if (alertaResponse.alertVisible) {
+        <app-generic-alert [type]="alertaResponse.alertType" (closed)="alertaResponse.alertVisible = false">
+            <strong class="block font-semibold">{{ alertaResponse.alertTitle }}</strong>
+            <span>{{ alertaResponse.alertMessage }}</span>
+        </app-generic-alert>
+        }
+
+        <!-- Botón volver -->
+        <button type="button" class="approvals__volver" (click)="goBack()" aria-label="Volver al inicio">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M15.75 19.5 8.25 12l7.5-7.5" />
+            </svg>
+            Volver al inicio
+        </button>
+
+        <!-- Encabezado -->
+        <article class="approvals__resumen">
+            <div class="approvals__insignia"><span></span> Módulo 2 · Flujo de Aprobaciones</div>
+            <h1>Flujo de Aprobaciones y Firmas</h1>
+            <p class="approvals__descripcion">
+                Gestiona el flujo estricto de aprobaciones: Elaboración → Revisión → Verificación → Validación.
+                Cada paso requiere firma híbrida (texto e imagen) y permite aprobar o rechazar con observaciones.
+            </p>
+            <div class="approvals__metadatos">
+                <div><span>Evento</span><strong>{{ approvalFlow?.eventName || 'Cargando...' }}</strong></div>
+                <div><span>Paso actual</span><strong>{{ (approvalFlow?.currentStep ?? 0) + 1 }} de 4</strong></div>
+                <div><span>Estado</span><strong>{{ getStatusText(currentStep?.status ?? 'pending') }}</strong></div>
+            </div>
+        </article>
+
+        <!-- Stepper visual -->
+        <nav class="approvals__stepper" aria-label="Progreso de aprobación">
+            @for (step of approvalFlow?.steps; track step.id; let index = $index) {
+            <div class="approvals__stepper-item" [class.approvals__stepper-item--active]="index === approvalFlow?.currentStep"
+                [class.approvals__stepper-item--completed]="step.status === 'approved'"
+                [class.approvals__stepper-item--rejected]="step.status === 'rejected'">
+                <div class="approvals__stepper-circle">
+                    @if (step.status === 'approved') {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 13l4 4L19 7" />
+                    </svg>
+                    } @else if (step.status === 'rejected') {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    } @else {
+                    <span>{{ index + 1 }}</span>
+                    }
+                </div>
+                <div class="approvals__stepper-info">
+                    <strong>{{ step.roleTitle }}</strong>
+                    <span>{{ step.roleDescription }}</span>
+                </div>
+                @if (index < ((approvalFlow?.steps?.length ?? 0) - 1)) {
+                <div class="approvals__stepper-line" [class.approvals__stepper-line--completed]="step.status === 'approved'"></div>
+                }
+            </div>
+            }
+        </nav>
+
+        <!-- Tarjeta del paso actual -->
+        @if (currentStep) {
+        <article class="approvals__card">
+            <header class="approvals__card-header">
+                <div>
+                    <h2>{{ currentStep.roleTitle }}</h2>
+                    <p>{{ currentStep.roleDescription }}</p>
+                </div>
+                <span class="approvals__status" [style.background-color]="getStatusColor(currentStep.status)">
+                    {{ getStatusText(currentStep.status) }}
+                </span>
+            </header>
+
+            <div class="approvals__card-body">
+                @if (currentStep.status === 'approved') {
+                <div class="approvals__info">
+                    <div class="approvals__info-item">
+                        <span>Aprobado por</span>
+                        <strong>{{ currentStep.approverName }}</strong>
+                    </div>
+                    <div class="approvals__info-item">
+                        <span>Fecha</span>
+                        <strong>{{ currentStep.date | date:'dd/MM/yyyy HH:mm' }}</strong>
+                    </div>
+                    @if (currentStep.signature) {
+                    <div class="approvals__info-item approvals__info-item--full">
+                        <span>Firma</span>
+                        <div class="approvals__signature">
+                            @if (currentStep.signature.text) {
+                            <p class="approvals__signature-text">{{ currentStep.signature.text }}</p>
+                            }
+                            @if (currentStep.signature.imageUrl) {
+                            <img [src]="currentStep.signature.imageUrl" alt="Firma" class="approvals__signature-image" />
+                            }
+                        </div>
+                    </div>
+                    }
+                    @if (currentStep.observations) {
+                    <div class="approvals__info-item approvals__info-item--full">
+                        <span>Observaciones</span>
+                        <p>{{ currentStep.observations }}</p>
+                    </div>
+                    }
+                </div>
+                } @else if (currentStep.status === 'rejected') {
+                <div class="approvals__info">
+                    <div class="approvals__info-item approvals__info-item--full">
+                        <span>Motivo de rechazo</span>
+                        <p class="approvals__rejection-reason">{{ currentStep.rejectionReason }}</p>
+                    </div>
+                    <div class="approvals__info-item">
+                        <span>Tipo de rechazo</span>
+                        <strong>{{ currentStep.rejectionType === 'return' ? 'Devolución' : 'Rechazo completo' }}</strong>
+                    </div>
+                </div>
+                } @else {
+                <p class="approvals__pending">
+                    Este paso está pendiente de aprobación. El responsable debe revisar y aprobar o rechazar este paso.
+                </p>
+                }
+            </div>
+
+            @if (currentStep.status === 'pending' || currentStep.status === 'in_progress') {
+            <footer class="approvals__card-footer">
+                <button type="button" class="approvals__btn approvals__btn--secondary" (click)="openRejectModal()">
+                    Rechazar
+                </button>
+                <button type="button" class="approvals__btn approvals__btn--primary" (click)="openSignatureModal()">
+                    Aprobar y Firmar
+                </button>
+            </footer>
+            }
+        </article>
+        }
+
+        <!-- Botón historial -->
+        <div class="approvals__actions">
+            <button type="button" class="approvals__btn approvals__btn--ghost" (click)="openHistoryModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Ver historial de aprobaciones
+            </button>
+        </div>
+    </section>
+
+    <!-- Modal de firma -->
+    @if (showSignatureModal) {
+    <div class="approvals__modal-fondo" (click)="closeSignatureModal()">
+        <div class="approvals__modal" (click)="$event.stopPropagation()">
+            <header class="approvals__modal-header">
+                <h2>Firma de Aprobación</h2>
+                <button type="button" class="approvals__modal-close" (click)="closeSignatureModal()">×</button>
+            </header>
+
+            <form [formGroup]="signatureForm" (ngSubmit)="submitApproval()" class="approvals__modal-body">
+                <div class="approvals__form-group">
+                    <label>Tipo de firma</label>
+                    <div class="approvals__radio-group">
+                        <label>
+                            <input type="radio" formControlName="signatureType" value="text" (change)="onSignatureTypeChange()" />
+                            Texto
+                        </label>
+                        <label>
+                            <input type="radio" formControlName="signatureType" value="image" (change)="onSignatureTypeChange()" />
+                            Imagen
+                        </label>
+                        <label>
+                            <input type="radio" formControlName="signatureType" value="both" (change)="onSignatureTypeChange()" />
+                            Ambas
+                        </label>
+                    </div>
+                </div>
+
+                @if (signatureForm.get('signatureType')?.value === 'text' || signatureForm.get('signatureType')?.value === 'both') {
+                <div class="approvals__form-group">
+                    <label for="signature-text">Firma (texto)</label>
+                    <input id="signature-text" type="text" formControlName="signatureText" placeholder="Escribe tu nombre completo" />
+                    @if (signatureForm.get('signatureText')?.invalid && signatureForm.get('signatureText')?.touched) {
+                    <small class="approvals__error">La firma es obligatoria</small>
+                    }
+                </div>
+                }
+
+                @if (signatureForm.get('signatureType')?.value === 'image' || signatureForm.get('signatureType')?.value === 'both') {
+                <div class="approvals__form-group">
+                    <label for="signature-image">Firma (imagen)</label>
+                    <input id="signature-image" type="file" accept="image/*" (change)="onImageSelected($event)" />
+                    @if (signatureForm.get('signatureImage')?.invalid && signatureForm.get('signatureImage')?.touched) {
+                    <small class="approvals__error">La imagen es obligatoria</small>
+                    }
+                    @if (signatureForm.get('signatureImage')?.value) {
+                    <img [src]="signatureForm.get('signatureImage')?.value" alt="Vista previa" class="approvals__image-preview" />
+                    }
+                </div>
+                }
+
+                <div class="approvals__form-group">
+                    <label for="observations">Observaciones (opcional)</label>
+                    <textarea id="observations" formControlName="observations" placeholder="Agrega observaciones sobre la aprobación..."></textarea>
+                </div>
+
+                <footer class="approvals__modal-footer">
+                    <button type="button" class="approvals__btn approvals__btn--secondary" (click)="closeSignatureModal()">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="approvals__btn approvals__btn--primary">
+                        Confirmar Aprobación
+                    </button>
+                </footer>
+            </form>
+        </div>
+    </div>
+    }
+
+    <!-- Modal de rechazo -->
+    @if (showRejectModal) {
+    <div class="approvals__modal-fondo" (click)="closeRejectModal()">
+        <div class="approvals__modal" (click)="$event.stopPropagation()">
+            <header class="approvals__modal-header">
+                <h2>Rechazar Paso</h2>
+                <button type="button" class="approvals__modal-close" (click)="closeRejectModal()">×</button>
+            </header>
+
+            <form [formGroup]="rejectForm" (ngSubmit)="submitRejection()" class="approvals__modal-body">
+                <div class="approvals__form-group">
+                    <label>Tipo de rechazo</label>
+                    <div class="approvals__radio-group">
+                        <label>
+                            <input type="radio" formControlName="rejectionType" value="return" />
+                            Devolver (volver al paso anterior)
+                        </label>
+                        <label>
+                            <input type="radio" formControlName="rejectionType" value="full" />
+                            Rechazo completo
+                        </label>
+                    </div>
+                </div>
+
+                <div class="approvals__form-group">
+                    <label for="reason">Motivo del rechazo</label>
+                    <textarea id="reason" formControlName="reason" placeholder="Explica el motivo del rechazo (mínimo 10 caracteres)"></textarea>
+                    @if (rejectForm.get('reason')?.invalid && rejectForm.get('reason')?.touched) {
+                    <small class="approvals__error">El motivo es obligatorio (mínimo 10 caracteres)</small>
+                    }
+                </div>
+
+                <footer class="approvals__modal-footer">
+                    <button type="button" class="approvals__btn approvals__btn--secondary" (click)="closeRejectModal()">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="approvals__btn approvals__btn--danger">
+                        Confirmar Rechazo
+                    </button>
+                </footer>
+            </form>
+        </div>
+    </div>
+    }
+
+    <!-- Modal de historial -->
+    @if (showHistoryModal) {
+    <div class="approvals__modal-fondo" (click)="closeHistoryModal()">
+        <div class="approvals__modal approvals__modal--large" (click)="$event.stopPropagation()">
+            <header class="approvals__modal-header">
+                <h2>Historial de Aprobaciones</h2>
+                <button type="button" class="approvals__modal-close" (click)="closeHistoryModal()">×</button>
+            </header>
+
+            <div class="approvals__modal-body">
+                <div class="approvals__history">
+                    @for (step of approvalFlow?.steps; track step.id) {
+                    <div class="approvals__history-item">
+                        <div class="approvals__history-header">
+                            <strong>{{ step.roleTitle }}</strong>
+                            <span class="approvals__status" [style.background-color]="getStatusColor(step.status)">
+                                {{ getStatusText(step.status) }}
+                            </span>
+                        </div>
+                        <div class="approvals__history-body">
+                            @if (step.approverName) {
+                            <p><strong>Aprobado por:</strong> {{ step.approverName }}</p>
+                            }
+                            @if (step.date) {
+                            <p><strong>Fecha:</strong> {{ step.date | date:'dd/MM/yyyy' }}</p>
+                            }
+                            @if (step.observations) {
+                            <p><strong>Observaciones:</strong> {{ step.observations }}</p>
+                            }
+                            @if (step.rejectionReason) {
+                            <p><strong>Motivo de rechazo:</strong> {{ step.rejectionReason }}</p>
+                            }
+                        </div>
+                    </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    }
+</main>
