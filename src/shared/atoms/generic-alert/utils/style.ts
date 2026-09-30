@@ -5,6 +5,7 @@ export type GenericAlertResponse = {
   alertTitle: string;
   alertMessage: string;
 };
+
 export const STYLES: Record<GenericAlertType, { box: string; bar: string; icon: string; path: string }> = {
   success: {
     box: 'bg-green-50 border-green-200 text-green-900',

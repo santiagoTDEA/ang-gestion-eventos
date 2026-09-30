@@ -8,6 +8,7 @@ import { UsersComponent } from './features/users/users.component';
 import { PeoplesComponent } from './features/peoples/peoples.component';
 import { StatusComponent } from './features/status/status.component';
 import { EventsComponent } from './features/events/events.component';
+import { ApprovalsComponent } from './features/approvals/approvals.component';
 
 export const routes: Routes = [
     {
@@ -23,6 +24,11 @@ export const routes: Routes = [
     {
         path:'eventos',
         component: EventsComponent,
+        canActivate: [validateSessionGuard]
+    },
+    {
+        path:'aprobaciones',
+        component: ApprovalsComponent,
         canActivate: [validateSessionGuard]
     },
     {
