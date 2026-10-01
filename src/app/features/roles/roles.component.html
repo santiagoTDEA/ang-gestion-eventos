@@ -180,7 +180,7 @@
             <span class="roles-form-card__required">* Campos obligatorios</span>
         </div>
 
-        <app-generic-form [disabled]="roleForm.invalid || loading" (formSubmit)=" updateForm? updateRoles() : onSubmit()">
+        <app-generic-form [disabled]="loading" (formSubmit)=" updateForm? updateRoles() : onSubmit()">
 
             <div [formGroup]="roleForm">
 

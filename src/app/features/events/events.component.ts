@@ -496,43 +496,60 @@ export class EventsComponent implements OnInit {
     return this.eventForm.valid;
   }
 
+  /** Asigna a cada bloque de aprobación el id del rol que le corresponde según approvalsMeta. */
+  private assignApprovalRoles(): string[] {
+    const missing: string[] = [];
+    this.approvalsMeta.forEach((meta, index) => {
+      const role = this.viewRoles.find(r => this.normalize(r.name) === this.normalize(meta.roleName));
+      if (!role) {
+        missing.push(meta.roleName);
+        return;
+      }
+      this.approvalsArray.at(index).get('role')?.setValue(role.id);
+    });
+    return missing;
+  }
+
+  private showAlert(type: AlertType, title: string, message: string): void {
+    this.alertaResponse = { alertVisible: true, alertType: type, alertTitle: title, alertMessage: message };
+  }
+
+  /** Limpia todo el formulario (sin disparar el autoguardado) y vuelve al primer paso. */
+  private resetForm(): void {
+    this.modulesArray.clear({ emitEvent: false });
+    while (this.objectivesArray.length > 3) {
+      this.objectivesArray.removeAt(this.objectivesArray.length - 1, { emitEvent: false });
+    }
+
+    this.eventForm.reset({
+      generalidades: { selectedDays: [] },
+      contenido: { objectives: ['', '', ''] }
+    }, { emitEvent: false });
+
+    this.activeStep = 0;
+    this.draftSaved = false;
+  }
+
   sendForReview(): void {
-    const elaboracionRole = this.asignarRoles("Elaboración");
-    if (!elaboracionRole) {
-      this.alertaResponse = {
-        alertVisible: true,
-        alertType: 'error',
-        alertTitle: 'Formulario incompleto',
-        alertMessage: 'No se encontró el rol de Elaboración.'
-      };
+    const missingRoles = this.assignApprovalRoles();
+    if (missingRoles.length > 0) {
+      this.showAlert('error', 'Formulario incompleto', `No se encontraron los roles: ${missingRoles.join(', ')}.`);
       return;
     }
-    this.approvalsArray.at(0).get('role')?.setValue(elaboracionRole.id);
-
 
     if (this.eventForm.invalid) {
       this.eventForm.markAllAsTouched();
-      this.alertaResponse = {
-        alertVisible: true,
-        alertType: 'error',
-        alertTitle: 'Formulario incompleto',
-        alertMessage: 'Completa todos los campos obligatorios de los 5 pasos antes de enviar.'
-      };
+      this.showAlert('error', 'Formulario incompleto', 'Completa todos los campos obligatorios de los 5 pasos antes de enviar.');
       return;
     }
 
-    console.log(this.eventForm.getRawValue());
+    console.log('Formulario de evento completo:', this.eventForm.getRawValue());
 
     this.reviewSent = true;
-
     // Criterio 3: al enviar exitosamente se elimina el borrador guardado.
     localStorage.removeItem(DRAFT_STORAGE_KEY);
-    this.alertaResponse = {
-      alertVisible: true,
-      alertType: 'success',
-      alertTitle: 'Formulario enviado',
-      alertMessage: 'El formato fue enviado para revisión correctamente.'
-    };
+    this.resetForm();
+    this.showAlert('success', 'Formulario enviado', 'El formato fue enviado para revisión correctamente.');
   }
 
   goBack(): void {

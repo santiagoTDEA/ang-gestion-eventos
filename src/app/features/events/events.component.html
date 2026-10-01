@@ -52,7 +52,7 @@
         <!-- Un único app-generic-form envuelve todo el asistente. Los botones "Siguiente"
              son type="button" (no disparan el submit); solo el botón final de Aprobaciones
              es type="submit" y dispara (formSubmit)="sendForReview()". -->
-        <app-generic-form [disabled]="eventForm.invalid || loading" (formSubmit)="sendForReview()">
+        <app-generic-form [disabled]="loading" (formSubmit)="sendForReview()">
 
             <!-- ===================== PASO 0: GENERALIDADES ===================== -->
             @if (activeStep === 0) {
@@ -463,20 +463,11 @@
                             (click)="saveDraft()">Guardar borrador</button>
                         <button type="button" class="generalidades__boton generalidades__boton--secundario"
                             (click)="togglePreview()">Vista previa</button>
-                        <app-generic-button [ngClass]="{
-                                    'aprobaciones-formulario__enviar--disabled': eventForm.invalid,
-                                    'aprobaciones-formulario__enviar--enabled': !eventForm.invalid
-                                }" label="{{ reviewSent ? 'Enviado' : 'Enviar para revisión →' }}" type="submit"
-                            [disabled]="eventForm.invalid" customClass="aprobaciones-formulario__enviar">
+                        <app-generic-button label="{{ reviewSent ? 'Enviado' : 'Enviar para revisión →' }}" type="submit"
+                            [disabled]="loading" customClass="aprobaciones-formulario__enviar">
                         </app-generic-button>
                     </div>
                 </footer>
-
-                @if (eventForm.invalid && !reviewSent) {
-                <p class="generalidades__confirmacion">
-                    Completa todos los campos obligatorios de los 5 pasos para habilitar el envío.
-                </p>
-                }
             </div>
 
             } @else {
@@ -547,8 +538,7 @@
                             </div>
                             <div>
                                 <strong>Modalidad</strong>
-                                <span>{{ generalidadesGroup.value.length ? generalidadesGroup.value.join(', ') : '—'
-                                    }}</span>
+                                <span>{{ selectedModality || '—' }}</span>
                             </div>
                             <div>
                                 <strong>Fechas</strong>

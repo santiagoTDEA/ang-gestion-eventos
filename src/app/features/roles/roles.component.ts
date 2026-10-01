@@ -103,8 +103,15 @@ export class RolesComponent {
 
   }
 
+  isFormValid(): boolean {
+    const { name, description, modulesFull } = this.roleForm.controls;
+    if (name.invalid || description.invalid) return false;
+    if (modulesFull.value) return true;
+    return this.accesos.valid;
+  }
+
   onSubmit(): void {
-    if (this.roleForm.invalid) {
+    if (!this.isFormValid()) {
       this.roleForm.markAllAsTouched();
       return;
     }
@@ -163,11 +170,11 @@ export class RolesComponent {
       return;
     }
 
-    if (this.roleForm.invalid) {
+    if (!this.isFormValid()) {
       this.roleForm.markAllAsTouched();
       return;
     }
-     const validteExist = this.verificarQueExistanAccesos(this.buildAccesosPayload(), this.roleForm.value.permissionsFull);
+    const validteExist = this.verificarQueExistanAccesos(this.buildAccesosPayload(), this.roleForm.value.permissionsFull);
     if (!validteExist) {
       this.alertaResponse = {
         alertVisible: true,
