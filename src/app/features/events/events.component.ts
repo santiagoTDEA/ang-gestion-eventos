@@ -25,9 +25,11 @@ import { ReturnRole } from '../roles/interfaces/roles.interfaces';
 import { Person } from '../peoples/interfaces/people.interfaces';
 import { PeoplesService } from '../peoples/services/peoples.service';
 import { DOCUMENT } from '@angular/common';
-import { ValidateRenderingService } from '../inicio/services/validate-rendering.service';
+import { NivelAcceso, ValidateRenderingService } from '../inicio/services/validate-rendering.service';
 import { JwtService } from '../../core/services/jwt.service';
 import { Role } from '../inicio/interfaces/inicio.interfaces';
+import { EventsService } from './services/events.service';
+import { Event, ReturnEvent } from './interfaces/events.interfaces';
 
 const DRAFT_STORAGE_KEY = 'eventDraft';
 
@@ -104,6 +106,7 @@ export class EventsComponent implements OnInit {
   private readonly peoplesService: PeoplesService = inject(PeoplesService);
   private readonly validateRenderingService: ValidateRenderingService = inject(ValidateRenderingService);
   private readonly jwtServices: JwtService = inject(JwtService);
+  private readonly eventsService: EventsService = inject(EventsService);
 
 
   persons: { value: string; label: string }[] = [];
@@ -114,6 +117,7 @@ export class EventsComponent implements OnInit {
   reviewSent = false;
   loading = false;
   impirmir: boolean = false;
+  validateRender: NivelAcceso = "write"
   readonly eventTypes = ['Curso', 'Diplomado', 'Seminario', '¿Otro?'];
   readonly eventTypeOptions = this.eventTypes.map(type => ({ value: type, label: type }));
   readonly weekDays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -145,6 +149,9 @@ export class EventsComponent implements OnInit {
     { number: '05', label: 'Aprobaciones', description: 'Revisa y envía el evento.' }
   ];
   viewRoles: ReturnRole[] = []
+  events: ReturnEvent[] = [];
+  showTable = false;
+  editingId: number | null = null;
   alertaResponse: {
     alertVisible: boolean;
     alertType: AlertType;
@@ -209,10 +216,14 @@ export class EventsComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.validarModulos();
     this.loadDraft();
     this.getFaculties();
     this.getRoles();
     this.getPersons();
+    if (this.canViewEvents) {
+      this.getEvents();
+    }
   }
 
   // --- Getters de acceso rápido a los grupos/arreglos del formulario ---
@@ -298,7 +309,7 @@ export class EventsComponent implements OnInit {
     if (!token) return;
     const Roles = this.jwtServices.cargarDesdeToken(token) as Role | null;
 
-    this.validateRenderingService.devolverAccesosPermitidos("eventos", Roles);
+    this.validateRender = this.validateRenderingService.devolverAccesosPermitidos("eventos", Roles);
   }
 
   getPersons(): void {
@@ -331,6 +342,129 @@ export class EventsComponent implements OnInit {
     });
   }
 
+
+  get canEditEvents(): boolean {
+    return this.validateRender === 'all' || this.validateRender === 'update';
+  }
+
+  get canViewEvents(): boolean {
+    return this.validateRender === 'view' || this.validateRender === 'all' || this.validateRender === 'update';
+  }
+
+  getEvents(): void {
+    this.eventsService.getEvents().subscribe({
+      next: (events: ReturnEvent[]) => {
+        this.events = events;
+      },
+      error: (err) => console.error(err),
+    });
+  }
+
+  toggleView(): void {
+    this.showTable = !this.showTable;
+    if (this.showTable) {
+      if (this.editingId !== null) {
+        this.finishEdit();
+      }
+      this.getEvents();
+    }
+  }
+
+  /** Lleva la información de la fila seleccionada al formulario y lo muestra en modo edición. */
+  startEdit(event: ReturnEvent): void {
+    if (!this.canEditEvents) {
+      return;
+    }
+
+    if (this.editingId === null) {
+      this.saveDraft();
+    }
+
+    const objectives = event.objectives.length >= 3
+      ? event.objectives
+      : [...event.objectives, ...Array(3 - event.objectives.length).fill('')];
+    this.resizeArray(this.objectivesArray, objectives.length, () => this.createObjectiveControl());
+    this.resizeArray(this.modulesArray, event.modules.length, () => this.createModuleControl());
+
+    const approvals = this.approvalsMeta.map((meta, index) => {
+      const approval = event.approvals.find(item => this.normalize(item.role?.name) === this.normalize(meta.roleName))
+        ?? event.approvals[index];
+      return {
+        name: approval ? String(approval.person.id) : '',
+        role: approval?.role.id ?? '',
+        date: approval?.date ?? '',
+        signature: approval?.signature ?? ''
+      };
+    });
+
+    this.eventForm.reset({}, { emitEvent: false });
+    this.eventForm.patchValue({
+      generalidades: {
+        eventType: event.eventType,
+        otherEventType: event.otherEventType ?? '',
+        name: event.name,
+        faculty: event.faculty.id,
+        academicProgram: event.academicProgram,
+        teacherProfile: event.teacherProfile,
+        duration: event.duration,
+        startTime: event.startTime.slice(0, 5),
+        endTime: event.endTime.slice(0, 5),
+        selectedDays: event.selectedDays,
+        selectedModality: event.modality,
+        startDate: event.startDate,
+        endDate: event.endDate,
+        minimumCapacity: event.minimumCapacity,
+        maximumCapacity: event.maximumCapacity,
+        participantProfile: event.participantProfile
+      },
+      contenido: {
+        presentation: event.presentation,
+        scope: event.scope,
+        generalObjective: event.generalObjective,
+        objectives,
+        competencies: event.competencies,
+        modules: event.modules
+      },
+      logistica: event.logistics,
+      financiera: {
+        costPerParticipant: event.costPerParticipant,
+        confirmedMinimumCapacity: event.confirmedMinimumCapacity,
+        financialObservations: event.financialObservations
+      },
+      aprobaciones: approvals
+    }, { emitEvent: false });
+
+    this.updateOtherEventTypeValidation(this.eventTypeValue, this.generalidadesGroup.get('otherEventType')!);
+    this.eventForm.markAsPristine();
+    this.eventForm.markAsUntouched();
+
+    this.editingId = event.id;
+    this.activeStep = 0;
+    this.reviewSent = false;
+    this.showTable = false;
+  }
+
+  /** Termina la edición y restaura el borrador de creación que hubiera guardado. */
+  finishEdit(): void {
+    this.editingId = null;
+    this.resetForm();
+    this.loadDraft();
+  }
+
+  cancelEdit(): void {
+    this.finishEdit();
+    this.showTable = true;
+    this.getEvents();
+  }
+
+  private resizeArray(array: FormArray, length: number, factory: () => FormControl): void {
+    while (array.length < length) {
+      array.push(factory(), { emitEvent: false });
+    }
+    while (array.length > length) {
+      array.removeAt(array.length - 1, { emitEvent: false });
+    }
+  }
 
   asignarRoles(name: string): ReturnRole | undefined {
     return this.viewRoles.find(role => role.name === name);
@@ -399,6 +533,9 @@ export class EventsComponent implements OnInit {
   }
 
   saveDraft(): void {
+    if (this.editingId !== null) {
+      return;
+    }
     localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(this.eventForm.getRawValue()));
     this.draftSaved = true;
   }
@@ -514,7 +651,6 @@ export class EventsComponent implements OnInit {
     this.alertaResponse = { alertVisible: true, alertType: type, alertTitle: title, alertMessage: message };
   }
 
-  /** Limpia todo el formulario (sin disparar el autoguardado) y vuelve al primer paso. */
   private resetForm(): void {
     this.modulesArray.clear({ emitEvent: false });
     while (this.objectivesArray.length > 3) {
@@ -543,13 +679,87 @@ export class EventsComponent implements OnInit {
       return;
     }
 
-    console.log('Formulario de evento completo:', this.eventForm.getRawValue());
+    this.loading = true;
+    const payload = this.buildEventPayload();
 
-    this.reviewSent = true;
-    // Criterio 3: al enviar exitosamente se elimina el borrador guardado.
-    localStorage.removeItem(DRAFT_STORAGE_KEY);
-    this.resetForm();
-    this.showAlert('success', 'Formulario enviado', 'El formato fue enviado para revisión correctamente.');
+    if (this.editingId !== null) {
+      this.eventsService.updateEvent(this.editingId, payload).subscribe({
+        next: () => {
+          this.loading = false;
+          this.finishEdit();
+          this.showTable = true;
+          this.getEvents();
+          this.showAlert('success', 'Evento actualizado', 'El evento fue actualizado correctamente.');
+        },
+        error: (err) => this.handleSendError(err, 'No se pudo actualizar el evento')
+      });
+      return;
+    }
+
+    this.eventsService.postCreateEvent(payload).subscribe({
+      next: () => {
+        this.loading = false;
+        this.reviewSent = true;
+        if (this.canViewEvents) {
+          this.getEvents();
+        }
+        // Criterio 3: al enviar exitosamente se elimina el borrador guardado.
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+        this.resetForm();
+        this.showAlert('success', 'Formulario enviado', 'El formato fue enviado para revisión correctamente.');
+      },
+      error: (err) => this.handleSendError(err, 'No se pudo enviar el formulario')
+    });
+  }
+
+  private handleSendError(err: { error?: { message?: string | string[] } }, title: string): void {
+    this.loading = false;
+    const message = err?.error?.message;
+    this.showAlert(
+      'error',
+      title,
+      Array.isArray(message) ? message.join(' ') : (message ?? 'Ocurrió un error al procesar el evento.')
+    );
+  }
+
+  /** Transforma el valor del formulario al contrato esperado por el backend (POST /events). */
+  private buildEventPayload(): Event {
+    const { generalidades, contenido, logistica, financiera, aprobaciones } = this.eventForm.getRawValue();
+
+    return {
+      eventType: generalidades.eventType,
+      otherEventType: generalidades.eventType === '¿Otro?' ? generalidades.otherEventType : undefined,
+      name: generalidades.name,
+      facultyId: Number(generalidades.faculty),
+      academicProgram: generalidades.academicProgram,
+      teacherProfile: generalidades.teacherProfile,
+      duration: Number(generalidades.duration),
+      startTime: generalidades.startTime,
+      endTime: generalidades.endTime,
+      selectedDays: generalidades.selectedDays,
+      modality: generalidades.selectedModality,
+      startDate: generalidades.startDate,
+      endDate: generalidades.endDate,
+      minimumCapacity: Number(generalidades.minimumCapacity),
+      maximumCapacity: Number(generalidades.maximumCapacity),
+      participantProfile: generalidades.participantProfile,
+      presentation: contenido.presentation,
+      scope: contenido.scope,
+      generalObjective: contenido.generalObjective,
+      objectives: contenido.objectives,
+      competencies: contenido.competencies,
+      modules: contenido.modules,
+      logistics: logistica,
+      costPerParticipant: Number(financiera.costPerParticipant),
+      confirmedMinimumCapacity: Number(financiera.confirmedMinimumCapacity),
+      financialObservations: financiera.financialObservations,
+      approvals: aprobaciones.map((approval: { name: string; role: string; date: string; signature: string }) => ({
+        personId: Number(approval.name),
+        roleId: approval.role,
+        date: approval.date,
+        signature: approval.signature
+      }))
+    };
   }
 
   goBack(): void {

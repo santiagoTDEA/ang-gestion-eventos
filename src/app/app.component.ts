@@ -29,6 +29,7 @@ export class AppComponent  implements OnInit {
         console.log(event.urlAfterRedirects);
         this.showTopMenu =! ["/","/inicio"].includes(event.urlAfterRedirects);
         this.routerUrl = event.urlAfterRedirects;
+        console.log(this.routerUrl)
       });
 
     this.mediatorAlertService.getAlert().subscribe(alert => {

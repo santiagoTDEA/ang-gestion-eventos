@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Role } from '../interfaces/inicio.interfaces';
 import { ModuleOption } from '../../roles/interfaces/roles.interfaces';
-type NivelAcceso = 'all' | 'view' | 'write' | 'update' | 'none';
+export type NivelAcceso = 'all' | 'view' | 'write' | 'update' | 'none';
 
 @Injectable({
   providedIn: 'root'
