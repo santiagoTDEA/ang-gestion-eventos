@@ -1,0 +1,111 @@
+<div class="contenido-formulario">
+
+    <div class="contenido-formulario__campo">
+        <label for="presentation">Introducción / Presentación <span>*</span></label>
+        <textarea id="presentation" [formControl]="asControl(form().controls['presentation'])"
+            placeholder="Antecedentes, justificación y necesidad del evento"></textarea>
+        @if (form().controls['presentation'].invalid &&
+        form().controls['presentation'].touched) {
+        <small class="eventos__error">Este campo es obligatorio.</small>
+        }
+    </div>
+
+    <div class="contenido-formulario__campo">
+        <label for="scope">Alcance <span>*</span></label>
+        <textarea id="scope" [formControl]="asControl(form().controls['scope'])"
+            placeholder="Qué se espera al culminar el evento, impactos o aportes"></textarea>
+        @if (form().controls['scope'].invalid &&
+        form().controls['scope'].touched) {
+        <small class="eventos__error">Este campo es obligatorio.</small>
+        }
+    </div>
+
+    <div class="contenido-formulario__campo">
+        <label for="general-objective">Objetivo general <span>*</span></label>
+        <textarea id="general-objective"
+            [formControl]="asControl(form().controls['generalObjective'])"
+            placeholder="Propósito global del evento"></textarea>
+        @if (form().controls['generalObjective'].invalid &&
+        form().controls['generalObjective'].touched) {
+        <small class="eventos__error">Este campo es obligatorio.</small>
+        }
+    </div>
+
+    <div class="contenido-formulario__campo contenido-formulario__campo--objetivos"
+        [class.contenido-formulario__campo--error]="objectivesArray.hasError('minArrayLength') && objectivesArray.touched">
+        <div class="contenido-formulario__etiqueta">
+            <label>Objetivos específicos <span>*</span></label>
+            <small>(entre 3 y 4, coherentes con el objetivo general)</small>
+        </div>
+
+        @for (objective of objectivesArray.controls; track $index) {
+        <div class="contenido-formulario__objetivo">
+            <span>{{ $index + 1 }}</span>
+            <textarea [formControl]="asControl(objective)"
+                placeholder="Objetivo específico {{ $index + 1 }} (acción concreta y medible)"></textarea>
+            <button type="button" (click)="removeObjective($index)"
+                aria-label="Eliminar objetivo">×</button>
+            @if (objective.invalid && objective.touched) {
+            <small class="eventos__error">Este objetivo es obligatorio.</small>
+            }
+        </div>
+        }
+
+        @if (objectivesArray.hasError('minArrayLength') && objectivesArray.touched) {
+        <small class="eventos__error">Registra al menos tres objetivos específicos.</small>
+        }
+
+        <button type="button" class="contenido-formulario__agregar" (click)="addObjective()">+ Agregar
+            objetivo</button>
+        <small class="contenido-formulario__ayuda">
+            Mínimo 3 objetivos específicos (llevas {{ objectivesArray.length }}).
+        </small>
+    </div>
+
+    <div class="contenido-formulario__campo">
+        <label for="competencies">Aspiración de competencias <span>*</span></label>
+        <textarea id="competencies" [formControl]="asControl(form().controls['competencies'])"
+            placeholder="Aprendizajes que se espera desarrollen los participantes"></textarea>
+        @if (form().controls['competencies'].invalid &&
+        form().controls['competencies'].touched) {
+        <small class="eventos__error">Este campo es obligatorio.</small>
+        }
+    </div>
+
+    <div class="contenido-formulario__campo contenido-formulario__campo--modulos"
+        [class.contenido-formulario__campo--error]="modulesArray.invalid && modulesArray.touched">
+        <label>Contenidos por módulos o descripción temática <span>*</span></label>
+        <small>Agrega al menos un módulo para describir el contenido temático.</small>
+
+        @for (module of modulesArray.controls; track $index) {
+        <div class="contenido-formulario__modulo">
+            <input [formControl]="asControl(module)" type="text"
+                placeholder="Nombre o descripción del módulo" />
+            <button type="button" (click)="removeModule($index)" aria-label="Eliminar módulo">×</button>
+            @if (module.invalid && module.touched) {
+            <small class="eventos__error">Este campo es obligatorio.</small>
+            }
+        </div>
+        }
+
+        @if (modulesArray.hasError('minArrayLength') && modulesArray.touched) {
+        <small class="eventos__error">Agrega al menos un módulo.</small>
+        }
+
+        <button type="button" class="contenido-formulario__agregar" (click)="addModule()">+ Agregar
+            módulo</button>
+    </div>
+
+    <footer class="contenido-formulario__acciones">
+        <button type="button" class="generalidades__boton generalidades__boton--secundario"
+            (click)="back.emit()">← Atrás</button>
+        <div>
+            <button type="button" class="generalidades__boton generalidades__boton--secundario"
+                (click)="saveDraft.emit()">Guardar borrador</button>
+            <button type="button" class="generalidades__boton generalidades__boton--secundario"
+                (click)="preview.emit()">Vista previa</button>
+            <button type="button" class="generalidades__boton generalidades__boton--principal"
+                (click)="next.emit()">Siguiente →</button>
+        </div>
+    </footer>
+</div>

@@ -1,0 +1,429 @@
+<main class="eventos">
+    <section class="eventos__contenido">
+
+        @if (alertaResponse.alertVisible) {
+        <app-generic-alert [type]="alertaResponse.alertType" (closed)="alertaResponse.alertVisible = false">
+            <strong class="block font-semibold">{{ alertaResponse.alertTitle }}</strong>
+            <span>{{ alertaResponse.alertMessage }}</span>
+        </app-generic-alert>
+        }
+
+        <button type="button" class="eventos__volver" (click)="goBack()" aria-label="Volver al inicio">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M15.75 19.5 8.25 12l7.5-7.5" />
+            </svg>
+            Volver al inicio
+        </button>
+
+        <article class="eventos__resumen">
+            <div class="eventos__insignia"><span></span> FO-EPS-03 · Versión 04</div>
+            <h1>Diseño o desarrollo de un evento de educación continua</h1>
+            <p class="eventos__descripcion">
+                Diligencia el formato institucional de principio a fin: generalidades, contenido, logística,
+                información financiera y firmas de aprobación, todo en un solo flujo digital.
+            </p>
+
+            <div class="eventos__metadatos">
+                <div><span>Código</span><strong>FO-EPS-03</strong></div>
+                <div><span>Fecha de aprobación</span><strong>04 dic. 2025</strong></div>
+                <div><span>Estado del documento</span><strong>Copia controlada</strong></div>
+            </div>
+        </article>
+
+        <div class="eventos__estadisticas">
+            <article><strong>0%</strong><span>Progreso del formulario</span></article>
+            <article><strong>{{ objectivesArray.length }}</strong><span>Objetivos específicos</span></article>
+            <article><strong>{{ modulesArray.length }}</strong><span>Módulos de contenido</span></article>
+            <article>
+                <strong>{{ reviewSent ? 'Enviado' : 'Borrador' }}</strong>
+                <span>{{ reviewSent ? '' : 'Sin enviar' }}</span>
+            </article>
+        </div>
+
+        <ng-template #formularioTpl>
+            @if (editingId !== null) {
+            <div
+                class="flex items-center justify-between gap-2 mb-4 rounded-md border border-[#dfebe2] bg-[#f0f8f2] px-4 py-3">
+                <strong class="text-sm text-[#063e25]">Editando evento #{{ editingId }}</strong>
+                <button type="button" (click)="cancelEdit()"
+                    class="px-3 py-1.5 rounded-md border border-gray-300 bg-white text-sm text-gray-600 hover:bg-gray-50 cursor-pointer">
+                    Cancelar edición
+                </button>
+            </div>
+            @if (editingReturnedObservation; as returned) {
+            <div class="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900" role="alert">
+                <strong>Devuelto por {{ returned.stepRole }}</strong>
+                <p class="mt-1 whitespace-pre-line">{{ returned.observation }}</p>
+                <p class="mt-2 text-xs text-red-700">
+                    Corrige el evento y guarda los cambios; luego reenvíalo desde el módulo de Aprobaciones.
+                </p>
+            </div>
+            }
+            }
+            <nav class="eventos__pasos" aria-label="Etapas del formulario">
+                @for (step of steps; track step.number; let index = $index) {
+                <button type="button" [class.eventos__paso--activo]="activeStep === index" (click)="selectStep(index)">
+                    <span>{{ step.number }}</span>
+                    <strong>{{ step.label }}</strong>
+                </button>
+                }
+            </nav>
+
+
+            <app-generic-form [disabled]="loading" (formSubmit)="sendForReview()">
+
+                @switch (activeStep) {
+                @case (0) {
+                <app-event-generalidades [form]="generalidadesGroup" [faculties]="facultyOptions"
+                    [eventTypeOptions]="eventTypeOptions" [weekDays]="weekDays" [modalities]="modalities"
+                    [draftSaved]="draftSaved" [printing]="impirmir" (saveDraft)="saveDraft()"
+                    (preview)="togglePreview()" (next)="nextStep()" />
+                }
+                @case (1) {
+                <app-event-contenido [form]="contenidoGroup" (back)="previousStep()" (saveDraft)="saveDraft()"
+                    (preview)="togglePreview()" (next)="nextStep()" />
+                }
+                @case (2) {
+                <app-event-logistica [form]="logisticaGroup" [aspects]="logisticsOptions" (back)="previousStep()"
+                    (saveDraft)="saveDraft()" (preview)="togglePreview()" (next)="nextStep()" />
+                }
+                @case (3) {
+                <app-event-financiera [form]="financieraGroup" (back)="previousStep()" (saveDraft)="saveDraft()"
+                    (preview)="togglePreview()" (next)="nextStep()" />
+                }
+                @case (4) {
+                <app-event-aprobaciones [form]="approvalsArray" [meta]="approvalsMeta" [options]="approvalOptions"
+                    [editing]="editingId !== null" [reviewSent]="reviewSent" [loading]="loading"
+                    (back)="previousStep()" (saveDraft)="saveDraft()" (preview)="togglePreview()" />
+                }
+                @default {
+                <section class="eventos__etapa">
+                    <div>
+                        <span class="eventos__etapa-numero">{{ steps[activeStep].number }}</span>
+                        <h2>{{ steps[activeStep].label }}</h2>
+                    </div>
+                    <p>{{ steps[activeStep].description }}</p>
+                </section>
+                }
+                }
+
+            </app-generic-form>
+        </ng-template>
+
+        <ng-template #sinAccesoTpl>
+            <article class="eventos__resumen" role="alert">
+                <h2>Sin acceso al módulo de eventos</h2>
+                <p class="eventos__descripcion">
+                    Tu rol no tiene permisos para este módulo. Si crees que es un error, contacta al administrador.
+                </p>
+            </article>
+        </ng-template>
+
+        <ng-template #soloEdicionTpl>
+            @if (editingId !== null) {
+            <ng-container *ngTemplateOutlet="formularioTpl"></ng-container>
+            } @else {
+            <ng-container *ngTemplateOutlet="tablaTpl"></ng-container>
+            }
+        </ng-template>
+
+        <ng-template #tablaTpl>
+            <section class="eventos__tabla">
+                <h3 class="text-lg font-bold text-[#2f7d3f] mb-3">Eventos registrados</h3>
+
+                <div class="hidden md:block overflow-x-auto rounded-md border border-gray-200">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-[#e7edfb] text-gray-700">
+                            <tr>
+                                <th class="px-3 py-2 font-medium">Nombre</th>
+                                <th class="px-3 py-2 font-medium">Tipo</th>
+                                <th class="px-3 py-2 font-medium">Facultad</th>
+                                <th class="px-3 py-2 font-medium">Modalidad</th>
+                                <th class="px-3 py-2 font-medium">Fechas</th>
+                                <th class="px-3 py-2 font-medium">Cupos</th>
+                                <th class="px-3 py-2 font-medium">Costo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (item of events; track item.id) {
+                            <tr class="border-t border-gray-200 hover:bg-gray-50" [class.cursor-pointer]="canEditEvents"
+                                [attr.role]="canEditEvents ? 'button' : null" [attr.tabindex]="canEditEvents ? 0 : null"
+                                (click)="startEdit(item)" (keydown.enter)="startEdit(item)">
+                                <td class="px-3 py-2">{{ item.name }}</td>
+                                <td class="px-3 py-2">{{ item.eventType === '¿Otro?' ? item.otherEventType :
+                                    item.eventType }}</td>
+                                <td class="px-3 py-2">{{ item.faculty.name }}</td>
+                                <td class="px-3 py-2">{{ item.modality }}</td>
+                                <td class="px-3 py-2">{{ item.startDate | date:'dd/MM/yyyy' }} - {{ item.endDate |
+                                    date:'dd/MM/yyyy' }}</td>
+                                <td class="px-3 py-2">{{ item.minimumCapacity }} - {{ item.maximumCapacity }}</td>
+                                <td class="px-3 py-2">{{ item.costPerParticipant |
+                                    currency:'COP':'symbol-narrow':'1.0-0' }}</td>
+                            </tr>
+                            }
+
+                            @if (events.length === 0) {
+                            <tr>
+                                <td colspan="7" class="px-3 py-6 text-center text-gray-400">
+                                    No hay eventos registrados
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="md:hidden space-y-3">
+                    @for (item of events; track item.id) {
+                    <div class="rounded-md border border-gray-200 p-4" [class.cursor-pointer]="canEditEvents"
+                        [attr.role]="canEditEvents ? 'button' : null" [attr.tabindex]="canEditEvents ? 0 : null"
+                        (click)="startEdit(item)" (keydown.enter)="startEdit(item)">
+                        <div class="flex items-start justify-between gap-2">
+                            <h4 class="font-medium text-gray-900 text-base">{{ item.name }}</h4>
+                            <span
+                                class="shrink-0 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                                {{ item.modality }}
+                            </span>
+                        </div>
+
+                        <p class="mt-1 text-sm text-gray-500">
+                            {{ item.eventType === '¿Otro?' ? item.otherEventType : item.eventType }} · {{
+                            item.faculty.name }}
+                        </p>
+
+                        <div class="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+                            <div>
+                                <span class="text-gray-400 block">Fechas</span>
+                                <span class="text-gray-600 block">{{ item.startDate | date:'dd/MM/yyyy' }} - {{
+                                    item.endDate | date:'dd/MM/yyyy' }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400 block">Cupos</span>
+                                <span class="text-gray-600">{{ item.minimumCapacity }} - {{ item.maximumCapacity
+                                    }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400 block">Costo</span>
+                                <span class="text-gray-600">{{ item.costPerParticipant |
+                                    currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400 block">Duración</span>
+                                <span class="text-gray-600">{{ item.duration }} horas</span>
+                            </div>
+                        </div>
+                    </div>
+                    }
+
+                    @if (events.length === 0) {
+                    <div class="rounded-md border border-gray-200 px-3 py-6 text-center text-gray-400">
+                        No hay eventos registrados
+                    </div>
+                    }
+                </div>
+            </section>
+        </ng-template>
+
+        <ng-template #todoTpl>
+            <div class="flex justify-end mb-4">
+                <button type="button" (click)="toggleView()" class="px-4 py-2 rounded-md bg-[#1c4a30] hover:bg-[#163c27]
+                           text-white text-sm font-medium transition-colors duration-200 cursor-pointer">
+                    {{ showTable ? 'Ver formulario' : 'Ver eventos registrados' }}
+                </button>
+            </div>
+
+            @if (showTable) {
+            <ng-container *ngTemplateOutlet="tablaTpl"></ng-container>
+            } @else {
+            <ng-container *ngTemplateOutlet="formularioTpl"></ng-container>
+            }
+        </ng-template>
+
+        <ng-container [ngSwitch]="validateRender">
+            <ng-container *ngSwitchCase="'all'">
+                <ng-container *ngTemplateOutlet="todoTpl"></ng-container>
+            </ng-container>
+            <ng-container *ngSwitchCase="'write'">
+                <ng-container *ngTemplateOutlet="formularioTpl"></ng-container>
+            </ng-container>
+            <ng-container *ngSwitchCase="'view'">
+                <ng-container *ngTemplateOutlet="tablaTpl"></ng-container>
+            </ng-container>
+            <ng-container *ngSwitchCase="'update'">
+                <ng-container *ngTemplateOutlet="soloEdicionTpl"></ng-container>
+            </ng-container>
+            <ng-container *ngSwitchDefault>
+                <ng-container *ngTemplateOutlet="sinAccesoTpl"></ng-container>
+            </ng-container>
+        </ng-container>
+
+        <!-- ===================== VISTA PREVIA ===================== -->
+        @if (previewVisible) {
+        <div class="vista-previa__fondo" role="presentation" (click)="closePreview()">
+            <section class="vista-previa" role="dialog" aria-modal="true" aria-labelledby="preview-title"
+                (click)="$event.stopPropagation()">
+
+                <header class="vista-previa__encabezado">
+                    <div>
+                        <h2 id="preview-title">Vista previa del formato FO-EPS-03</h2>
+                        <p>Diseño o desarrollo de eventos de educación continua</p>
+                    </div>
+                    <button type="button" class="vista-previa__cerrar" (click)="closePreview()"
+                        aria-label="Cerrar vista previa">×</button>
+                </header>
+
+                <div class="vista-previa__contenido">
+                    <div class="vista-previa__titulo">
+                        <strong>DISEÑO O DESARROLLO DE EVENTOS DE EDUCACIÓN CONTINUA</strong>
+                        <span>Código: FO-EPS-03<br />Versión: 04<br />Fecha aprob.: 04/12/2025</span>
+                    </div>
+
+                    <section class="vista-previa__seccion">
+                        <h3>Generalidades del evento</h3>
+                        <div class="vista-previa__datos">
+                            <div>
+                                <strong>Tipo de evento</strong>
+                                <span>{{ eventForm.value.generalidades.eventType === '¿Otro?' ?
+                                    (eventForm.value.generalidades.otherEventType || 'Otro') :
+                                    (eventForm.value.generalidades.eventType || '—') }}</span>
+                            </div>
+                            <div>
+                                <strong>Nombre del evento</strong>
+                                <span>{{ eventForm.value.generalidades.name || '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Facultad o dependencia</strong>
+                                <span>{{ eventForm.value.generalidades.faculty || '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Programa académico</strong>
+                                <span>{{ eventForm.value.generalidades.academicProgram || '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Perfil del docente responsable</strong>
+                                <span>{{ eventForm.value.generalidades.teacherProfile || '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Duración</strong>
+                                <span>{{ eventForm.value.generalidades.duration || '—' }} horas</span>
+                            </div>
+                            <div>
+                                <strong>Días de la semana</strong>
+                                <span>{{ selectedDays.length ? selectedDays.join(', ') : '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Modalidad</strong>
+                                <span>{{ selectedModality || '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Fechas</strong>
+                                <span>{{ eventForm.value.generalidades.startDate || '—' }} → {{
+                                    eventForm.value.generalidades.endDate || '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Cupo</strong>
+                                <span>Mínimo {{ eventForm.value.generalidades.minimumCapacity || '—' }} · Máximo {{
+                                    eventForm.value.generalidades.maximumCapacity || '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Perfil de los participantes</strong>
+                                <span>{{ eventForm.value.generalidades.participantProfile || '—' }}</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="vista-previa__seccion">
+                        <h3>Contenido del evento</h3>
+                        <div class="vista-previa__datos">
+                            <div>
+                                <strong>Introducción / Presentación</strong>
+                                <span>{{ eventForm.value.contenido.presentation || '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Alcance</strong>
+                                <span>{{ eventForm.value.contenido.scope || '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Objetivo general</strong>
+                                <span>{{ eventForm.value.contenido.generalObjective || '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Objetivos específicos</strong>
+                                <span>{{ eventForm.value.contenido.objectives.join(' · ') || '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Aspiración de competencias</strong>
+                                <span>{{ eventForm.value.contenido.competencies || '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Contenidos por módulos</strong>
+                                <span>{{ eventForm.value.contenido.modules.join(' · ') || '—' }}</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="vista-previa__seccion">
+                        <h3>Detalles logísticos</h3>
+                        <div class="vista-previa__datos">
+                            @for (aspect of logisticsOptions; track aspect) {
+                            <div>
+                                <strong>{{ aspect }}</strong>
+                                <span>{{ eventForm.value.logistica[aspect] || '—' }}</span>
+                            </div>
+                            }
+                        </div>
+                    </section>
+
+                    <section class="vista-previa__seccion">
+                        <h3>Información financiera</h3>
+                        <div class="vista-previa__datos">
+                            <div>
+                                <strong>Costo por participante</strong>
+                                <span>{{ eventForm.value.financiera.costPerParticipant ? '$ ' +
+                                    eventForm.value.financiera.costPerParticipant : '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Cupo mínimo confirmado</strong>
+                                <span>{{ eventForm.value.financiera.confirmedMinimumCapacity || '—' }}</span>
+                            </div>
+                            <div>
+                                <strong>Observaciones</strong>
+                                <span>{{ eventForm.value.financiera.financialObservations || '—' }}</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="vista-previa__seccion">
+                        <h3>Cadena de aprobación</h3>
+                        <div class="vista-previa__aprobaciones">
+                            @for (meta of approvalsMeta; track meta.title; let index = $index) {
+                            <article>
+                                <strong>{{ meta.title }}</strong>
+                                <span>{{ eventForm.value.aprobaciones[index].name || 'Nombre pendiente' }} · {{
+                                    eventForm.value.aprobaciones[index].role || 'Cargo pendiente' }}</span>
+                                <span>Fecha: {{ eventForm.value.aprobaciones[index].date || '—' }}</span>
+                                <div>{{ eventForm.value.aprobaciones[index].signature || 'Sin firma' }}</div>
+                            </article>
+                            }
+                        </div>
+                    </section>
+                </div>
+
+                <footer class="vista-previa__acciones">
+                    <button type="button" class="vista-previa__boton vista-previa__boton--secundario"
+                        (click)="closePreview()">Cerrar</button>
+                    <button type="button" class="vista-previa__boton vista-previa__boton--principal"
+                        (click)="printPreview()">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path
+                                d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v7H6z" />
+                        </svg>
+                        Imprimir / Guardar PDF
+                    </button>
+                </footer>
+            </section>
+        </div>
+        }
+
+    </section>
+</main>

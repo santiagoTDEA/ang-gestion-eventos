@@ -1,0 +1,764 @@
+import { Component, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import {
+  AbstractControl,
+  FormArray,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators
+} from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { debounceTime } from 'rxjs/operators';
+import { GenericAlertComponent } from '../../../shared/atoms/generic-alert/generic-alert.component';
+import { GenericFormComponent } from '../../../shared/organisms/generic-form/generic-form.component';
+import { GenericButtonComponent } from '../../../shared/atoms/generic-button/generic-button.component';
+import { CommonModule } from '@angular/common';
+import { ReturnFaculty } from '../faculty/interfaces/faculty.interfaces';
+import { FacultyService } from '../faculty/services/faculty.service';
+import { RolesService } from '../roles/services/roles.service';
+import { ReturnRole } from '../roles/interfaces/roles.interfaces';
+import { Person } from '../peoples/interfaces/people.interfaces';
+import { PeoplesService } from '../peoples/services/peoples.service';
+import { DOCUMENT } from '@angular/common';
+import { NivelAcceso, ValidateRenderingService } from '../inicio/services/validate-rendering.service';
+import { JwtService } from '../../core/services/jwt.service';
+import { Role } from '../inicio/interfaces/inicio.interfaces';
+import { EventsService } from './services/events.service';
+import { Event, ReturnEvent } from './interfaces/events.interfaces';
+import { EventGeneralidadesComponent } from './components/event-generalidades/event-generalidades.component';
+import { EventContenidoComponent } from './components/event-contenido/event-contenido.component';
+import { EventLogisticaComponent } from './components/event-logistica/event-logistica.component';
+import { EventFinancieraComponent } from './components/event-financiera/event-financiera.component';
+import { ApprovalMeta, EventAprobacionesComponent } from './components/event-aprobaciones/event-aprobaciones.component';
+
+const DRAFT_STORAGE_KEY = 'eventDraft';
+
+
+type AlertType = 'success' | 'error' | 'info' | 'warning';
+
+function minArrayLength(min: number): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value;
+    if (!Array.isArray(value) || value.length < min) {
+      return { minArrayLength: { requiredLength: min, actualLength: Array.isArray(value) ? value.length : 0 } };
+    }
+    return null;
+  };
+}
+
+function minFormArrayLength(min: number): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const array = control as FormArray;
+    if (!array || array.length < min) {
+      return { minArrayLength: { requiredLength: min, actualLength: array ? array.length : 0 } };
+    }
+    return null;
+  };
+}
+
+function validTimeRange(control: AbstractControl): ValidationErrors | null {
+  const startTime = control.get('startTime')?.value;
+  const endTime = control.get('endTime')?.value;
+
+  if (!startTime || !endTime || endTime >= startTime) {
+    return null;
+  }
+
+  return { endTimeBeforeStartTime: true };
+}
+
+function validDateRange(control: AbstractControl): ValidationErrors | null {
+  const startDate = control.get('startDate')?.value;
+  const endDate = control.get('endDate')?.value;
+
+  if (!startDate || !endDate || endDate >= startDate) {
+    return null;
+  }
+
+  return { endDateBeforeStartDate: true };
+}
+
+@Component({
+  selector: 'app-events',
+  standalone: true,
+  imports: [
+    ReactiveFormsModule,
+    GenericAlertComponent,
+    GenericFormComponent,
+    EventGeneralidadesComponent,
+    EventContenidoComponent,
+    EventLogisticaComponent,
+    EventFinancieraComponent,
+    EventAprobacionesComponent,
+    GenericButtonComponent,
+    CommonModule
+  ],
+  templateUrl: './events.component.html',
+  styleUrl: './events.component.css',
+  // Los estilos del formulario se comparten con los componentes de cada paso.
+  encapsulation: ViewEncapsulation.None
+})
+export class EventsComponent implements OnInit {
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly fb = inject(FormBuilder);
+  private readonly facultiesService = inject(FacultyService);
+  private readonly roleServices: RolesService = inject(RolesService);
+  private readonly peoplesService: PeoplesService = inject(PeoplesService);
+  private readonly validateRenderingService: ValidateRenderingService = inject(ValidateRenderingService);
+  private readonly jwtServices: JwtService = inject(JwtService);
+  private readonly eventsService: EventsService = inject(EventsService);
+
+
+  persons: { value: string; label: string }[] = [];
+  approvalOptions: { value: string; label: string }[][] = [];
+  activeStep = 0;
+  draftSaved = false;
+  previewVisible = false;
+  reviewSent = false;
+  loading = false;
+  impirmir: boolean = false;
+  validateRender: NivelAcceso = "write"
+  readonly eventTypes = ['Curso', 'Diplomado', 'Seminario', '¿Otro?'];
+  readonly eventTypeOptions = this.eventTypes.map(type => ({ value: type, label: type }));
+  readonly weekDays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  readonly modalities = ['Presencial', 'Virtual', 'Mixta'];
+  readonly logisticsOptions = [
+    'Elaboración de piezas publicitarias',
+    'Difusión',
+    'Proceso de inscripción',
+    'Transmisión (YouTube)',
+    'Constancia de participación',
+    '¿Otro?'
+  ];
+  private readonly document = inject(DOCUMENT);
+
+  facultyOptions: ReturnFaculty[] = [];
+
+  readonly approvalsMeta: ApprovalMeta[] = [
+    { title: 'Responsable de elaboración', description: 'Persona que diligenció el formato.', roleName: 'Elaboración' },
+    { title: 'Responsable de revisión', description: 'Enlace de Extensión, director o coordinador de la dependencia.', roleName: 'Revisión' },
+    { title: 'Responsable de verificación', description: 'Modalidad de Educación Continua.', roleName: 'Verificación' },
+    { title: 'Responsable de validación', description: 'Dirección de Extensión Académica.', roleName: 'Validación' }
+  ];
+
+  readonly steps = [
+    { number: '01', label: 'Generalidades', description: 'Información general del evento.' },
+    { number: '02', label: 'Contenido', description: 'Define los objetivos y el contenido.' },
+    { number: '03', label: 'Logística', description: 'Organiza fechas, lugar y recursos.' },
+    { number: '04', label: 'Información financiera', description: 'Registra el presupuesto del evento.' },
+    { number: '05', label: 'Aprobaciones', description: 'Revisa y envía el evento.' }
+  ];
+  viewRoles: ReturnRole[] = []
+  events: ReturnEvent[] = [];
+  showTable = false;
+  editingId: number | null = null;
+  editingEvent: ReturnEvent | null = null;
+  alertaResponse: {
+    alertVisible: boolean;
+    alertType: AlertType;
+    alertTitle: string;
+    alertMessage: string;
+  } = {
+      alertVisible: false,
+      alertType: 'success',
+      alertTitle: '',
+      alertMessage: ''
+    };
+
+  readonly eventForm: FormGroup;
+
+  constructor() {
+    this.eventForm = this.fb.group({
+      generalidades: this.fb.group({
+        eventType: ['', Validators.required],
+        otherEventType: [''], // required condicional, ver watchOtherEventType()
+        name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(150)]],
+        faculty: ['', Validators.required],
+        academicProgram: ['', Validators.required],
+        teacherProfile: ['', Validators.required],
+        duration: ['', [Validators.required, Validators.min(1)]],
+        startTime: ['', Validators.required],
+        endTime: ['', Validators.required],
+        selectedDays: [[] as string[], minArrayLength(1)],
+        selectedModality: ['', Validators.required],
+        startDate: ['', Validators.required],
+        endDate: ['', Validators.required],
+        minimumCapacity: ['', [Validators.required, Validators.min(1)]],
+        maximumCapacity: ['', [Validators.required, Validators.min(1)]],
+        participantProfile: ['', Validators.required]
+      }, { validators: [validTimeRange, validDateRange] }),
+      contenido: this.fb.group({
+        presentation: ['', Validators.required],
+        scope: ['', Validators.required],
+        generalObjective: ['', Validators.required],
+        objectives: this.fb.array(
+          [this.createObjectiveControl(), this.createObjectiveControl(), this.createObjectiveControl()],
+          minFormArrayLength(3)
+        ),
+        competencies: ['', Validators.required],
+        modules: this.fb.array([] as FormControl[], minFormArrayLength(1))
+      }),
+      logistica: this.fb.group(
+        this.logisticsOptions.reduce((group, aspect) => {
+          group[aspect] = ['', Validators.required];
+          return group;
+        }, {} as Record<string, unknown[]>)
+      ),
+      financiera: this.fb.group({
+        costPerParticipant: ['', [Validators.required, Validators.min(0)]],
+        confirmedMinimumCapacity: ['', [Validators.required, Validators.min(1)]],
+        financialObservations: ['', Validators.required]
+      }),
+      aprobaciones: this.fb.array(this.approvalsMeta.map(() => this.createApprovalGroup()))
+    });
+
+    this.watchOtherEventType();
+    this.watchAutosave();
+  }
+
+  ngOnInit(): void {
+    this.validarModulos();
+    this.loadDraft();
+    this.getFaculties();
+    this.getRoles();
+    this.getPersons();
+    if (this.canViewEvents) {
+      this.getEvents();
+    }
+    this.openEventFromQuery();
+  }
+
+  /** Si llega ?editar=<id> (por ejemplo desde Aprobaciones), abre ese evento ya cargado en el formulario. */
+  private openEventFromQuery(): void {
+    const id = Number(this.route.snapshot.queryParamMap.get('editar'));
+    if (!id || !this.canEditEvents) {
+      return;
+    }
+
+    this.eventsService.getEventById(id).subscribe({
+      next: (event: ReturnEvent) => this.startEdit(event),
+      error: (err) => console.error(err),
+    });
+  }
+
+  // --- Getters de acceso rápido a los grupos/arreglos del formulario ---
+
+  get generalidadesGroup(): FormGroup {
+    return this.eventForm.get('generalidades') as FormGroup;
+  }
+
+  get contenidoGroup(): FormGroup {
+    return this.eventForm.get('contenido') as FormGroup;
+  }
+
+  get logisticaGroup(): FormGroup {
+    return this.eventForm.get('logistica') as FormGroup;
+  }
+
+  get financieraGroup(): FormGroup {
+    return this.eventForm.get('financiera') as FormGroup;
+  }
+
+  get objectivesArray(): FormArray {
+    return this.contenidoGroup.get('objectives') as FormArray;
+  }
+
+  get modulesArray(): FormArray {
+    return this.contenidoGroup.get('modules') as FormArray;
+  }
+
+  get approvalsArray(): FormArray {
+    return this.eventForm.get('aprobaciones') as FormArray;
+  }
+
+  get selectedDays(): string[] {
+    return this.generalidadesGroup.get('selectedDays')?.value ?? [];
+  }
+
+  get selectedModality(): string {
+    return this.generalidadesGroup.get('selectedModality')?.value ?? '';
+  }
+
+  get eventTypeValue(): string {
+    return this.generalidadesGroup.get('eventType')?.value ?? '';
+  }
+
+
+
+  private createObjectiveControl(value = ''): FormControl {
+    return this.fb.control(value, Validators.required);
+  }
+
+  private createModuleControl(value = ''): FormControl {
+    return this.fb.control(value, Validators.required);
+  }
+
+  private createApprovalGroup(): FormGroup {
+    return this.fb.group({
+      name: ['', Validators.required],
+      role: ['', Validators.required],
+      date: ['', Validators.required],
+      signature: ['', Validators.required]
+    });
+  }
+
+  /** Normaliza texto para comparar sin importar mayúsculas ni tildes. */
+  private normalize(value?: string): string {
+    return (value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  }
+
+
+  validarModulos(): void {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+    const Roles = this.jwtServices.cargarDesdeToken(token) as Role | null;
+
+    this.validateRender = this.validateRenderingService.devolverAccesosPermitidos("eventos", Roles);
+  }
+
+  getPersons(): void {
+    this.peoplesService.getPeoples().subscribe({
+      next: (response: Person[]) => {
+        this.persons = response.filter(person =>
+          person.status?.statusName?.toLowerCase().trim() === 'activo'
+        ).map(type => ({ value: type.id.toString(), label: `${type.name || type.email} - ${type.role?.name ?? ''}` }))
+
+        // Opciones por bloque de aprobación (mismo orden que approvalsMeta)
+        this.approvalOptions = this.approvalsMeta.map(meta =>
+          response
+            .filter(person =>
+              person.status?.statusName?.toLowerCase().trim() === 'activo' &&
+              this.normalize(person.role?.name) === this.normalize(meta.roleName)
+            )
+            .map(person => ({ value: person.id.toString(), label: `${person.name || person.email} - ${person.role?.name ?? ''}` }))
+        );
+      },
+      error: (err) => console.error(err),
+    });
+  }
+  getFaculties(): void {
+    this.facultiesService.getFaculties().subscribe({
+      next: (response: ReturnFaculty[]) => {
+
+        this.facultyOptions = response;
+      },
+      error: (err) => console.error(err),
+    });
+  }
+
+
+  /** Observación abierta con la que se devolvió el evento que se está editando. */
+  get editingReturnedObservation() {
+    const event = this.editingEvent;
+    if (event?.workflowStatus !== 'devuelto') {
+      return null;
+    }
+    return [...(event.observations ?? [])]
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .find(item => !item.resolvedAt) ?? null;
+  }
+
+  get canEditEvents(): boolean {
+    return this.validateRender === 'all' || this.validateRender === 'update';
+  }
+
+  get canViewEvents(): boolean {
+    return this.validateRender === 'view' || this.validateRender === 'all' || this.validateRender === 'update';
+  }
+
+  getEvents(): void {
+    this.eventsService.getEvents().subscribe({
+      next: (events: ReturnEvent[]) => {
+        this.events = events;
+      },
+      error: (err) => console.error(err),
+    });
+  }
+
+  toggleView(): void {
+    this.showTable = !this.showTable;
+    if (this.showTable) {
+      if (this.editingId !== null) {
+        this.finishEdit();
+      }
+      this.getEvents();
+    }
+  }
+
+  startEdit(event: ReturnEvent): void {
+    if (!this.canEditEvents) {
+      return;
+    }
+
+    if (this.editingId === null) {
+      this.saveDraft();
+    }
+
+    const objectives = event.objectives.length >= 3
+      ? event.objectives
+      : [...event.objectives, ...Array(3 - event.objectives.length).fill('')];
+    this.resizeArray(this.objectivesArray, objectives.length, () => this.createObjectiveControl());
+    this.resizeArray(this.modulesArray, event.modules.length, () => this.createModuleControl());
+
+    const approvals = this.approvalsMeta.map((meta, index) => {
+      const approval = event.approvals.find(item => this.normalize(item.role?.name) === this.normalize(meta.roleName))
+        ?? event.approvals[index];
+      return {
+        name: approval ? String(approval.person.id) : '',
+        role: approval?.role.id ?? '',
+        date: approval?.date ?? '',
+        signature: approval?.signature ?? ''
+      };
+    });
+
+    this.eventForm.reset({}, { emitEvent: false });
+    this.eventForm.patchValue({
+      generalidades: {
+        eventType: event.eventType,
+        otherEventType: event.otherEventType ?? '',
+        name: event.name,
+        faculty: event.faculty.id,
+        academicProgram: event.academicProgram,
+        teacherProfile: event.teacherProfile,
+        duration: event.duration,
+        startTime: event.startTime.slice(0, 5),
+        endTime: event.endTime.slice(0, 5),
+        selectedDays: event.selectedDays,
+        selectedModality: event.modality,
+        startDate: event.startDate,
+        endDate: event.endDate,
+        minimumCapacity: event.minimumCapacity,
+        maximumCapacity: event.maximumCapacity,
+        participantProfile: event.participantProfile
+      },
+      contenido: {
+        presentation: event.presentation,
+        scope: event.scope,
+        generalObjective: event.generalObjective,
+        objectives,
+        competencies: event.competencies,
+        modules: event.modules
+      },
+      logistica: event.logistics,
+      financiera: {
+        costPerParticipant: event.costPerParticipant,
+        confirmedMinimumCapacity: event.confirmedMinimumCapacity,
+        financialObservations: event.financialObservations
+      },
+      aprobaciones: approvals
+    }, { emitEvent: false });
+
+    this.updateOtherEventTypeValidation(this.eventTypeValue, this.generalidadesGroup.get('otherEventType')!);
+    this.eventForm.markAsPristine();
+    this.eventForm.markAsUntouched();
+
+    this.editingId = event.id;
+    this.editingEvent = event;
+    this.activeStep = 0;
+    this.reviewSent = false;
+    this.showTable = false;
+  }
+
+  /** Termina la edición y restaura el borrador de creación que hubiera guardado. */
+  finishEdit(): void {
+    this.editingId = null;
+    this.editingEvent = null;
+    this.resetForm();
+    this.loadDraft();
+  }
+
+  cancelEdit(): void {
+    this.finishEdit();
+    this.showTable = true;
+    this.getEvents();
+  }
+
+  private resizeArray(array: FormArray, length: number, factory: () => FormControl): void {
+    while (array.length < length) {
+      array.push(factory(), { emitEvent: false });
+    }
+    while (array.length > length) {
+      array.removeAt(array.length - 1, { emitEvent: false });
+    }
+  }
+
+  asignarRoles(name: string): ReturnRole | undefined {
+    return this.viewRoles.find(role => role.name === name);
+  }
+
+  getRoles(): void {
+    this.roleServices.getRoles().subscribe({
+      next: (roles) => {
+        console.log(roles);
+        this.viewRoles = roles;
+      }
+    });
+  }
+
+  /** otherEventType solo es obligatorio si eventType === '¿Otro?'. */
+  private watchOtherEventType(): void {
+    const eventTypeControl = this.generalidadesGroup.get('eventType')!;
+    const otherEventTypeControl = this.generalidadesGroup.get('otherEventType')!;
+
+    eventTypeControl.valueChanges.subscribe(type => {
+      this.updateOtherEventTypeValidation(type, otherEventTypeControl);
+    });
+    this.updateOtherEventTypeValidation(eventTypeControl.value, otherEventTypeControl);
+  }
+
+  private updateOtherEventTypeValidation(type: string, control: AbstractControl): void {
+    if (type === '¿Otro?') {
+      control.setValidators(Validators.required);
+    } else {
+      control.clearValidators();
+      control.setValue('', { emitEvent: false });
+    }
+    control.updateValueAndValidity({ emitEvent: false });
+  }
+
+  /** Criterio 1: autoguardado en localStorage ante cualquier cambio del formulario. */
+  private watchAutosave(): void {
+    this.eventForm.valueChanges.pipe(debounceTime(400)).subscribe(() => this.saveDraft());
+  }
+
+  /** Criterio 1: si existe un borrador guardado, se restaura al cargar el componente. */
+  private loadDraft(): void {
+    try {
+      const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
+      if (!raw) {
+        return;
+      }
+
+      const draft = JSON.parse(raw);
+
+      const savedObjectives: string[] = draft?.contenido?.objectives ?? [];
+      while (this.objectivesArray.length < Math.max(savedObjectives.length, 3)) {
+        this.objectivesArray.push(this.createObjectiveControl());
+      }
+
+      const savedModules: string[] = draft?.contenido?.modules ?? [];
+      while (this.modulesArray.length < savedModules.length) {
+        this.modulesArray.push(this.createModuleControl());
+      }
+
+      this.eventForm.patchValue(draft, { emitEvent: false });
+      this.updateOtherEventTypeValidation(this.eventTypeValue, this.generalidadesGroup.get('otherEventType')!);
+    } catch {
+      // Borrador corrupto o ilegible: se ignora y se continúa con los valores por defecto.
+    }
+  }
+
+  saveDraft(): void {
+    if (this.editingId !== null) {
+      return;
+    }
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(this.eventForm.getRawValue()));
+    this.draftSaved = true;
+  }
+
+  selectStep(index: number): void {
+    this.activeStep = index;
+  }
+
+  selectEventType(type: string): void {
+    this.generalidadesGroup.get('eventType')!.setValue(type);
+  }
+
+
+
+  private readonly stepGroups: Array<() => AbstractControl> = [
+    () => this.generalidadesGroup,
+    () => this.contenidoGroup,
+    () => this.logisticaGroup,
+    () => this.financieraGroup
+  ];
+
+  /** Avanza de paso solo si el paso actual es válido; si no, muestra los errores. */
+  nextStep(): void {
+    this.draftSaved = false;
+    const currentGroup = this.stepGroups[this.activeStep]?.();
+
+    if (currentGroup && currentGroup.invalid) {
+      currentGroup.markAllAsTouched();
+      return;
+    }
+
+    if (this.activeStep < this.steps.length - 1) {
+      this.activeStep += 1;
+    }
+  }
+
+  previousStep(): void {
+    if (this.activeStep > 0) {
+      this.activeStep -= 1;
+    }
+  }
+
+
+
+
+
+  togglePreview(): void {
+    this.impirmir = !this.impirmir;
+    this.previewVisible = !this.previewVisible;
+  }
+
+  closePreview(): void {
+    this.impirmir = false;
+    this.previewVisible = false;
+  }
+
+
+
+  printPreview(): void {
+    this.document.defaultView?.print();
+  }
+
+
+
+  /** Se mantiene por compatibilidad con el template: ahora delega en la validez del FormGroup. */
+  get isFormComplete(): boolean {
+    return this.eventForm.valid;
+  }
+
+  /** Asigna a cada bloque de aprobación el id del rol que le corresponde según approvalsMeta. */
+  private assignApprovalRoles(): string[] {
+    const missing: string[] = [];
+    this.approvalsMeta.forEach((meta, index) => {
+      const role = this.viewRoles.find(r => this.normalize(r.name) === this.normalize(meta.roleName));
+      if (!role) {
+        missing.push(meta.roleName);
+        return;
+      }
+      this.approvalsArray.at(index).get('role')?.setValue(role.id);
+    });
+    return missing;
+  }
+
+  private showAlert(type: AlertType, title: string, message: string): void {
+    this.alertaResponse = { alertVisible: true, alertType: type, alertTitle: title, alertMessage: message };
+  }
+
+  private resetForm(): void {
+    this.modulesArray.clear({ emitEvent: false });
+    while (this.objectivesArray.length > 3) {
+      this.objectivesArray.removeAt(this.objectivesArray.length - 1, { emitEvent: false });
+    }
+
+    this.eventForm.reset({
+      generalidades: { selectedDays: [] },
+      contenido: { objectives: ['', '', ''] }
+    }, { emitEvent: false });
+
+    this.activeStep = 0;
+    this.draftSaved = false;
+  }
+
+  sendForReview(): void {
+    const missingRoles = this.assignApprovalRoles();
+    if (missingRoles.length > 0) {
+      this.showAlert('error', 'Formulario incompleto', `No se encontraron los roles: ${missingRoles.join(', ')}.`);
+      return;
+    }
+
+    if (this.eventForm.invalid) {
+      this.eventForm.markAllAsTouched();
+      this.showAlert('error', 'Formulario incompleto', 'Completa todos los campos obligatorios de los 5 pasos antes de enviar.');
+      return;
+    }
+
+    this.loading = true;
+    const payload = this.buildEventPayload();
+
+    if (this.editingId !== null) {
+      this.eventsService.updateEvent(this.editingId, payload).subscribe({
+        next: () => {
+          this.loading = false;
+          this.finishEdit();
+          this.showTable = true;
+          this.getEvents();
+          this.showAlert('success', 'Evento actualizado', 'El evento fue actualizado correctamente.');
+        },
+        error: (err) => this.handleSendError(err, 'No se pudo actualizar el evento')
+      });
+      return;
+    }
+
+    this.eventsService.postCreateEvent(payload).subscribe({
+      next: () => {
+        this.loading = false;
+        this.reviewSent = true;
+        if (this.canViewEvents) {
+          this.getEvents();
+        }
+        // Criterio 3: al enviar exitosamente se elimina el borrador guardado.
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+        this.resetForm();
+        this.showAlert('success', 'Formulario enviado', 'El formato fue enviado para revisión correctamente.');
+      },
+      error: (err) => this.handleSendError(err, 'No se pudo enviar el formulario')
+    });
+  }
+
+  private handleSendError(err: { error?: { message?: string | string[] } }, title: string): void {
+    this.loading = false;
+    const message = err?.error?.message;
+    this.showAlert(
+      'error',
+      title,
+      Array.isArray(message) ? message.join(' ') : (message ?? 'Ocurrió un error al procesar el evento.')
+    );
+  }
+
+  /** Transforma el valor del formulario al contrato esperado por el backend (POST /events). */
+  private buildEventPayload(): Event {
+    const { generalidades, contenido, logistica, financiera, aprobaciones } = this.eventForm.getRawValue();
+
+    return {
+      eventType: generalidades.eventType,
+      otherEventType: generalidades.eventType === '¿Otro?' ? generalidades.otherEventType : undefined,
+      name: generalidades.name,
+      facultyId: Number(generalidades.faculty),
+      academicProgram: generalidades.academicProgram,
+      teacherProfile: generalidades.teacherProfile,
+      duration: Number(generalidades.duration),
+      startTime: generalidades.startTime,
+      endTime: generalidades.endTime,
+      selectedDays: generalidades.selectedDays,
+      modality: generalidades.selectedModality,
+      startDate: generalidades.startDate,
+      endDate: generalidades.endDate,
+      minimumCapacity: Number(generalidades.minimumCapacity),
+      maximumCapacity: Number(generalidades.maximumCapacity),
+      participantProfile: generalidades.participantProfile,
+      presentation: contenido.presentation,
+      scope: contenido.scope,
+      generalObjective: contenido.generalObjective,
+      objectives: contenido.objectives,
+      competencies: contenido.competencies,
+      modules: contenido.modules,
+      logistics: logistica,
+      costPerParticipant: Number(financiera.costPerParticipant),
+      confirmedMinimumCapacity: Number(financiera.confirmedMinimumCapacity),
+      financialObservations: financiera.financialObservations,
+      approvals: aprobaciones.map((approval: { name: string; role: string; date: string; signature: string }) => ({
+        personId: Number(approval.name),
+        roleId: approval.role,
+        date: approval.date,
+        signature: approval.signature
+      }))
+    };
+  }
+
+  goBack(): void {
+    this.router.navigate(['/inicio']);
+  }
+}

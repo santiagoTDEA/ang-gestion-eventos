@@ -1,0 +1,38 @@
+<aside class="side-menu" aria-label="Navegación principal">
+    <a class="side-menu__brand" routerLink="/inicio">
+        <span class="side-menu__brand-mark">GE</span>
+        <span class="side-menu__brand-text">
+            <strong>Gestión de Eventos</strong>
+            <small>Extensión Académica · Educación Continua</small>
+        </span>
+    </a>
+
+    <nav class="side-menu__nav">
+        <a class="side-menu__panel" routerLink="/inicio" [class.side-menu__panel--active]="isActive('/inicio')"
+            [attr.aria-current]="isActive('/inicio') ? 'page' : null">
+            <svg class="side-menu__icono" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 11l9-8 9 8M5 10v10h14V10" />
+            </svg>
+            <span>Panel general</span>
+        </a>
+
+        @for (section of sections; track section.label) {
+        <p class="side-menu__section"><span></span>{{ section.label }}</p>
+
+        @for (item of section.items; track item.path) {
+        <a class="side-menu__item" [routerLink]="item.path" [class.side-menu__item--active]="isActive(item.path)"
+            [attr.aria-current]="isActive(item.path) ? 'page' : null">
+            <span class="side-menu__number">{{ item.number }}</span>
+            <span class="side-menu__label">{{ item.label }}</span>
+        </a>
+        }
+        }
+    </nav>
+
+    <button type="button" class="side-menu__logout" (click)="logout()">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M10 17l5-5-5-5m5 5H3m9-9h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6" />
+        </svg>
+        <span>Cerrar sesión</span>
+    </button>
+</aside>

@@ -1,0 +1,155 @@
+<div class="generalidades">
+
+    <div class="generalidades__campo generalidades__campo--completo">
+        <app-generic-select label="Tipo de evento" placeholder="Selecciona un tipo de evento"
+            [control]="form().controls['eventType']" [options]="eventTypeOptions()"
+            optionValue="value" optionLabel="label">
+        </app-generic-select>
+
+        @if (eventTypeValue === '¿Otro?') {
+        <app-generic-input label="Especifica el tipo de evento"
+            placeholder="Especifica el tipo de evento" icon="none"
+            [control]="form().controls['otherEventType']">
+        </app-generic-input>
+        }
+    </div>
+
+    <app-generic-input label="Nombre del evento"
+        placeholder="Ej. Diplomado en Analítica de Datos para Negocios" icon="none"
+        [control]="form().controls['name']">
+    </app-generic-input>
+
+    <div class="generalidades__grid generalidades__grid--dos">
+        <app-generic-select label="Facultad" placeholder="Selecciona una facultad"
+            [control]="form().controls['faculty']" [options]="faculties()"
+            optionValue="id" optionLabel="name">
+        </app-generic-select>
+
+        <app-generic-input label="Programa académico" placeholder="Programa asociado al evento"
+            icon="none" [control]="form().controls['academicProgram']">
+        </app-generic-input>
+    </div>
+
+    <div class="generalidades__campo generalidades__campo--completo">
+        <label for="teacher-profile">Perfil del docente responsable <span>*</span></label>
+        <textarea id="teacher-profile"
+            [formControl]="asControl(form().controls['teacherProfile'])"
+            placeholder="Formación, experiencia y trayectoria relevante para el evento"></textarea>
+        @if (form().controls['teacherProfile'].invalid &&
+        form().controls['teacherProfile'].touched) {
+        <small class="generalidades__error">Este campo es obligatorio.</small>
+        }
+    </div>
+
+    <div class="generalidades__grid generalidades__grid--tres">
+        <app-generic-input label="Duración total (horas)" type="number" placeholder="Ej. 40" icon="none"
+            [control]="form().controls['duration']">
+        </app-generic-input>
+
+        <app-generic-input label="Hora de inicio" type="time" icon="none"
+            [control]="form().controls['startTime']">
+        </app-generic-input>
+
+        <app-generic-input label="Hora de fin" type="time" icon="none"
+            [control]="form().controls['endTime']">
+        </app-generic-input>
+    </div>
+    @if (form().hasError('endTimeBeforeStartTime') &&
+    (form().controls['startTime'].touched ||
+    form().controls['endTime'].touched)) {
+    <small class="generalidades__error">La hora de fin no puede ser anterior a la hora de
+        inicio.</small>
+    }
+
+    <div class="generalidades__campo generalidades__campo--completo">
+        <label>Días de la semana <span>*</span></label>
+        <div class="generalidades__opciones"
+            [class.generalidades__opciones--error]="form().controls['selectedDays'].invalid && form().controls['selectedDays'].touched">
+            @for (day of weekDays(); track day) {
+            <button type="button" [class.generalidades__opcion--activo]="selectedDays.includes(day)"
+                (click)="toggleDay(day)">{{ day }}</button>
+            }
+        </div>
+        @if (form().controls['selectedDays'].invalid &&
+        form().controls['selectedDays'].touched) {
+        <small class="generalidades__error">Selecciona al menos un día.</small>
+        }
+    </div>
+
+    <div class="generalidades__campo generalidades__campo--completo">
+        <label>Modalidad <span>*</span></label>
+        <div class="generalidades__modalidades"
+            [class.generalidades__modalidades--error]="form().controls['selectedModality'].invalid && form().controls['selectedModality'].touched">
+            @for (modality of modalities(); track modality) {
+            <button type="button" class="generalidades__modalidad"
+                [class.generalidades__modalidad--activa]="selectedModality === modality"
+                [attr.aria-pressed]="selectedModality === modality" (click)="toggleModality(modality)">
+                <strong>{{ modality }}</strong>
+            </button>
+            }
+        </div>
+        @if (form().controls['selectedModality'].invalid &&
+        form().controls['selectedModality'].touched) {
+        <small class="generalidades__error">Selecciona al menos una modalidad.</small>
+        }
+    </div>
+
+    <div class="generalidades__grid generalidades__grid--dos">
+        <app-generic-input label="Fecha de inicio" type="date" icon="none"
+            [control]="form().controls['startDate']">
+        </app-generic-input>
+
+        <app-generic-input label="Fecha de terminación" type="date" icon="none"
+            [control]="form().controls['endDate']">
+        </app-generic-input>
+    </div>
+    @if (form().hasError('endDateBeforeStartDate') &&
+    (form().controls['startDate'].touched ||
+    form().controls['endDate'].touched)) {
+    <small class="generalidades__error">La fecha de terminación no puede ser anterior a la fecha de
+        inicio.</small>
+    }
+
+    <div class="generalidades__grid generalidades__grid--dos">
+        <app-generic-input label="Cupo mínimo" type="number" placeholder="Ej. 15" icon="none"
+            [control]="form().controls['minimumCapacity']">
+        </app-generic-input>
+
+        <app-generic-input label="Cupo máximo" type="number" placeholder="Ej. 40" icon="none"
+            [control]="form().controls['maximumCapacity']">
+        </app-generic-input>
+    </div>
+    @if (form().hasError('maximumCapacityBelowMinimum') &&
+    (form().controls['minimumCapacity'].touched ||
+    form().controls['maximumCapacity'].touched)) {
+    <small class="generalidades__error">El cupo máximo no puede ser menor que el cupo mínimo.</small>
+    }
+
+    <div class="generalidades__campo generalidades__campo--completo">
+        <label for="participant-profile">Perfil de los participantes <span>*</span></label>
+        <textarea id="participant-profile"
+            [formControl]="asControl(form().controls['participantProfile'])"
+            placeholder="A quién va dirigido, competencias o conocimientos previos requeridos"></textarea>
+        @if (form().controls['participantProfile'].invalid &&
+        form().controls['participantProfile'].touched) {
+        <small class="generalidades__error">Este campo es obligatorio.</small>
+        }
+    </div>
+
+    @if (!printing()) {
+    <footer class="generalidades__acciones">
+        <div>
+            <button type="button" class="generalidades__boton generalidades__boton--secundario"
+                (click)="saveDraft.emit()">Guardar borrador</button>
+            <button type="button" class="generalidades__boton generalidades__boton--secundario"
+                (click)="preview.emit()">Vista previa</button>
+            <button type="button" class="generalidades__boton generalidades__boton--principal"
+                (click)="next.emit()">Siguiente →</button>
+        </div>
+    </footer>
+    }
+
+    @if (draftSaved()) {
+    <p class="generalidades__confirmacion">Borrador guardado correctamente.</p>
+    }
+</div>

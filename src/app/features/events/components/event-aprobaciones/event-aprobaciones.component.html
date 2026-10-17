@@ -1,0 +1,52 @@
+<div class="aprobaciones-formulario">
+
+    @for (approval of form().controls; track meta()[$index].title; let index = $index) {
+    <article class="aprobaciones-formulario__bloque">
+        <div class="aprobaciones-formulario__titulo">
+            <h2>{{ meta()[index].title }}</h2>
+            <p>{{ meta()[index].description }}</p>
+        </div>
+
+        <div class="aprobaciones-formulario__datos">
+
+            <app-generic-select label="Persona" placeholder="Selecciona una persona"
+                [control]="asGroup(approval).controls['name']" [options]="options()[index] ?? []"
+                optionValue="value" optionLabel="label">
+            </app-generic-select>
+
+            <!-- <app-generic-input label="Cargo o rol" icon="none"
+                    [control]="asGroup(approval).controls['role']"></app-generic-input> -->
+
+            <app-generic-input label="Fecha" type="date" icon="none"
+                [control]="asGroup(approval).controls['date']">
+            </app-generic-input>
+
+            <div class="aprobaciones-formulario__firma">
+                <label>Firma <span>*</span></label>
+                <textarea [formControl]="asControl(asGroup(approval).controls['signature'])"
+                    placeholder="Firma aquí con el mouse o el dedo"></textarea>
+                @if (asGroup(approval).controls['signature'].invalid &&
+                asGroup(approval).controls['signature'].touched) {
+                <small class="eventos__error">La firma es obligatoria.</small>
+                }
+                <button type="button" (click)="clearSignature(index)">Borrar firma</button>
+            </div>
+        </div>
+    </article>
+    }
+
+    <footer class="aprobaciones-formulario__acciones">
+        <button type="button" class="generalidades__boton generalidades__boton--secundario"
+            (click)="back.emit()">← Atrás</button>
+        <div>
+            <button type="button" class="generalidades__boton generalidades__boton--secundario"
+                (click)="saveDraft.emit()">Guardar borrador</button>
+            <button type="button" class="generalidades__boton generalidades__boton--secundario"
+                (click)="preview.emit()">Vista previa</button>
+            <app-generic-button
+                label="{{ editing() ? 'Guardar cambios →' : (reviewSent() ? 'Enviado' : 'Enviar para revisión →') }}"
+                type="submit" [disabled]="loading()" customClass="generalidades__boton aprobaciones-formulario__enviar">
+            </app-generic-button>
+        </div>
+    </footer>
+</div>

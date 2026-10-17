@@ -1,0 +1,275 @@
+<div class="roles-page min-h-screen w-full flex items-center justify-center relative font-sans py-10 px-10">
+    <div class="roles-shell w-full min-h-[80vh] bg-white rounded-[10px] shadow-[0_10px_30px_rgba(0,0,0,0.15)] px-7 pt-8 pb-7">
+    @if (alertaResponse.alertVisible) {
+        <app-generic-alert [type]="alertaResponse.alertType" (closed)="alertaResponse.alertVisible = false">
+            <strong class="block font-semibold">{{ alertaResponse.alertTitle }}</strong>
+            <span>{{ alertaResponse.alertMessage }}</span>
+        </app-generic-alert>
+        }
+    <div class="roles-header flex items-center justify-between gap-2 mb-6 flex-wrap sm:flex-nowrap">
+
+    <button type="button" (click)="goBack()"
+        class="flex items-center gap-1.5 px-3 py-2 rounded-lg
+               text-gray-500 hover:text-gray-700 hover:bg-gray-50
+               text-sm font-medium transition-all duration-200
+               cursor-pointer shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+            stroke="currentColor" class="w-5 h-5 shrink-0">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+        </svg>
+        <span class="hidden xs:inline sm:inline">Volver</span>
+    </button>
+
+    <span class="roles-header__title order-3 sm:order-none w-full sm:w-auto text-center
+             text-lg sm:text-xl md:text-2xl font-bold text-title
+             truncate sm:whitespace-normal">
+        {{ visibilityTablet ? 'Roles registrados' : 'Registro de Rol' }}
+    </span>
+
+            @if (acceso.canCreate || !visibilityTablet) {
+    <button type="button" (click)="visibilityRoles()"
+        class="flex items-center gap-2 px-4 py-2.5 rounded-lg
+               bg-[#eef2fb] hover:bg-[#dde6f9]
+               text-[#1c4a30] hover:text-[#163c27]
+               text-sm font-semibold
+               border border-[#d5deef]
+               transition-all duration-200
+               shrink-0 cursor-pointer">
+        @if (visibilityTablet) {
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+            stroke="currentColor" class="w-4 h-4 shrink-0">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+        } @else {
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+            stroke="currentColor" class="w-4 h-4 shrink-0">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                d="M2.25 12s3.75-6 9.75-6 9.75 6 9.75 6-3.75 6-9.75 6-9.75-6-9.75-6Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+        </svg>
+        }
+        <span class="hidden xs:inline sm:inline">{{ visibilityTablet ? 'Registro de Rol' : 'Roles registrados' }}</span>
+    </button>
+            }
+
+</div>
+
+        @if(visibilityTablet) {
+
+        <section class="roles-list mt-8">
+
+            <div class="hidden md:block overflow-x-auto rounded-md border border-gray-200">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-[#e7edfb] text-gray-700">
+                        <tr>
+                            <th class="px-3 py-2 font-medium">Nombre</th>
+                            <th class="px-3 py-2 font-medium">Descripción</th>
+                            <th class="px-3 py-2 font-medium">Permisos completos</th>
+                            <th class="px-3 py-2 font-medium">Módulos completos</th>
+                            <th class="px-3 py-2 font-medium">Estado</th>
+                            <th class="px-3 py-2 font-medium">Creado</th>
+                            <th class="px-3 py-2 font-medium">Actualizado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (item of viewRoles; track $index) {
+                        <tr class="border-t border-gray-200 hover:bg-gray-50" [class.cursor-pointer]="acceso.canEdit" role="button" tabindex="0" (click)="acceso.canEdit && obtenerDatos(item)">
+                            <td class="px-3 py-2">{{ item.name }}</td>
+                            <td class="px-3 py-2">{{ item.description }}</td>
+                            <td class="px-3 py-2">
+                                <span class="px-2 py-1 rounded-full text-xs font-medium"
+                                    [class.bg-green-100]="item.permissionsFull"
+                                    [class.text-green-700]="item.permissionsFull"
+                                    [class.bg-red-100]="!item.permissionsFull"
+                                    [class.text-red-700]="!item.permissionsFull">
+                                    {{ item.permissionsFull ? 'Sí' : 'No' }}
+                                </span>
+                            </td>
+                            <td class="px-3 py-2">
+                                <span class="px-2 py-1 rounded-full text-xs font-medium"
+                                    [class.bg-green-100]="item.modulesFull" [class.text-green-700]="item.modulesFull"
+                                    [class.bg-red-100]="!item.modulesFull" [class.text-red-700]="!item.modulesFull">
+                                    {{ item.modulesFull ? 'Sí' : 'No' }}
+                                </span>
+                            </td>
+                            <td class="px-3 py-2">
+                                <span class="px-2 py-1 rounded-full text-xs font-medium"
+                                    [class.bg-green-100]="item.isActive" [class.text-green-700]="item.isActive"
+                                    [class.bg-red-100]="!item.isActive" [class.text-red-700]="!item.isActive">
+                                    {{ item.isActive ? 'Activo' : 'Inactivo' }}
+                                </span>
+                            </td>
+                            <td class="px-3 py-2">{{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+                            <td class="px-3 py-2">{{ item.updatedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+                        </tr>
+                        }
+
+                        @if (viewRoles.length === 0) {
+                        <tr>
+                            <td colspan="7" class="px-3 py-6 text-center text-gray-400">
+                                No hay roles registrados
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="md:hidden space-y-3">
+                @for (item of viewRoles; track $index) {
+                <div class="rounded-md border border-gray-200 p-4 hover:bg-gray-50" [class.cursor-pointer]="acceso.canEdit" role="button"
+                    tabindex="0" (click)="acceso.canEdit && obtenerDatos(item)">
+
+                    <div class="flex items-start justify-between gap-2">
+                        <h3 class="font-medium text-gray-900 text-base">{{ item.name }}</h3>
+                        <span class="shrink-0 px-2 py-1 rounded-full text-xs font-medium"
+                            [class.bg-green-100]="item.isActive" [class.text-green-700]="item.isActive"
+                            [class.bg-red-100]="!item.isActive" [class.text-red-700]="!item.isActive">
+                            {{ item.isActive ? 'Activo' : 'Inactivo' }}
+                        </span>
+                    </div>
+
+                    @if (item.description) {
+                    <p class="mt-1 text-sm text-gray-500 line-clamp-2">{{ item.description }}</p>
+                    }
+
+                    <div class="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+                        <div>
+                            <span class="text-gray-400 block">Permisos completos</span>
+                            <span class="inline-block mt-0.5 px-2 py-0.5 rounded-full font-medium"
+                                [class.bg-green-100]="item.permissionsFull"
+                                [class.text-green-700]="item.permissionsFull" [class.bg-red-100]="!item.permissionsFull"
+                                [class.text-red-700]="!item.permissionsFull">
+                                {{ item.permissionsFull ? 'Sí' : 'No' }}
+                            </span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400 block">Módulos completos</span>
+                            <span class="inline-block mt-0.5 px-2 py-0.5 rounded-full font-medium"
+                                [class.bg-green-100]="item.modulesFull" [class.text-green-700]="item.modulesFull"
+                                [class.bg-red-100]="!item.modulesFull" [class.text-red-700]="!item.modulesFull">
+                                {{ item.modulesFull ? 'Sí' : 'No' }}
+                            </span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400 block">Creado</span>
+                            <span class="text-gray-600">{{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400 block">Actualizado</span>
+                            <span class="text-gray-600">{{ item.updatedAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+                        </div>
+                    </div>
+                </div>
+                }
+
+                @if (viewRoles.length === 0) {
+                <div class="rounded-md border border-gray-200 px-3 py-6 text-center text-gray-400">
+                    No hay roles registrados
+                </div>
+                }
+            </div>
+
+        </section>
+
+        }@else {
+        <section class="roles-form-card">
+        <div class="roles-form-card__heading">
+            <div>
+                <span class="roles-form-card__eyebrow">Control de accesos</span>
+                <h2>{{ updateForm ? 'Editar rol' : 'Registrar nuevo rol' }}</h2>
+            </div>
+            <span class="roles-form-card__required">* Campos obligatorios</span>
+        </div>
+
+        <app-generic-form [disabled]="loading" (formSubmit)=" updateForm? updateRoles() : onSubmit()">
+
+            <div [formGroup]="roleForm">
+
+                <div class="roles-form-grid grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                    <app-generic-input label="Nombre" placeholder="Escribe el nombre del rol" icon="none"
+                        [control]="roleForm.controls['name']"></app-generic-input>
+
+                    <app-generic-input label="Descripción" placeholder="Escribe la descripción" icon="none"
+                        [control]="roleForm.controls['description']"></app-generic-input>
+                </div>
+
+                <div class="roles-permissions flex flex-col gap-2 mt-2 mb-6 sm:flex-row sm:items-center sm:gap-6">
+                    <app-generic-checkbox label="Permisos completos"
+                        [control]="roleForm.controls['permissionsFull']"></app-generic-checkbox>
+                    <app-generic-checkbox label="Activo"
+                        [control]="roleForm.controls['isActive']"></app-generic-checkbox>
+                    <app-generic-checkbox label="Módulos completos"
+                        [control]="roleForm.controls['modulesFull']"></app-generic-checkbox>
+                </div>
+
+                @if(renderFullAcceso()){
+
+                <div class="roles-access-heading mb-3 flex items-center justify-between">
+                    <h3 class="text-sm font-bold text-[#2f7d3f]">Accesos por módulo</h3>
+                    <button type="button" (click)="addAcceso()"
+                        class="text-sm font-medium text-[#1c4a30] hover:text-[#163c27] cursor-pointer">
+                        + Agregar módulo
+                    </button>
+                </div>
+
+                <div formArrayName="accesos" class="flex flex-col gap-4">
+
+                    @for (item of accesos.controls; track $index) {
+
+                    <section [formGroupName]="$index" class="roles-access-card border border-gray-200 rounded-md p-4 relative">
+
+                        @if(accesos.length > 1){
+                        <button type="button" (click)="removeAcceso($index)"
+                            class="absolute top-2 right-2 text-gray-400 hover:text-red-500 cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                        }
+
+                        <app-generic-select label="Módulo" placeholder="Selecciona un módulo"
+                            [control]="$any(item.get('modulo'))" [options]="moduleOptions" optionValue="value"
+                            optionLabel="label">
+                        </app-generic-select>
+
+                        @if(visibilityAcceso()){
+                        <app-generic-select label="Nivel de acceso" placeholder="Selecciona un nivel"
+                            [control]="$any(item.get('nivel'))" [options]="nivelOptions" optionValue="value"
+                            optionLabel="label">
+                        </app-generic-select>
+                        }
+
+                    </section>
+                    }
+
+                </div>
+
+                }
+
+            </div>
+
+            <div class="roles-form-actions flex justify-center mt-6">
+              <button type="submit" 
+    class="flex items-center gap-2 px-4 py-2.5 rounded-lg
+           bg-[#eef2fb] hover:bg-[#dde6f9]
+           text-[#1c4a30] hover:text-[#163c27]
+           text-sm font-semibold
+           border border-[#d5deef]
+           transition-all duration-200
+           shrink-0 cursor-pointer">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5"
+        stroke="currentColor" class="w-4 h-4 shrink-0">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+    </svg>
+    <span class="hidden xs:inline sm:inline">Guardar rol</span>
+</button>
+            </div>
+
+        </app-generic-form>
+    </section>
+        }
+
+    </div>
+</div>

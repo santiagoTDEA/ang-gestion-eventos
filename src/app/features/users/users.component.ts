@@ -1,0 +1,236 @@
+import { Component, OnInit, inject } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { ValidateRenderingService } from '../inicio/services/validate-rendering.service';
+import { UsersService } from './services/users.service';
+import { CreateUserDto, UserResponse, Status } from './interfaces/users.interfaces';
+import { GenericFormComponent } from '../../../shared/organisms/generic-form/generic-form.component';
+import { GenericInputComponent, GenericInputIcon } from '../../../shared/atoms/generic-input/generic-input.component';
+import { GenericSelectComponent } from '../../../shared/atoms/generic-select/generic-select.component';
+import { GenericButtonComponent } from '../../../shared/atoms/generic-button/generic-button.component';
+import { StatusService } from '../../core/services/status.service';
+import { PeoplesService } from '../peoples/services/peoples.service';
+import { GenericAlertResponse } from '../../../shared/atoms/generic-alert/utils/style';
+import { GenericAlertComponent } from '../../../shared/atoms/generic-alert/generic-alert.component';
+
+@Component({
+  selector: 'app-users',
+  imports: [ReactiveFormsModule, GenericFormComponent, GenericInputComponent, GenericSelectComponent, GenericButtonComponent, GenericAlertComponent],
+  templateUrl: './users.component.html',
+  styleUrl: './users.component.css'
+})
+export class UsersComponent implements OnInit {
+
+  private readonly usersService: UsersService = inject(UsersService);
+  private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
+  private readonly validateRenderingService = inject(ValidateRenderingService);
+  readonly acceso = this.validateRenderingService.permisosDelModulo('usuarios');
+  private readonly statusServices: StatusService = inject(StatusService);
+  private readonly peopleService: PeoplesService = inject(PeoplesService);
+  alertaResponse: GenericAlertResponse = { alertVisible: false, alertType: 'success', alertTitle: '', alertMessage: '' };
+
+  users: UserResponse[] = [];
+  visibilityTablet = false;
+  loading = false;
+  updateMethod = false;
+  currentUserId: string | null = null;
+  typePassword: 'text' | 'password' = 'password';
+  iconoPassword: GenericInputIcon = 'eye';
+
+
+  userForm!: FormGroup;
+  personOptions: any[] = [];
+  allPersonOptions: any[] = [];
+  statusOptions: Status[] = [];
+
+  ngOnInit(): void {
+    if (!this.acceso.canView) {
+      this.router.navigate(['/inicio']);
+      return;
+    }
+    this.visibilityTablet = !this.acceso.canCreate;
+
+    this.buildForm();
+    this.getUsers();
+    this.getStatusOptions();
+    this.getPeopleOptions();
+  }
+
+  private getStatusOptions(): void {
+    this.statusServices.getStatusOptions().subscribe({
+      next: (statuses) => {
+        if (statuses.length === 0) {
+          this.alertaResponse = {
+            alertVisible: true,
+            alertType: 'error',
+            alertTitle: 'Error',
+            alertMessage: 'No hay estados disponibles.'
+          };
+          return
+        }
+        this.statusOptions = statuses.filter(status => status.statusName.trim().toLowerCase() === "activo" || status.statusName.trim().toLowerCase() === "inactivo");
+      },
+
+    });
+
+
+  }
+
+  handleClick(): void {
+    this.iconoPassword = (this.typePassword === 'password' ? 'eye' : 'eye-slash') as GenericInputIcon;
+    this.typePassword = this.typePassword === 'password' ? 'text' : 'password';
+  }
+
+  private getPeopleOptions(): void {
+    this.peopleService.getPeoples().subscribe({
+      next: (people) => {
+
+        if (people.length === 0) {
+          this.alertaResponse = {
+            alertVisible: true,
+            alertType: 'error',
+            alertTitle: 'Error',
+            alertMessage: 'No hay personas disponibles.'
+          };
+          return;
+        }
+        this.allPersonOptions = people;
+        this.updatePersonOptions();
+      }
+    });
+  }
+
+  updatePersonOptions(): void {
+    if (!this.updateMethod) {
+      this.personOptions = this.allPersonOptions.filter((person) => person.user == null).map((person) => ({
+        id: person.id,
+        label: person.name ? `${person.name} - ${person.email}` : person.email
+      }));
+    } else {
+      const currentPersonOptions = this.allPersonOptions.filter(person => person?.user?.id === this.currentUserId);
+      if (currentPersonOptions.length > 0) {
+        this.personOptions = currentPersonOptions.map((person) => ({
+          id: person.id,
+          label: person.name ? `${person.name} - ${person.email}` : person.email
+        }));
+      } else {
+        this.personOptions = this.allPersonOptions.filter((person) => person.user == null).map((person) => ({
+          id: person.id,
+          label: person.name ? `${person.name} - ${person.email}` : person.email
+        }));
+      }
+    }
+
+  }
+
+
+
+  private buildForm(): void {
+    this.userForm = this.fb.group({
+      username: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(50)]],
+      password: ['', [Validators.minLength(6), Validators.maxLength(100)]],
+      personId: [null],
+      statusId: [null, Validators.required],
+    });
+  }
+
+
+  getUsers(): void {
+    this.usersService.getUsers().subscribe({
+      next: (response: UserResponse[]) => {
+        this.users = response;
+      }
+    });
+  }
+
+  visibilityRoles(): void {
+    this.visibilityTablet = !this.visibilityTablet;
+    if (this.visibilityTablet) {
+      this.resetForm();
+    }
+  }
+
+  private resetForm(): void {
+    this.updateMethod = false;
+    this.currentUserId = null;
+    this.userForm.reset({
+      username: '',
+      password: '',
+      personId: null,
+      statusId: null,
+    });
+    this.userForm.get('password')?.addValidators(Validators.required);
+    this.userForm.get('password')?.updateValueAndValidity();
+  }
+
+  obtenerDatos(item: UserResponse): void {
+    console.log(item);
+    this.updateMethod = true;
+    this.currentUserId = item.id;
+    this.updatePersonOptions();
+
+    this.userForm.get('password')?.clearValidators();
+    this.userForm.get('password')?.setValidators([Validators.minLength(6), Validators.maxLength(100)]);
+    this.userForm.get('password')?.updateValueAndValidity();
+
+    this.userForm.patchValue({
+      username: item.username,
+      password: item.password,
+      personId: item.person?.id ?? null,
+      statusId: item.status?.idStatus ?? null,
+    });
+
+    this.visibilityTablet = false;
+  }
+
+  onSubmit(formValue: CreateUserDto): void {
+    if (this.userForm.invalid) {
+      this.userForm.markAllAsTouched();
+      return;
+    }
+
+    const payload: CreateUserDto = {
+      username: formValue.username,
+      password: formValue.password,
+      personId: formValue.personId ? Number(formValue.personId) : undefined,
+      statusId: formValue.statusId,
+    };
+
+    if (this.updateMethod && this.currentUserId) {
+      this.usersService.updateUser(this.currentUserId, payload).subscribe({
+        next: () => {
+          this.alertaResponse = {
+            alertVisible: true,
+            alertType: 'success',
+            alertTitle: 'Éxito',
+            alertMessage: 'Usuario actualizado correctamente.'
+          };
+          this.getUsers();
+          this.visibilityTablet = true;
+          this.resetForm();
+        },
+        error: (err) => console.error(err),
+      });
+    } else {
+      this.usersService.postUser(payload).subscribe({
+        next: () => {
+          this.alertaResponse = {
+            alertVisible: true,
+            alertType: 'success',
+            alertTitle: 'Éxito',
+            alertMessage: 'Usuario creado correctamente.'
+          };
+          this.getUsers();
+          this.visibilityTablet = true;
+          this.resetForm();
+        },
+        error: (err) => console.error(err),
+      });
+    }
+  }
+
+  goBack(): void {
+    this.router.navigate(['/inicio']);
+  }
+}

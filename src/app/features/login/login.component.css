@@ -1,0 +1,6 @@
+.color-fondo {
+    background: linear-gradient(137deg, #f3f7f5 0%, #eaf1ee 100%);
+}
+.text-title {
+    color: var(--text-title);
+}

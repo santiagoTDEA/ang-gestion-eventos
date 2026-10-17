@@ -1,0 +1,27 @@
+<div class="min-h-screen w-full relative font-sans p-6 flex items-center justify-center">
+    <div class="w-full max-w-md bg-white rounded-[10px] shadow-[0_10px_30px_rgba(0,0,0,0.15)] px-7 pt-8 pb-7">
+       @if (alertaResponse.alertVisible) {
+        <app-generic-alert [type]="alertaResponse.alertType" (closed)="alertaResponse.alertVisible = false">
+            <strong class="block font-semibold">{{ alertaResponse.alertTitle }}</strong>
+            <span>{{ alertaResponse.alertMessage }}</span>
+        </app-generic-alert>
+        }
+        <div class="flex flex-col items-center justify-center gap-1 mb-6">
+            <img src="images/tdea-logo.png" alt="TdeA Institución Universitaria" class="h-20 w-auto object-contain" />
+            <span class="text-2xl font-bold text-title">Gestión de Eventos</span>
+        </div>
+
+        <app-generic-form [disabled]="loginForm.invalid || loading" (formSubmit)="onSubmit(loginForm.getRawValue())">
+
+            <app-generic-input label="Nombre de usuario" placeholder="Escribe tu usuario" icon="user"
+                [control]="loginForm.controls['username']"></app-generic-input>
+
+            <app-generic-input label="Contraseña" placeholder="Escribe tu contraseña" [type]="typePassword" [icon]="iconoPassword"
+                [control]="loginForm.controls['password']" (iconClick)="handleClick()"></app-generic-input>
+
+            <app-generic-button label="Ingresar" type="submit" [disabled]="loginForm.invalid"
+                customClass="w-full mt-1 rounded-md bg-[#1c4a30] hover:bg-[#163c27] text-white text-sm font-medium py-3"></app-generic-button>
+
+        </app-generic-form>
+    </div>
+</div>

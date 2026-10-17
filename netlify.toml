@@ -1,0 +1,15 @@
+[build]
+  command = "npm run build"
+  # Con el builder "application" de Angular el sitio queda en la subcarpeta browser.
+  publish = "dist/ang-gestion-eventos/browser"
+
+[build.environment]
+  # Angular 19 soporta Node 18, 20 y 22; Netlify usaba Node 24 por defecto.
+  NODE_VERSION = "20"
+
+# App de una sola página: cualquier ruta (/inicio, /eventos...) debe servir index.html
+# y dejar que el router de Angular la resuelva; sin esto Netlify responde 404.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
