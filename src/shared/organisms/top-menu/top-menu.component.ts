@@ -83,7 +83,8 @@ export class TopMenuComponent implements OnInit, OnChanges, OnDestroy {
       this.notificationsService.markRead(item.id).subscribe({ error: () => this.loadNotifications() });
     }
 
-    this.router.navigate(['/aprobaciones'], { queryParams: { evento: item.eventId } });
+    const target = item.type.startsWith('difusion') ? '/difusion' : '/aprobaciones';
+    this.router.navigate([target], { queryParams: { evento: item.eventId } });
   }
 
   markAllRead(): void {

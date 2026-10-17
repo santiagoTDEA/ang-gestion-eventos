@@ -10,7 +10,11 @@ export type NotificationType =
   | 'firmado'
   | 'devuelto'
   | 'reenviado'
-  | 'aprobado';
+  | 'aprobado'
+  | 'difusion_nueva'
+  | 'difusion_estado'
+  | 'difusion_revision'
+  | 'difusion_devuelta';
 
 export interface AppNotification {
   id: number;

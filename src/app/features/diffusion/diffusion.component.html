@@ -1,0 +1,207 @@
+<main class="diffusion">
+    <section class="diffusion__contenido">
+        @if (alertaResponse.alertVisible) {
+        <app-generic-alert [type]="alertaResponse.alertType" (closed)="alertaResponse.alertVisible = false">
+            <strong class="block font-semibold">{{ alertaResponse.alertTitle }}</strong>
+            <span>{{ alertaResponse.alertMessage }}</span>
+        </app-generic-alert>
+        }
+
+        <button type="button" class="diffusion__volver" (click)="goBack()" aria-label="Volver al inicio">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M15.75 19.5 8.25 12l7.5-7.5" />
+            </svg>
+            Volver al inicio
+        </button>
+
+        <article class="diffusion__resumen">
+            <div class="diffusion__insignia"><span></span> Módulo 4 · Gestión de difusión</div>
+            <h1>Gestión de difusión</h1>
+            <p class="diffusion__descripcion">
+                Cuando un evento completa su aprobación, la plataforma genera sola las solicitudes de piezas y de
+                difusión que el organizador pidió en logística, sin correos. Cada solicitud avanza por
+                Solicitada, En diseño, En revisión y Publicada, y las piezas quedan en el repositorio.
+            </p>
+            <div class="diffusion__metadatos">
+                <div><span>Solicitudes</span><strong>{{ requests.length }}</strong></div>
+                <div><span>En proceso</span><strong>{{ inProgress }}</strong></div>
+                <div><span>Publicadas</span><strong>{{ published }}</strong></div>
+            </div>
+        </article>
+
+        <section aria-label="Solicitudes">
+            <h2 class="diffusion__subtitulo">Solicitudes</h2>
+
+            @if (loading) {
+            <p class="diffusion__vacio">Cargando solicitudes…</p>
+            } @else if (requests.length === 0) {
+            <p class="diffusion__vacio">
+                Aún no hay solicitudes. Se crean cuando un evento con apoyo de piezas o difusión completa su aprobación.
+            </p>
+            } @else {
+            <div class="diffusion__lista">
+                @for (request of requests; track request.id) {
+                <button type="button" class="diffusion__solicitud"
+                    [class.diffusion__solicitud--activa]="request.id === selectedId" (click)="select(request)">
+                    <strong>{{ request.eventName }}</strong>
+                    <span>{{ typeLabel[request.type] }} · {{ request.areaLabel }}</span>
+                    <span class="diffusion__chip" [class.diffusion__chip--ok]="request.status === 'publicada'"
+                        [class.diffusion__chip--revision]="request.status === 'en_revision'">
+                        {{ statusLabel(request.status) }}
+                    </span>
+                    <small>{{ request.assets.length }} {{ request.assets.length === 1 ? 'pieza' : 'piezas' }}</small>
+                </button>
+                }
+            </div>
+            }
+        </section>
+
+        @if (selected; as request) {
+        <nav class="diffusion__estados" aria-label="Estado de la solicitud">
+            @for (status of statuses; track status.value; let index = $index) {
+            <div class="diffusion__estado" [class.diffusion__estado--hecho]="index < statusIndex(request.status)"
+                [class.diffusion__estado--actual]="index === statusIndex(request.status)">
+                <span class="diffusion__estado-circulo">
+                    @if (index < statusIndex(request.status) || request.status === 'publicada') {
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 13l4 4L19 7" />
+                    </svg>
+                    } @else {
+                    {{ index + 1 }}
+                    }
+                </span>
+                <strong>{{ status.label }}</strong>
+            </div>
+            }
+        </nav>
+
+        <article class="diffusion__tarjeta">
+            <header class="diffusion__tarjeta-cabecera">
+                <div>
+                    <h2>{{ request.eventName }}</h2>
+                    <p>{{ typeLabel[request.type] }} · {{ request.areaLabel }}</p>
+                </div>
+                <span class="diffusion__chip" [class.diffusion__chip--ok]="request.status === 'publicada'"
+                    [class.diffusion__chip--revision]="request.status === 'en_revision'">
+                    {{ statusLabel(request.status) }}
+                </span>
+            </header>
+
+            <div class="diffusion__cuerpo">
+                <dl class="diffusion__datos">
+                    <div><dt>Fechas</dt><dd>{{ request.eventSnapshot.startDate | date:'dd/MM/yyyy' }} - {{ request.eventSnapshot.endDate | date:'dd/MM/yyyy' }}</dd></div>
+                    <div><dt>Horario</dt><dd>{{ request.eventSnapshot.startTime.slice(0, 5) }} - {{ request.eventSnapshot.endTime.slice(0, 5) }}</dd></div>
+                    <div><dt>Modalidad</dt><dd>{{ request.eventSnapshot.modality }}</dd></div>
+                    <div><dt>Facultad</dt><dd>{{ request.eventSnapshot.faculty }}</dd></div>
+                    <div class="diffusion__datos-ancho"><dt>Público objetivo</dt><dd>{{ request.eventSnapshot.participantProfile }}</dd></div>
+                    <div class="diffusion__datos-ancho"><dt>Presentación</dt><dd>{{ request.eventSnapshot.presentation }}</dd></div>
+                </dl>
+
+                <h3 class="diffusion__titulo-seccion">Piezas del repositorio</h3>
+
+                @if (request.assets.length === 0) {
+                <p class="diffusion__vacio diffusion__vacio--chico">
+                    Todavía no hay piezas en esta solicitud.
+                </p>
+                } @else {
+                <ul class="diffusion__piezas">
+                    @for (asset of request.assets; track asset.id) {
+                    <li class="diffusion__pieza">
+                        <a [href]="fileUrl(asset)" target="_blank" rel="noopener" class="diffusion__pieza-vista">
+                            @if (isImage(asset)) {
+                            <img [src]="fileUrl(asset)" [alt]="asset.originalName" />
+                            } @else if (isVideo(asset)) {
+                            <video [src]="fileUrl(asset)" preload="metadata" muted></video>
+                            } @else {
+                            <span class="diffusion__pieza-icono">Abrir</span>
+                            }
+                        </a>
+                        <div class="diffusion__pieza-info">
+                            <strong>{{ assetLabel[asset.assetType] }}</strong>
+                            <span>{{ asset.originalName }}</span>
+                            <small>{{ formatSize(asset.size) }} · {{ asset.createdAt | date:'dd/MM/yyyy HH:mm' }}</small>
+                        </div>
+                        @if (request.canUpload) {
+                        <button type="button" class="diffusion__quitar" (click)="removeAsset(asset)"
+                            [disabled]="working" aria-label="Quitar pieza">×</button>
+                        }
+                    </li>
+                    }
+                </ul>
+                }
+
+                @if (request.canUpload) {
+                <form class="diffusion__subida" (submit)="$event.preventDefault(); upload()">
+                    <label>
+                        Tipo de pieza
+                        <select [formControl]="assetType">
+                            <option [ngValue]="null" disabled>Selecciona un tipo</option>
+                            @for (type of request.allowedAssetTypes; track type) {
+                            <option [ngValue]="type">{{ assetLabel[type] }}</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        Archivo
+                        <input type="file" (change)="onFileSelected($event)" />
+                    </label>
+                    <button type="submit" class="diffusion__btn diffusion__btn--primario"
+                        [disabled]="working || assetType.invalid || !selectedFile">
+                        {{ working ? 'Subiendo…' : 'Subir pieza' }}
+                    </button>
+                </form>
+                }
+
+                <h3 class="diffusion__titulo-seccion">Historial</h3>
+                <ul class="diffusion__historial">
+                    @for (item of request.history; track item.id) {
+                    <li>
+                        <strong>{{ statusLabel(item.toStatus) }}</strong>
+                        <span>{{ item.changedByName }} · {{ item.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+                        @if (item.note) {
+                        <p>{{ item.note }}</p>
+                        }
+                    </li>
+                    }
+                </ul>
+            </div>
+
+            @if (request.allowedActions.length > 0) {
+            <footer class="diffusion__acciones">
+                @for (action of request.allowedActions; track action.to) {
+                <button type="button" class="diffusion__btn"
+                    [class.diffusion__btn--primario]="!action.requiresNote"
+                    [class.diffusion__btn--secundario]="action.requiresNote" [disabled]="working"
+                    (click)="runAction(action)">
+                    {{ action.label }}
+                </button>
+                }
+            </footer>
+            }
+        </article>
+
+        @if (pendingAction) {
+        <div class="diffusion__modal-fondo" (click)="cancelNote()">
+            <div class="diffusion__modal" (click)="$event.stopPropagation()">
+                <h3>{{ pendingAction.label }}</h3>
+                <p>Indica qué debe corregirse; el área responsable verá esta observación.</p>
+                <textarea [formControl]="noteControl" rows="4" maxlength="1000"
+                    placeholder="Describe la observación (mínimo 10 caracteres)"></textarea>
+                @if (noteControl.invalid && noteControl.touched) {
+                <small class="diffusion__error">La observación es obligatoria (mínimo 10 caracteres).</small>
+                }
+                <div class="diffusion__modal-acciones">
+                    <button type="button" class="diffusion__btn diffusion__btn--secundario" (click)="cancelNote()">
+                        Cancelar
+                    </button>
+                    <button type="button" class="diffusion__btn diffusion__btn--primario" [disabled]="working"
+                        (click)="confirmNote()">
+                        {{ working ? 'Enviando…' : 'Devolver' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+        }
+        }
+    </section>
+</main>

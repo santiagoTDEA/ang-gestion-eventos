@@ -24,7 +24,7 @@ interface MenuSection {
 
 /** Cómo se agrupan los módulos en el menú. Los módulos que no estén aquí caen en "Otros". */
 const MENU_GROUPS: MenuGroup[] = [
-  { label: 'Gestión de eventos', modules: ['eventos', 'aprobaciones'] },
+  { label: 'Gestión de eventos', modules: ['eventos', 'aprobaciones', 'difusion'] },
   { label: 'Administración', modules: ['facultades', 'personas', 'usuarios', 'roles', 'estados'] }
 ];
 
