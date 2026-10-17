@@ -2,7 +2,6 @@ export interface EventApproval {
     personId: number;
     roleId: string;
     date: string;
-    signature: string;
 }
 
 export interface Event {
@@ -44,7 +43,7 @@ export interface ReturnEvent extends Omit<Event, 'facultyId' | 'approvals'> {
     approvals: {
         id: number;
         date: string;
-        signature: string;
+        signature: string | null;
         status: 'pendiente' | 'aprobado';
         signedAt: string | null;
         person: { id: number; name: string; email: string };

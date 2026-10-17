@@ -1,6 +1,7 @@
 export interface CreateUserDto {
     username: string;
     password: string;
+    signature?: string | null;
     personId?: number;
     statusId: number;
 }
@@ -41,6 +42,7 @@ export interface UserResponse {
     id: string;
     username: string;
     password: string;
+    signature?: string | null;
     status: Status;
     person: Person;
 }

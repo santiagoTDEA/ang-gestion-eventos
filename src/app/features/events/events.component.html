@@ -142,11 +142,12 @@
                                 <th class="px-3 py-2 font-medium">Fechas</th>
                                 <th class="px-3 py-2 font-medium">Cupos</th>
                                 <th class="px-3 py-2 font-medium">Costo</th>
+                                <th class="px-3 py-2 font-medium">Estado</th>
                             </tr>
                         </thead>
                         <tbody>
                             @for (item of events; track item.id) {
-                            <tr class="border-t border-gray-200 hover:bg-gray-50" [class.cursor-pointer]="canEditEvents"
+                            <tr class="border-t border-gray-200 hover:bg-gray-50" [class.cursor-pointer]="canEditEvent(item)"
                                 [attr.role]="canEditEvents ? 'button' : null" [attr.tabindex]="canEditEvents ? 0 : null"
                                 (click)="startEdit(item)" (keydown.enter)="startEdit(item)">
                                 <td class="px-3 py-2">{{ item.name }}</td>
@@ -159,12 +160,20 @@
                                 <td class="px-3 py-2">{{ item.minimumCapacity }} - {{ item.maximumCapacity }}</td>
                                 <td class="px-3 py-2">{{ item.costPerParticipant |
                                     currency:'COP':'symbol-narrow':'1.0-0' }}</td>
+                                <td class="px-3 py-2">
+                                    <span class="px-2 py-1 rounded-full text-xs font-medium"
+                                        [class.bg-green-100]="isApproved(item)" [class.text-green-700]="isApproved(item)"
+                                        [class.bg-red-100]="item.workflowStatus === 'devuelto'" [class.text-red-700]="item.workflowStatus === 'devuelto'"
+                                        [class.bg-amber-100]="!isApproved(item) && item.workflowStatus !== 'devuelto'" [class.text-amber-700]="!isApproved(item) && item.workflowStatus !== 'devuelto'">
+                                        {{ statusLabel(item) }}
+                                    </span>
+                                </td>
                             </tr>
                             }
 
                             @if (events.length === 0) {
                             <tr>
-                                <td colspan="7" class="px-3 py-6 text-center text-gray-400">
+                                <td colspan="8" class="px-3 py-6 text-center text-gray-400">
                                     No hay eventos registrados
                                 </td>
                             </tr>
@@ -175,7 +184,7 @@
 
                 <div class="md:hidden space-y-3">
                     @for (item of events; track item.id) {
-                    <div class="rounded-md border border-gray-200 p-4" [class.cursor-pointer]="canEditEvents"
+                    <div class="rounded-md border border-gray-200 p-4" [class.cursor-pointer]="canEditEvent(item)"
                         [attr.role]="canEditEvents ? 'button' : null" [attr.tabindex]="canEditEvents ? 0 : null"
                         (click)="startEdit(item)" (keydown.enter)="startEdit(item)">
                         <div class="flex items-start justify-between gap-2">
@@ -190,6 +199,7 @@
                             {{ item.eventType === '¿Otro?' ? item.otherEventType : item.eventType }} · {{
                             item.faculty.name }}
                         </p>
+<span class="inline-block mt-2 px-2 py-1 rounded-full text-xs font-medium"                            [class.bg-green-100]="isApproved(item)" [class.text-green-700]="isApproved(item)"                            [class.bg-red-100]="item.workflowStatus === 'devuelto'" [class.text-red-700]="item.workflowStatus === 'devuelto'"                            [class.bg-amber-100]="!isApproved(item) && item.workflowStatus !== 'devuelto'" [class.text-amber-700]="!isApproved(item) && item.workflowStatus !== 'devuelto'">                            {{ statusLabel(item) }}                        </span>
 
                         <div class="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
                             <div>
@@ -402,7 +412,6 @@
                                 <span>{{ eventForm.value.aprobaciones[index].name || 'Nombre pendiente' }} · {{
                                     eventForm.value.aprobaciones[index].role || 'Cargo pendiente' }}</span>
                                 <span>Fecha: {{ eventForm.value.aprobaciones[index].date || '—' }}</span>
-                                <div>{{ eventForm.value.aprobaciones[index].signature || 'Sin firma' }}</div>
                             </article>
                             }
                         </div>

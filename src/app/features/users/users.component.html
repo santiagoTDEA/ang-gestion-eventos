@@ -66,6 +66,7 @@
                             <th class="px-3 py-2 font-medium">Nombre</th>
                             <th class="px-3 py-2 font-medium">Cédula</th>
                             <th class="px-3 py-2 font-medium">Correo</th>
+                            <th class="px-3 py-2 font-medium">Firma digital</th>
                             <th class="px-3 py-2 font-medium">Estado</th>
                         </tr>
                     </thead>
@@ -77,6 +78,7 @@
                             <td class="px-3 py-2" [class.text-red-700]="!item.person?.name">{{ item.person?.name ? item.person.name : "Pendiente" }}</td>
                             <td class="px-3 py-2" [class.text-red-700]="!item.person?.cedula">{{ item.person?.cedula? item.person.cedula : "Pendiente" }}</td>
                             <td class="px-3 py-2" [class.text-red-700]="!item.person?.email">{{ item.person?.email ? item.person.email : "Pendiente" }}</td>
+                            <td class="px-3 py-2 font-mono text-xs text-gray-600">{{ item.signature ? item.signature : "Se genera al guardar" }}</td>
                             <td class="px-3 py-2">
                                 <span class="px-2 py-1 rounded-full text-xs font-medium"
                                     [class.bg-green-100]="item.status.idStatus === 1"
@@ -126,6 +128,10 @@
                         <div>
                             <span class="text-gray-400 block">Email</span>
                             <span [class.text-red-700]="!item.person?.email">{{ item.person?.email ? item.person?.email : "Pendiente" }}</span>
+                        </div>
+                        <div class="col-span-2">
+                            <span class="text-gray-400 block">Firma digital</span>
+                            <span class="font-mono">{{ item.signature ? item.signature : "Se genera al guardar" }}</span>
                         </div>
                     </div>
                     <div class="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">

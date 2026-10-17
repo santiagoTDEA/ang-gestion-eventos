@@ -19,8 +19,8 @@
             <h1>Flujo de aprobaciones y firmas</h1>
             <p class="approvals__descripcion">
                 Cada evento avanza por el workflow en orden: Docente / Responsable, Coordinador / Enlace,
-                Equipo Educación Continua y Director de Extensión. Quien tiene el turno firma con la firma
-                que quedó registrada en el evento.
+                Equipo Educación Continua y Director de Extensión. Cada responsable firma con su propia firma
+                cuando es su turno.
             </p>
             <div class="approvals__metadatos">
                 <div><span>Eventos</span><strong>{{ events.length }}</strong></div>
@@ -158,7 +158,8 @@
                             </div>
                             <div class="approvals__paso-firma">
                                 <span>Firma</span>
-                                <p class="approvals__signature-text">{{ step.signature }}</p>
+                                <p class="approvals__signature-text">{{ step.personName }}</p>
+                                <small class="approvals__signature-code">Firma digital {{ step.signature }}</small>
                             </div>
                             }
                         </div>
@@ -262,9 +263,10 @@
                 <div class="approvals__modal-body">
                     <p>
                         Vas a firmar <strong>{{ selectedEvent?.name }}</strong> como
-                        <strong>{{ currentStep.title }}</strong> con la firma registrada en el evento:
+                        <strong>{{ currentStep.title }}</strong> con tu firma:
                     </p>
-                    <p class="approvals__signature-text">{{ currentStep.signature }}</p>
+                    <p class="approvals__signature-text">{{ currentStep.personName }}</p>
+                    <small class="approvals__signature-code">Se estampará tu firma digital única, generada al crear tu usuario.</small>
                 </div>
 
                 <footer class="approvals__modal-footer">

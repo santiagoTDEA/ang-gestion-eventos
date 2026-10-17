@@ -1450,3 +1450,14 @@ app-events {
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.86);
 }
+
+.aprobaciones-formulario__nota {
+    margin: 0 0 14px;
+    padding: 10px 12px;
+    border: 1px solid #dfebe2;
+    border-radius: 8px;
+    background: #f0f8f2;
+    color: #315340;
+    font-size: 12px;
+    line-height: 1.45;
+}

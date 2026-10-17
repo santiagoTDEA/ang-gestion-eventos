@@ -34,7 +34,7 @@ import { EventLogisticaComponent } from './components/event-logistica/event-logi
 import { EventFinancieraComponent } from './components/event-financiera/event-financiera.component';
 import { ApprovalMeta, EventAprobacionesComponent } from './components/event-aprobaciones/event-aprobaciones.component';
 
-const DRAFT_STORAGE_KEY = 'eventDraft';
+const DRAFT_STORAGE_KEY = 'eventDraft:v2';
 
 
 type AlertType = 'success' | 'error' | 'info' | 'warning';
@@ -139,7 +139,6 @@ export class EventsComponent implements OnInit {
   facultyOptions: ReturnFaculty[] = [];
 
   readonly approvalsMeta: ApprovalMeta[] = [
-    { title: 'Responsable de elaboración', description: 'Persona que diligenció el formato.', roleName: 'Elaboración' },
     { title: 'Responsable de revisión', description: 'Enlace de Extensión, director o coordinador de la dependencia.', roleName: 'Revisión' },
     { title: 'Responsable de verificación', description: 'Modalidad de Educación Continua.', roleName: 'Verificación' },
     { title: 'Responsable de validación', description: 'Dirección de Extensión Académica.', roleName: 'Validación' }
@@ -302,7 +301,6 @@ export class EventsComponent implements OnInit {
       name: ['', Validators.required],
       role: ['', Validators.required],
       date: ['', Validators.required],
-      signature: ['', Validators.required]
     });
   }
 
@@ -374,6 +372,21 @@ export class EventsComponent implements OnInit {
     return this.validateRender === 'view' || this.validateRender === 'all' || this.validateRender === 'update';
   }
 
+  /** El flujo de aprobación está completo: el evento queda cerrado y ya no se edita. */
+  isApproved(event: ReturnEvent): boolean {
+    return event.approvals.length > 0 && event.approvals.every(step => step.status === 'aprobado');
+  }
+
+  statusLabel(event: ReturnEvent): string {
+    if (this.isApproved(event)) return 'Aprobado';
+    return event.workflowStatus === 'devuelto' ? 'Devuelto' : 'En aprobación';
+  }
+
+  /** Se puede abrir para editar: tiene permiso y todavía no completó las aprobaciones. */
+  canEditEvent(event: ReturnEvent): boolean {
+    return this.canEditEvents && !this.isApproved(event);
+  }
+
   getEvents(): void {
     this.eventsService.getEvents().subscribe({
       next: (events: ReturnEvent[]) => {
@@ -398,6 +411,11 @@ export class EventsComponent implements OnInit {
       return;
     }
 
+    if (this.isApproved(event)) {
+      this.showAlert('warning', 'Evento aprobado', 'Este evento ya completó el flujo de aprobación y no se puede editar.');
+      return;
+    }
+
     if (this.editingId === null) {
       this.saveDraft();
     }
@@ -408,14 +426,12 @@ export class EventsComponent implements OnInit {
     this.resizeArray(this.objectivesArray, objectives.length, () => this.createObjectiveControl());
     this.resizeArray(this.modulesArray, event.modules.length, () => this.createModuleControl());
 
-    const approvals = this.approvalsMeta.map((meta, index) => {
-      const approval = event.approvals.find(item => this.normalize(item.role?.name) === this.normalize(meta.roleName))
-        ?? event.approvals[index];
+    const approvals = this.approvalsMeta.map(meta => {
+      const approval = event.approvals.find(item => this.normalize(item.role?.name) === this.normalize(meta.roleName));
       return {
         name: approval ? String(approval.person.id) : '',
         role: approval?.role.id ?? '',
-        date: approval?.date ?? '',
-        signature: approval?.signature ?? ''
+        date: approval?.date ?? ''
       };
     });
 
@@ -683,8 +699,7 @@ export class EventsComponent implements OnInit {
         next: () => {
           this.loading = false;
           this.finishEdit();
-          this.showTable = true;
-          this.getEvents();
+          this.goToTable();
           this.showAlert('success', 'Evento actualizado', 'El evento fue actualizado correctamente.');
         },
         error: (err) => this.handleSendError(err, 'No se pudo actualizar el evento')
@@ -696,9 +711,7 @@ export class EventsComponent implements OnInit {
       next: () => {
         this.loading = false;
         this.reviewSent = true;
-        if (this.canViewEvents) {
-          this.getEvents();
-        }
+        this.goToTable();
         // Criterio 3: al enviar exitosamente se elimina el borrador guardado.
         localStorage.removeItem(DRAFT_STORAGE_KEY);
         this.resetForm();
@@ -706,6 +719,17 @@ export class EventsComponent implements OnInit {
       },
       error: (err) => this.handleSendError(err, 'No se pudo enviar el formulario')
     });
+  }
+
+  /** Tras guardar (crear o editar) lleva al usuario a la tabla de eventos, arriba de la página. */
+  private goToTable(): void {
+    if (!this.canViewEvents) {
+      return;
+    }
+
+    this.showTable = true;
+    this.getEvents();
+    this.document.defaultView?.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   private handleSendError(err: { error?: { message?: string | string[] } }, title: string): void {
@@ -749,11 +773,10 @@ export class EventsComponent implements OnInit {
       costPerParticipant: Number(financiera.costPerParticipant),
       confirmedMinimumCapacity: Number(financiera.confirmedMinimumCapacity),
       financialObservations: financiera.financialObservations,
-      approvals: aprobaciones.map((approval: { name: string; role: string; date: string; signature: string }) => ({
+      approvals: aprobaciones.map((approval: { name: string; role: string; date: string }) => ({
         personId: Number(approval.name),
         roleId: approval.role,
-        date: approval.date,
-        signature: approval.signature
+        date: approval.date
       }))
     };
   }

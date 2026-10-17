@@ -1,5 +1,5 @@
 import { Component, input, output } from '@angular/core';
-import { AbstractControl, FormArray, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { AbstractControl, FormArray, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { GenericButtonComponent } from '../../../../../shared/atoms/generic-button/generic-button.component';
 import { GenericInputComponent } from '../../../../../shared/atoms/generic-input/generic-input.component';
 import { GenericSelectComponent } from '../../../../../shared/atoms/generic-select/generic-select.component';
@@ -30,15 +30,9 @@ export class EventAprobacionesComponent {
   readonly saveDraft = output<void>();
   readonly preview = output<void>();
 
-  asControl(control: AbstractControl): FormControl {
-    return control as FormControl;
-  }
 
   asGroup(control: AbstractControl): FormGroup {
     return control as FormGroup;
   }
 
-  clearSignature(index: number): void {
-    this.form().at(index).get('signature')!.setValue('');
-  }
 }

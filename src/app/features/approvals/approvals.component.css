@@ -820,3 +820,11 @@
 .approvals__historial {
     margin-top: 20px;
 }
+
+.approvals__signature-code {
+    display: block;
+    margin-top: 2px;
+    color: #6b7280;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11px;
+}

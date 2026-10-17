@@ -1,4 +1,9 @@
 <div class="aprobaciones-formulario">
+    <p class="aprobaciones-formulario__nota">
+        <strong>Responsable de elaboración:</strong> se asigna automáticamente a quien crea el evento; no hay que
+        diligenciarlo. La firma de cada responsable se aplica cuando le toque aprobar en el módulo de Aprobaciones.
+    </p>
+
 
     @for (approval of form().controls; track meta()[$index].title; let index = $index) {
     <article class="aprobaciones-formulario__bloque">
@@ -21,16 +26,6 @@
                 [control]="asGroup(approval).controls['date']">
             </app-generic-input>
 
-            <div class="aprobaciones-formulario__firma">
-                <label>Firma <span>*</span></label>
-                <textarea [formControl]="asControl(asGroup(approval).controls['signature'])"
-                    placeholder="Firma aquí con el mouse o el dedo"></textarea>
-                @if (asGroup(approval).controls['signature'].invalid &&
-                asGroup(approval).controls['signature'].touched) {
-                <small class="eventos__error">La firma es obligatoria.</small>
-                }
-                <button type="button" (click)="clearSignature(index)">Borrar firma</button>
-            </div>
         </div>
     </article>
     }
