@@ -1,0 +1,12 @@
+
+/* Con menú lateral: el contenido deja libre el ancho del menú (y la barra inferior en móvil). */
+.app-shell--with-menu {
+    margin-left: 264px;
+}
+
+@media (max-width: 900px) {
+    .app-shell--with-menu {
+        margin-left: 0;
+        padding-bottom: 72px;
+    }
+}

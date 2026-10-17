@@ -23,6 +23,18 @@ export class EventsService {
     return this.http.get<ReturnEvent[]>(`${environment.apiUrl}events`);
   }
 
+  approveEvent(id: number): Observable<ReturnEvent> {
+    return this.http.post<ReturnEvent>(`${environment.apiUrl}events/${id}/approve`, {});
+  }
+
+  returnEvent(id: number, observation: string): Observable<ReturnEvent> {
+    return this.http.post<ReturnEvent>(`${environment.apiUrl}events/${id}/return`, { observation });
+  }
+
+  resubmitEvent(id: number): Observable<ReturnEvent> {
+    return this.http.post<ReturnEvent>(`${environment.apiUrl}events/${id}/resubmit`, {});
+  }
+
   getEventById(id: number): Observable<ReturnEvent> {
     return this.http.get<ReturnEvent>(`${environment.apiUrl}events/${id}`);
   }

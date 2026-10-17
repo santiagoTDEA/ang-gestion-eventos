@@ -45,8 +45,22 @@ export interface ReturnEvent extends Omit<Event, 'facultyId' | 'approvals'> {
         id: number;
         date: string;
         signature: string;
-        person: { id: number; email: string };
+        status: 'pendiente' | 'aprobado';
+        signedAt: string | null;
+        person: { id: number; name: string; email: string };
         role: { id: string; name: string };
     }[];
+    createdBy?: string | null;
+    workflowStatus: 'en_flujo' | 'devuelto';
+    observations: EventObservation[];
     createdAt: string;
+}
+
+export interface EventObservation {
+    id: number;
+    stepRole: string;
+    observation: string;
+    createdAt: string;
+    resolvedAt: string | null;
+    author: { id: number; name: string } | null;
 }

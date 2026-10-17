@@ -584,16 +584,44 @@
 
     .approvals__stepper {
         flex-direction: column;
-        gap: 16px;
+        gap: 18px;
+        padding: 18px 16px;
     }
 
     .approvals__stepper-item {
+        flex: none;
         flex-direction: row;
+        align-items: center;
+        gap: 14px;
         text-align: left;
     }
 
+    .approvals__stepper-circle {
+        position: relative;
+        z-index: 1;
+        flex: none;
+    }
+
+    .approvals__stepper-info {
+        margin-top: 0;
+        gap: 3px;
+    }
+
+    .approvals__stepper-info strong {
+        font-size: 14px;
+    }
+
+    .approvals__stepper-info span {
+        font-size: 12px;
+    }
+
+    /* Conector vertical entre un paso y el siguiente. */
     .approvals__stepper-line {
-        display: none;
+        top: 40px;
+        left: 19px;
+        width: 2px;
+        height: 18px;
+        z-index: 0;
     }
 
     .approvals__card-footer {
@@ -611,4 +639,184 @@
     .approvals__modal-footer .approvals__btn {
         width: 100%;
     }
+}
+/* ===== Listado de eventos y pasos del workflow ===== */
+.approvals__subtitulo {
+    margin: 0 0 10px;
+    font-size: 1rem;
+    color: #0b4a2e;
+}
+
+.approvals__vacio {
+    padding: 18px;
+    border-radius: 10px;
+    background: #fff;
+    color: #6b7280;
+    text-align: center;
+}
+
+.approvals__lista {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.approvals__evento {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 14px;
+    border: 1px solid #dfebe2;
+    border-radius: 10px;
+    background: #fff;
+    text-align: left;
+    cursor: pointer;
+}
+
+.approvals__evento span:not(.approvals__chip) {
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+.approvals__evento--activo {
+    border-color: #1c4a30;
+    box-shadow: 0 0 0 2px rgba(28, 74, 48, 0.15);
+}
+
+.approvals__chip {
+    display: inline-block;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0;
+    padding: 3px 10px;
+    border-radius: 8px;
+    background: #eef2fb;
+    color: #374151;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.35;
+    text-align: left;
+}
+
+.approvals__chip--ok {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.approvals__chip--turno {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.approvals__status--ok {
+    background-color: #22c55e;
+}
+
+.approvals__pasos {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.approvals__paso {
+    padding: 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+}
+
+.approvals__paso--actual {
+    border-color: #f59e0b;
+    background: #fffbeb;
+}
+
+.approvals__paso-cabecera {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.approvals__paso-cabecera div {
+    display: flex;
+    flex-direction: column;
+}
+
+.approvals__paso-cabecera span:not(.approvals__chip),
+.approvals__paso-datos span {
+    font-size: 0.78rem;
+    color: #6b7280;
+}
+
+.approvals__paso-datos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.approvals__paso-datos div {
+    display: flex;
+    flex-direction: column;
+}
+
+.approvals__paso-firma {
+    grid-column: 1 / -1;
+}
+
+/* ===== Devolución con observaciones ===== */
+.approvals__chip--devuelto {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.approvals__status--devuelto {
+    background-color: #ef4444;
+}
+
+.approvals__devuelto {
+    margin: 0 20px 4px;
+    padding: 14px 16px;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    background: #fef2f2;
+    color: #7f1d1d;
+}
+
+.approvals__devuelto p {
+    margin: 6px 0 0;
+}
+
+.approvals__devuelto-ayuda {
+    font-size: 0.85rem;
+    color: #991b1b;
+}
+
+.approvals__devuelto-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.approvals__observacion {
+    margin: 10px 0 0;
+    white-space: pre-line;
+}
+
+.approvals__observacion-campo {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font: inherit;
+    resize: vertical;
+}
+
+.approvals__historial {
+    margin-top: 20px;
 }

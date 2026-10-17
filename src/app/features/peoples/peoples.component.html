@@ -26,6 +26,7 @@
                 }}
             </span>
 
+            @if (acceso.canCreate || !visibilityTablet) {
             <button type="button" (click)="visibilityRoles()" class="flex items-center gap-2 px-4 py-2.5 rounded-lg
                        bg-[#eef2fb] hover:bg-[#dde6f9]
                        text-[#1c4a30] hover:text-[#163c27]
@@ -49,6 +50,7 @@
                 <span class="hidden xs:inline sm:inline">{{ visibilityTablet ? 'Nueva persona' : 'Ver personas'
                     }}</span>
             </button>
+            }
 
         </div>
 
@@ -60,6 +62,7 @@
                 <table class="w-full text-sm text-left">
                     <thead class="bg-[#e7edfb] text-gray-700">
                         <tr>
+                            <th class="px-3 py-2 font-medium">Nombre</th>
                             <th class="px-3 py-2 font-medium">Cédula</th>
                             <th class="px-3 py-2 font-medium">Correo</th>
                             <th class="px-3 py-2 font-medium">Teléfono</th>
@@ -71,8 +74,9 @@
                     </thead>
                     <tbody>
                         @for (item of persons; track $index) {
-                        <tr class="border-t border-gray-200 hover:bg-gray-50 cursor-pointer" role="button" tabindex="0"
-                            (click)="obtenerDatos(item)">
+                        <tr class="border-t border-gray-200 hover:bg-gray-50" [class.cursor-pointer]="acceso.canEdit" role="button" tabindex="0"
+                            (click)="acceso.canEdit && obtenerDatos(item)">
+                            <td class="px-3 py-2">{{ item.name }}</td>
                             <td class="px-3 py-2">{{ item.cedula }}</td>
                             <td class="px-3 py-2">{{ item.email }}</td>
                             <td class="px-3 py-2">{{ item.phone }}</td>
@@ -108,12 +112,13 @@
 
             <div class="md:hidden space-y-3">
                 @for (item of persons; track $index) {
-                <div class="rounded-md border border-gray-200 p-4 hover:bg-gray-50 cursor-pointer" role="button"
-                    tabindex="0" (click)="obtenerDatos(item)">
+                <div class="rounded-md border border-gray-200 p-4 hover:bg-gray-50" [class.cursor-pointer]="acceso.canEdit" role="button"
+                    tabindex="0" (click)="acceso.canEdit && obtenerDatos(item)">
 
                     <!-- Fila principal: Cédula + Estado -->
                     <div class="flex items-start justify-between gap-2">
-                        <h4 class="font-medium text-gray-900 text-base">{{ item.cedula }}</h4>
+                        <h4 class="font-medium text-gray-900 text-base">{{ item.name }}</h4>
+                        <span class="text-sm text-gray-500">{{ item.cedula }}</span>
                         <span class="shrink-0 px-2 py-1 rounded-full text-xs font-medium"
                             [class.bg-green-100]="item.status.idStatus === 1"
                             [class.text-green-700]="item.status.idStatus === 1"
@@ -177,6 +182,9 @@
 
             <div [formGroup]="personForm">
                 <div class="peoples-form-grid grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+
+                    <app-generic-input label="Nombre" placeholder="Escribe el nombre completo" icon="none"
+                        [control]="personForm.controls['name']"></app-generic-input>
 
                     <app-generic-input label="Cédula" placeholder="Escribe el número de cédula" icon="none"
                         [control]="personForm.controls['cedula']"></app-generic-input>

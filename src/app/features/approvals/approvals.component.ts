@@ -1,44 +1,56 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { DatePipe } from '@angular/common';
+import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ApprovalService } from './services/approval.service';
-import { ApprovalFlow, ApprovalStep, ApprovalRole, Signature } from './interfaces/approval.interfaces';
+import { APPROVAL_FLOW, FlowStep, StepState } from './interfaces/approval.interfaces';
+import { EventObservation, ReturnEvent } from '../events/interfaces/events.interfaces';
+import { PeoplesService } from '../peoples/services/peoples.service';
+import { Person } from '../peoples/interfaces/people.interfaces';
+import { JwtService } from '../../core/services/jwt.service';
+import { ValidateRenderingService } from '../inicio/services/validate-rendering.service';
 import { GenericAlertComponent } from '../../../shared/atoms/generic-alert/generic-alert.component';
 import { GenericAlertResponse } from '../../../shared/atoms/generic-alert/utils/style';
+
+/** Nombre sin tildes ni mayúsculas, para cruzar el rol de la aprobación con el workflow. */
+const normalize = (value?: string): string =>
+  (value ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 
 @Component({
   selector: 'app-approvals',
   standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    GenericAlertComponent,
-  ],
+  imports: [DatePipe, ReactiveFormsModule, GenericAlertComponent],
   templateUrl: './approvals.component.html',
   styleUrl: './approvals.component.css'
 })
 export class ApprovalsComponent implements OnInit {
-
   private readonly approvalService = inject(ApprovalService);
-  private readonly fb = inject(FormBuilder);
+  private readonly peoplesService = inject(PeoplesService);
+  private readonly jwtService = inject(JwtService);
+  private readonly validateRenderingService = inject(ValidateRenderingService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
-  // Datos del flujo
-  approvalFlow: ApprovalFlow | null = null;
-  currentStep: ApprovalStep | null = null;
+  readonly acceso = this.validateRenderingService.permisosDelModulo('aprobaciones');
+  readonly flow = APPROVAL_FLOW;
+
+  events: ReturnEvent[] = [];
+  selectedEventId: number | null = null;
+  /** Persona vinculada al usuario autenticado (a quién le toca firmar). */
+  private myPersonId: number | null = null;
+  private myUserId: string | null = null;
+
   loading = false;
-
-  // Modales
+  signing = false;
   showSignatureModal = false;
-  showRejectModal = false;
-  showHistoryModal = false;
+  showReturnModal = false;
+  returning = false;
 
-  // Formularios
-  signatureForm!: FormGroup;
-  rejectForm!: FormGroup;
+  readonly observationControl = new FormControl('', {
+    nonNullable: true,
+    validators: [Validators.required, Validators.minLength(10), Validators.maxLength(1000)]
+  });
 
-  // Alertas
   alertaResponse: GenericAlertResponse = {
     alertVisible: false,
     alertType: 'success',
@@ -46,306 +58,250 @@ export class ApprovalsComponent implements OnInit {
     alertMessage: ''
   };
 
-  // Datos de prueba (eliminar cuando tengas el backend)
-  mockFlow: ApprovalFlow = {
-    id: '1',
-    eventId: 'EVT-001',
-    eventName: 'Diplomado en Analítica de Datos',
-    currentStep: 0,
-    steps: [
-      {
-        id: 'step-1',
-        role: 'elaboracion',
-        roleTitle: 'Responsable de Elaboración',
-        roleDescription: 'Docente o persona encargada del diseño',
-        status: 'pending',
-        date: new Date().toISOString()
-      },
-      {
-        id: 'step-2',
-        role: 'revision',
-        roleTitle: 'Responsable de Revisión',
-        roleDescription: 'Enlace de Extensión, Director o Coordinador',
-        status: 'pending'
-      },
-      {
-        id: 'step-3',
-        role: 'verificacion',
-        roleTitle: 'Responsable de Verificación',
-        roleDescription: 'Modalidad de Educación Continua',
-        status: 'pending'
-      },
-      {
-        id: 'step-4',
-        role: 'validacion',
-        roleTitle: 'Responsable de Validación',
-        roleDescription: 'Director de Extensión Académica',
-        status: 'pending'
-      }
-    ],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
-
   ngOnInit(): void {
-    this.initForms();
-    this.loadApprovalFlow();
+    if (!this.acceso.canView) {
+      this.router.navigate(['/inicio']);
+      return;
+    }
+
+    this.loadMyPerson();
+    this.loadEvents();
   }
 
-  private initForms(): void {
-    // Formulario de firma híbrida
-    this.signatureForm = this.fb.group({
-      signatureType: ['text', Validators.required],
-      signatureText: [''],
-      signatureImage: [null],
-      observations: ['']
-    });
-
-    // Formulario de rechazo
-    this.rejectForm = this.fb.group({
-      rejectionType: ['return', Validators.required],
-      reason: ['', [Validators.required, Validators.minLength(10)]]
-    });
+  get selectedEvent(): ReturnEvent | null {
+    return this.events.find(event => event.id === this.selectedEventId) ?? null;
   }
 
-  private loadApprovalFlow(): void {
-    this.loading = true;
-    // Usar datos de prueba por ahora
-    setTimeout(() => {
-      this.approvalFlow = this.mockFlow;
-      this.currentStep = this.approvalFlow.steps[this.approvalFlow.currentStep];
-      this.loading = false;
-    }, 500);
+  get selectedSteps(): FlowStep[] {
+    return this.selectedEvent ? this.stepsOf(this.selectedEvent) : [];
+  }
 
-    // Cuando tengas el backend, descomenta esto:
-    /*
-    this.approvalService.getApprovalFlow('EVT-001').subscribe({
-      next: (flow) => {
-        this.approvalFlow = flow;
-        this.currentStep = flow.steps[flow.currentStep];
-        this.loading = false;
-      },
-      error: (err) => {
-        console.error(err);
-        this.loading = false;
-        this.showAlert('error', 'Error', 'No se pudo cargar el flujo de aprobación');
+  /** Paso que está esperando firma en el evento seleccionado. */
+  get currentStep(): FlowStep | null {
+    return this.selectedSteps.find(step => step.state === 'current') ?? null;
+  }
+
+  get canSignCurrent(): boolean {
+    return !!this.currentStep?.mine && this.acceso.canEdit && !this.isReturned(this.selectedEvent);
+  }
+
+  get completedCount(): number {
+    return this.events.filter(event => this.isComplete(event)).length;
+  }
+
+  get pendingForMe(): number {
+    return this.events.filter(event => this.isMyTurn(event)).length;
+  }
+
+  isReturned(event: ReturnEvent | null): boolean {
+    return event?.workflowStatus === 'devuelto';
+  }
+
+  /** Observaciones del evento, de la más reciente a la más antigua. */
+  observationsOf(event: ReturnEvent): EventObservation[] {
+    return [...(event.observations ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  openObservation(event: ReturnEvent): EventObservation | null {
+    return this.observationsOf(event).find(item => !item.resolvedAt) ?? null;
+  }
+
+  /** El autor es quien creó el evento o la persona asignada al primer paso. */
+  isAuthor(event: ReturnEvent): boolean {
+    const byCreation = !!this.myUserId && event.createdBy === this.myUserId;
+    return byCreation || (this.stepsOf(event)[0]?.mine ?? false);
+  }
+
+  /** El evento está devuelto y le toca corregirlo al usuario actual. */
+  needsMyFix(event: ReturnEvent): boolean {
+    return this.isReturned(event) && this.isAuthor(event);
+  }
+
+  selectEvent(event: ReturnEvent): void {
+    this.selectedEventId = event.id;
+  }
+
+  /** Une el workflow con las aprobaciones del evento y marca cuál es el paso actual. */
+  stepsOf(event: ReturnEvent): FlowStep[] {
+    let currentAssigned = false;
+
+    return this.flow.map(meta => {
+      const approval = event.approvals.find(item => normalize(item.role?.name) === meta.key);
+      const signed = approval?.status === 'aprobado';
+
+      let state: StepState = 'pending';
+      if (signed) {
+        state = 'approved';
+      } else if (!currentAssigned) {
+        state = 'current';
+        currentAssigned = true;
       }
+
+      return {
+        ...meta,
+        approvalId: approval?.id ?? 0,
+        state,
+        personName: approval?.person?.name || approval?.person?.email || 'Sin asignar',
+        personEmail: approval?.person?.email ?? '',
+        signature: approval?.signature ?? '',
+        signedAt: approval?.signedAt ?? null,
+        mine: !!approval && approval.person?.id === this.myPersonId
+      };
     });
-    */
   }
 
-  // Abrir modal de firma
+  isComplete(event: ReturnEvent): boolean {
+    return this.stepsOf(event).every(step => step.state === 'approved');
+  }
+
+  isMyTurn(event: ReturnEvent): boolean {
+    return !this.isReturned(event) && this.stepsOf(event).some(step => step.state === 'current' && step.mine);
+  }
+
+  statusLabel(event: ReturnEvent): string {
+    if (this.isComplete(event)) return 'Aprobado';
+    if (this.isReturned(event)) return `Devuelto por ${this.openObservation(event)?.stepRole ?? 'un responsable'}`;
+    const current = this.stepsOf(event).find(step => step.state === 'current');
+    return current ? `Pendiente: ${current.title}` : '';
+  }
+
   openSignatureModal(): void {
-    this.showSignatureModal = true;
+    if (this.canSignCurrent) {
+      this.showSignatureModal = true;
+    }
   }
 
-  // Cerrar modal de firma
   closeSignatureModal(): void {
     this.showSignatureModal = false;
-    this.signatureForm.reset({ signatureType: 'text' });
   }
 
-  // Abrir modal de rechazo
-  openRejectModal(): void {
-    this.showRejectModal = true;
-  }
+  /** Firma electrónica: confirma el paso con la firma que ya está registrada en el evento. */
+  confirmSignature(): void {
+    const event = this.selectedEvent;
+    if (!event || !this.canSignCurrent || this.signing) return;
 
-  // Cerrar modal de rechazo
-  closeRejectModal(): void {
-    this.showRejectModal = false;
-    this.rejectForm.reset({ rejectionType: 'return' });
-  }
-
-  // Abrir historial
-  openHistoryModal(): void {
-    this.showHistoryModal = true;
-  }
-
-  // Cerrar historial
-  closeHistoryModal(): void {
-    this.showHistoryModal = false;
-  }
-
-  // Manejar cambio en tipo de firma
-  onSignatureTypeChange(): void {
-    const type = this.signatureForm.get('signatureType')?.value;
-    const textControl = this.signatureForm.get('signatureText');
-    const imageControl = this.signatureForm.get('signatureImage');
-
-    if (type === 'text') {
-      imageControl?.clearValidators();
-      textControl?.setValidators([Validators.required]);
-    } else if (type === 'image') {
-      textControl?.clearValidators();
-      imageControl?.setValidators([Validators.required]);
-    } else {
-      textControl?.setValidators([Validators.required]);
-      imageControl?.setValidators([Validators.required]);
-    }
-
-    textControl?.updateValueAndValidity();
-    imageControl?.updateValueAndValidity();
-  }
-
-  // Manejar carga de imagen de firma
-  onImageSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files[0]) {
-      const file = input.files[0];
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        this.signatureForm.get('signatureImage')?.setValue(e.target?.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  }
-
-  // Enviar aprobación
-  submitApproval(): void {
-    if (this.signatureForm.invalid) {
-      this.signatureForm.markAllAsTouched();
-      return;
-    }
-
-    const formValue = this.signatureForm.value;
-    const signature: Signature = {
-      type: formValue.signatureType,
-      text: formValue.signatureText,
-      imageUrl: formValue.signatureImage
-    };
-
-    // Simulación de aprobación
-    if (this.currentStep) {
-      this.currentStep.status = 'approved';
-      this.currentStep.approverName = 'Usuario Actual';
-      this.currentStep.approverRole = this.currentStep.roleTitle;
-      this.currentStep.date = new Date().toISOString();
-      this.currentStep.signature = signature;
-      this.currentStep.observations = formValue.observations;
-
-      // Avanzar al siguiente paso
-      if (this.approvalFlow && this.approvalFlow.currentStep < this.approvalFlow.steps.length - 1) {
-        this.approvalFlow.currentStep++;
-        this.currentStep = this.approvalFlow.steps[this.approvalFlow.currentStep];
-        this.currentStep.status = 'in_progress';
-      }
-    }
-
-    this.closeSignatureModal();
-    this.showAlert('success', 'Aprobación exitosa', 'El paso ha sido aprobado correctamente');
-
-    // Cuando tengas el backend, descomenta esto:
-    /*
-    this.approvalService.approveStep({
-      stepId: this.currentStep!.id,
-      signature,
-      observations: formValue.observations
-    }).subscribe({
-      next: (response) => {
+    this.signing = true;
+    this.approvalService.signCurrentStep(event.id).subscribe({
+      next: updated => {
+        this.events = this.events.map(item => (item.id === updated.id ? updated : item));
+        this.signing = false;
         this.closeSignatureModal();
-        this.showAlert('success', 'Aprobación exitosa', response.message);
-        this.loadApprovalFlow();
+        this.showAlert(
+          'success',
+          this.isComplete(updated) ? 'Evento aprobado' : 'Firma registrada',
+          this.isComplete(updated)
+            ? 'El evento completó el flujo de aprobación.'
+            : 'El evento avanzó al siguiente paso del flujo.'
+        );
       },
-      error: (err) => {
-        console.error(err);
-        this.showAlert('error', 'Error', 'No se pudo aprobar el paso');
+      error: err => {
+        this.signing = false;
+        this.closeSignatureModal();
+        const message = err?.error?.message;
+        this.showAlert('error', 'No se pudo firmar', Array.isArray(message) ? message.join(' ') : (message ?? 'Ocurrió un error al registrar la firma.'));
       }
     });
-    */
   }
 
-  // Enviar rechazo
-  submitRejection(): void {
-    if (this.rejectForm.invalid) {
-      this.rejectForm.markAllAsTouched();
+  openReturnModal(): void {
+    if (this.canSignCurrent) {
+      this.observationControl.reset('');
+      this.showReturnModal = true;
+    }
+  }
+
+  closeReturnModal(): void {
+    this.showReturnModal = false;
+  }
+
+  /** Devuelve el evento al autor; la observación es obligatoria y queda en el historial. */
+  confirmReturn(): void {
+    const event = this.selectedEvent;
+    if (!event || !this.canSignCurrent || this.returning) return;
+
+    if (this.observationControl.invalid) {
+      this.observationControl.markAsTouched();
       return;
     }
 
-    const formValue = this.rejectForm.value;
-
-    // Simulación de rechazo
-    if (this.currentStep) {
-      this.currentStep.status = 'rejected';
-      this.currentStep.rejectionReason = formValue.reason;
-      this.currentStep.rejectionType = formValue.rejectionType;
-
-      if (formValue.rejectionType === 'return') {
-        // Volver al paso anterior
-        if (this.approvalFlow && this.approvalFlow.currentStep > 0) {
-          this.approvalFlow.currentStep--;
-          this.currentStep = this.approvalFlow.steps[this.approvalFlow.currentStep];
-          this.currentStep.status = 'in_progress';
-        }
-      } else {
-        // Rechazo completo - marcar todo como rechazado
-        if (this.approvalFlow) {
-          this.approvalFlow.steps.forEach(step => {
-            if (step.status === 'pending' || step.status === 'in_progress') {
-              step.status = 'rejected';
-            }
-          });
-        }
-      }
-    }
-
-    this.closeRejectModal();
-    this.showAlert('warning', 'Rechazo registrado', 'El paso ha sido rechazado');
-
-    // Cuando tengas el backend, descomenta esto:
-    /*
-    this.approvalService.rejectStep({
-      stepId: this.currentStep!.id,
-      rejectionType: formValue.rejectionType,
-      reason: formValue.reason
-    }).subscribe({
-      next: (response) => {
-        this.closeRejectModal();
-        this.showAlert('warning', 'Rechazo registrado', response.message);
-        this.loadApprovalFlow();
+    this.returning = true;
+    this.approvalService.returnToAuthor(event.id, this.observationControl.value.trim()).subscribe({
+      next: updated => {
+        this.replaceEvent(updated);
+        this.returning = false;
+        this.closeReturnModal();
+        this.showAlert('warning', 'Evento devuelto', 'Se devolvió al autor con tu observación.');
       },
-      error: (err) => {
-        console.error(err);
-        this.showAlert('error', 'Error', 'No se pudo rechazar el paso');
+      error: err => {
+        this.returning = false;
+        this.showAlert('error', 'No se pudo devolver', this.errorMessage(err, 'Ocurrió un error al devolver el evento.'));
       }
     });
-    */
   }
 
-  // Obtener color del estado
-  getStatusColor(status: string): string {
-    const colors: Record<string, string> = {
-      pending: '#94a3b8',
-      in_progress: '#3b82f6',
-      approved: '#22c55e',
-      rejected: '#ef4444',
-      returned: '#f59e0b'
-    };
-    return colors[status] || '#94a3b8';
+  /** El autor reenvía el evento ya corregido; el flujo sigue en el paso que lo devolvió. */
+  resubmit(): void {
+    const event = this.selectedEvent;
+    if (!event || !this.needsMyFix(event)) return;
+
+    this.approvalService.resubmit(event.id).subscribe({
+      next: updated => {
+        this.replaceEvent(updated);
+        this.showAlert('success', 'Evento reenviado', 'El flujo continúa en el paso que lo devolvió.');
+      },
+      error: err => this.showAlert('error', 'No se pudo reenviar', this.errorMessage(err, 'Ocurrió un error al reenviar el evento.'))
+    });
   }
 
-  // Obtener texto del estado
-  getStatusText(status: string): string {
-    const texts: Record<string, string> = {
-      pending: 'Pendiente',
-      in_progress: 'En progreso',
-      approved: 'Aprobado',
-      rejected: 'Rechazado',
-      returned: 'Devuelto'
-    };
-    return texts[status] || status;
+  goToEvents(): void {
+    this.router.navigate(['/eventos'], { queryParams: { editar: this.selectedEventId } });
   }
 
-  // Mostrar alerta
+  private replaceEvent(updated: ReturnEvent): void {
+    this.events = this.events.map(item => (item.id === updated.id ? updated : item));
+  }
+
+  private errorMessage(err: { error?: { message?: string | string[] } }, fallback: string): string {
+    const message = err?.error?.message;
+    return Array.isArray(message) ? message.join(' ') : (message ?? fallback);
+  }
+
+  private loadMyPerson(): void {
+    const token = localStorage.getItem('accessToken');
+    const userId = token ? this.jwtService.obtenerUserId(token) : null;
+    this.myUserId = userId;
+    if (!userId) return;
+
+    this.peoplesService.getPeoples().subscribe({
+      next: (people: Person[]) => {
+        this.myPersonId = people.find(person => person.user?.id === userId)?.id ?? null;
+      },
+      error: err => console.error(err)
+    });
+  }
+
+  private loadEvents(): void {
+    this.loading = true;
+    this.approvalService.getEvents().subscribe({
+      next: events => {
+        this.events = events;
+        this.loading = false;
+        const requestedId = Number(this.route.snapshot.queryParamMap.get('evento'));
+        const firstPending = events.find(event => event.id === requestedId) ?? events.find(event => this.isMyTurn(event)) ?? events[0];
+        if (firstPending) this.selectEvent(firstPending);
+      },
+      error: err => {
+        console.error(err);
+        this.loading = false;
+        this.showAlert('error', 'Error', 'No se pudieron cargar los eventos.');
+      }
+    });
+  }
+
   private showAlert(type: 'success' | 'error' | 'warning' | 'info', title: string, message: string): void {
-    this.alertaResponse = {
-      alertVisible: true,
-      alertType: type,
-      alertTitle: title,
-      alertMessage: message
-    };
+    this.alertaResponse = { alertVisible: true, alertType: type, alertTitle: title, alertMessage: message };
   }
 
-  // Volver al inicio
   goBack(): void {
     this.router.navigate(['/inicio']);
   }

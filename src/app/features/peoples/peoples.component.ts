@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { ValidateRenderingService } from '../inicio/services/validate-rendering.service';
 import { PeoplesService } from './services/peoples.service';
 import { FacultyService } from '../faculty/services/faculty.service';
 import { RolesService } from '../roles/services/roles.service';
@@ -29,6 +30,8 @@ export class PeoplesComponent {
   private readonly rolesService: RolesService = inject(RolesService);
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  private readonly validateRenderingService = inject(ValidateRenderingService);
+  readonly acceso = this.validateRenderingService.permisosDelModulo('personas');
   private readonly statusServices: StatusService = inject(StatusService);
   alertaResponse:GenericAlertResponse= { alertVisible: false, alertType: 'success', alertTitle: '', alertMessage: '' };
 
@@ -46,6 +49,12 @@ export class PeoplesComponent {
   statusOptions: Status[] = [];
 
   ngOnInit(): void {
+    if (!this.acceso.canView) {
+      this.router.navigate(['/inicio']);
+      return;
+    }
+    this.visibilityTablet = !this.acceso.canCreate;
+
     this.getPersons();
     this.getFaculties();
     this.getRoles();
@@ -55,6 +64,7 @@ export class PeoplesComponent {
 
   private buildForm(): void {
     this.personForm = this.fb.group({
+      name: ['', [Validators.required, Validators.maxLength(150)]],
       cedula: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(10), Validators.pattern(/^\d+$/)]],
       email: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
       phone: ['', [Validators.required, Validators.maxLength(20)]],
@@ -142,6 +152,7 @@ export class PeoplesComponent {
     this.updateMethod = false;
     this.currentPersonId = null;
     this.personForm.reset({
+      name: '',
       cedula: '',
       email: '',
       phone: '',
@@ -157,6 +168,7 @@ export class PeoplesComponent {
     this.currentPersonId = item.id;
 
     this.personForm.patchValue({
+      name: item.name ?? '',
       cedula: item.cedula,
       email: item.email,
       phone: item.phone,

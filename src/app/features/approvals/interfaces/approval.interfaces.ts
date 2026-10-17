@@ -1,60 +1,49 @@
-// Estados posibles del flujo de aprobación
-export type ApprovalStatus = 'pending' | 'in_progress' | 'approved' | 'rejected' | 'returned';
+/** Estado de un paso para quien mira el flujo de un evento. */
+export type StepState = 'approved' | 'current' | 'pending';
 
-// Roles en la cadena de aprobación
-export type ApprovalRole = 'elaboracion' | 'revision' | 'verificacion' | 'validacion';
-
-// Firma híbrida (texto + imagen)
-export interface Signature {
-  type: 'text' | 'image' | 'both';
-  text?: string;
-  imageUrl?: string;
+/** Pasos del workflow, en el orden en que se firman. */
+export interface FlowStepMeta {
+  key: string;
+  roleName: string;
+  title: string;
+  description: string;
 }
 
-// Registro de aprobación individual
-export interface ApprovalStep {
-  id: string;
-  role: ApprovalRole;
-  roleTitle: string;
-  roleDescription: string;
-  status: ApprovalStatus;
-  approverName?: string;
-  approverRole?: string;
-  date?: string;
-  signature?: Signature;
-  observations?: string;
-  rejectionReason?: string;
-  rejectionType?: 'return' | 'full';
-}
+export const APPROVAL_FLOW: FlowStepMeta[] = [
+  {
+    key: 'elaboracion',
+    roleName: 'Elaboración',
+    title: 'Docente / Responsable',
+    description: 'Persona que diligenció el formato.',
+  },
+  {
+    key: 'revision',
+    roleName: 'Revisión',
+    title: 'Coordinador / Enlace',
+    description: 'Enlace de Extensión, director o coordinador de la dependencia.',
+  },
+  {
+    key: 'verificacion',
+    roleName: 'Verificación',
+    title: 'Equipo Educación Continua',
+    description: 'Modalidad de Educación Continua.',
+  },
+  {
+    key: 'validacion',
+    roleName: 'Validación',
+    title: 'Director de Extensión',
+    description: 'Dirección de Extensión Académica.',
+  },
+];
 
-// Flujo completo de aprobación
-export interface ApprovalFlow {
-  id: string;
-  eventId: string;
-  eventName: string;
-  currentStep: number;
-  steps: ApprovalStep[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-// DTO para enviar aprobación
-export interface ApproveDto {
-  stepId: string;
-  signature: Signature;
-  observations?: string;
-}
-
-// DTO para rechazar
-export interface RejectDto {
-  stepId: string;
-  rejectionType: 'return' | 'full';
-  reason: string;
-}
-
-// Respuesta del servicio
-export interface ApprovalResponse {
-  success: boolean;
-  message: string;
-  data?: ApprovalFlow;
+/** Paso del workflow de un evento, ya combinado con su aprobación. */
+export interface FlowStep extends FlowStepMeta {
+  approvalId: number;
+  state: StepState;
+  personName: string;
+  personEmail: string;
+  signature: string;
+  signedAt: string | null;
+  /** El paso está asignado al usuario autenticado. */
+  mine: boolean;
 }

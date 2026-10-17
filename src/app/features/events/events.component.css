@@ -1,4 +1,4 @@
-:host {
+app-events {
     display: block;
     min-height: 100vh;
 }
@@ -962,26 +962,20 @@
 }
 
 .aprobaciones-formulario__enviar {
-    border-color: #27a965;
-    background: #38c777;
-    color: #07371e;
-
-    &--disabled {
-        border-color: #b0b0b0;
-        background: #e0e0e0;
-        color: #7a7a7a;
-        cursor: not-allowed;
-    }
-
-    &--enabled {
-        border-color: #27a965;
-        background: #38c777;
-        color: #07371e;
-    }
+    border-color: #0b4226;
+    background: #063e25;
+    color: #fff;
 }
 
-.aprobaciones-formulario__enviar:hover {
-    background: #2eb76a;
+.aprobaciones-formulario__enviar:hover:not(:disabled) {
+    background: #0b5a34;
+}
+
+.aprobaciones-formulario__enviar:disabled {
+    border-color: #d1d5db;
+    background: #e5e7eb;
+    color: #9ca3af;
+    cursor: not-allowed;
 }
 
 .vista-previa__fondo {

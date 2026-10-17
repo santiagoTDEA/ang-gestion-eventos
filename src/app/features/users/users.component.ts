@@ -1,6 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { ValidateRenderingService } from '../inicio/services/validate-rendering.service';
 import { UsersService } from './services/users.service';
 import { CreateUserDto, UserResponse, Status } from './interfaces/users.interfaces';
 import { GenericFormComponent } from '../../../shared/organisms/generic-form/generic-form.component';
@@ -23,6 +24,8 @@ export class UsersComponent implements OnInit {
   private readonly usersService: UsersService = inject(UsersService);
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  private readonly validateRenderingService = inject(ValidateRenderingService);
+  readonly acceso = this.validateRenderingService.permisosDelModulo('usuarios');
   private readonly statusServices: StatusService = inject(StatusService);
   private readonly peopleService: PeoplesService = inject(PeoplesService);
   alertaResponse: GenericAlertResponse = { alertVisible: false, alertType: 'success', alertTitle: '', alertMessage: '' };
@@ -42,6 +45,12 @@ export class UsersComponent implements OnInit {
   statusOptions: Status[] = [];
 
   ngOnInit(): void {
+    if (!this.acceso.canView) {
+      this.router.navigate(['/inicio']);
+      return;
+    }
+    this.visibilityTablet = !this.acceso.canCreate;
+
     this.buildForm();
     this.getUsers();
     this.getStatusOptions();
@@ -96,19 +105,19 @@ export class UsersComponent implements OnInit {
     if (!this.updateMethod) {
       this.personOptions = this.allPersonOptions.filter((person) => person.user == null).map((person) => ({
         id: person.id,
-        label: person.email
+        label: person.name ? `${person.name} - ${person.email}` : person.email
       }));
     } else {
       const currentPersonOptions = this.allPersonOptions.filter(person => person?.user?.id === this.currentUserId);
       if (currentPersonOptions.length > 0) {
         this.personOptions = currentPersonOptions.map((person) => ({
           id: person.id,
-          label: person.email
+          label: person.name ? `${person.name} - ${person.email}` : person.email
         }));
       } else {
         this.personOptions = this.allPersonOptions.filter((person) => person.user == null).map((person) => ({
           id: person.id,
-          label: person.email
+          label: person.name ? `${person.name} - ${person.email}` : person.email
         }));
       }
     }
@@ -184,7 +193,7 @@ export class UsersComponent implements OnInit {
     const payload: CreateUserDto = {
       username: formValue.username,
       password: formValue.password,
-      personId: formValue.personId,
+      personId: formValue.personId ? Number(formValue.personId) : undefined,
       statusId: formValue.statusId,
     };
 

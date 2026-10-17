@@ -1,0 +1,39 @@
+<div class="financiera-formulario">
+    <p class="financiera-formulario__nota">Espacio diligenciado por la Dirección de Extensión Académica.
+    </p>
+
+    <div class="financiera-formulario__grid">
+        <app-generic-input label="Costo por participante" type="number" placeholder="0" icon="none"
+            [control]="form().controls['costPerParticipant']">
+        </app-generic-input>
+
+        <app-generic-input label="Cupo mínimo (confirmado)" type="number"
+            placeholder="Se sincroniza con Generalidades" icon="none"
+            [control]="form().controls['confirmedMinimumCapacity']">
+        </app-generic-input>
+    </div>
+
+    <div class="financiera-formulario__campo">
+        <label for="financial-observations">Observaciones financieras <span>*</span></label>
+        <textarea id="financial-observations"
+            [formControl]="asControl(form().controls['financialObservations'])"
+            placeholder="Notas sobre viabilidad, punto de equilibrio, becas, alianzas, etc."></textarea>
+        @if (form().controls['financialObservations'].invalid &&
+        form().controls['financialObservations'].touched) {
+        <small class="eventos__error">Este campo es obligatorio.</small>
+        }
+    </div>
+
+    <footer class="financiera-formulario__acciones">
+        <button type="button" class="generalidades__boton generalidades__boton--secundario"
+            (click)="back.emit()">← Atrás</button>
+        <div>
+            <button type="button" class="generalidades__boton generalidades__boton--secundario"
+                (click)="saveDraft.emit()">Guardar borrador</button>
+            <button type="button" class="generalidades__boton generalidades__boton--secundario"
+                (click)="preview.emit()">Vista previa</button>
+            <button type="button" class="generalidades__boton generalidades__boton--principal"
+                (click)="next.emit()">Siguiente →</button>
+        </div>
+    </footer>
+</div>

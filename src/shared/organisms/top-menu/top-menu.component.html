@@ -2,7 +2,7 @@
     <div class="top-menu__inner">
         <a class="top-menu__brand" routerLink="/inicio" aria-label="Ir al inicio">
             <span class="top-menu__brand-mark">GE</span>
-            <span class="top-menu__brand-name" [innerHTML]="`Gestión de ${routerUrl.split('/')[1]}`"></span>
+            <span class="top-menu__brand-name">{{ moduleTitle }}</span>
         </a>
 
         <div class="top-menu__action-group">
@@ -12,7 +12,9 @@
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8.5 13h5" />
                 </svg>
+                @if (unreadCount > 0) {
                 <span class="top-menu__notification-dot"></span>
+                }
             </button>
 
             <button type="button" class="top-menu__avatar" (click)="toggleUserMenu()" aria-label="Abrir menú de usuario"
@@ -20,8 +22,30 @@
 
             @if (showNotifications) {
             <div class="top-menu__popover top-menu__notifications">
-                <strong>Notificaciones</strong>
+                <div class="top-menu__notifications-header">
+                    <strong>Notificaciones</strong>
+                    @if (unreadCount > 0) {
+                    <button type="button" class="top-menu__notifications-all" (click)="markAllRead()">
+                        Marcar todas como leídas
+                    </button>
+                    }
+                </div>
+
+                @if (notifications.length === 0) {
                 <p>No tienes notificaciones nuevas.</p>
+                } @else {
+                <ul class="top-menu__notifications-list">
+                    @for (item of notifications; track item.id) {
+                    <li>
+                        <button type="button" class="top-menu__notification"
+                            [class.top-menu__notification--unread]="!item.read" (click)="openNotification(item)">
+                            <span class="top-menu__notification-text">{{ item.message }}</span>
+                            <span class="top-menu__notification-time">{{ item.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+                        </button>
+                    </li>
+                    }
+                </ul>
+                }
             </div>
             }
 

@@ -1,33 +1,31 @@
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../../environments/environment';
-import { Observable, of } from 'rxjs';
-import { ApprovalFlow, ApproveDto, RejectDto, ApprovalResponse } from '../interfaces/approval.interfaces';
+import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
+import { EventsService } from '../../events/services/events.service';
+import { ReturnEvent } from '../../events/interfaces/events.interfaces';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApprovalService {
+  private readonly eventsService = inject(EventsService);
 
-  constructor(private readonly http: HttpClient) { }
-
-  // Obtener flujo de aprobación por evento
-  getApprovalFlow(eventId: string): Observable<ApprovalFlow> {
-    return this.http.get<ApprovalFlow>(`${environment.apiUrl}approvals/event/${eventId}`);
+  /** Eventos visibles para el usuario con el estado de cada paso del workflow. */
+  getEvents(): Observable<ReturnEvent[]> {
+    return this.eventsService.getEvents();
   }
 
-  // Aprobar paso
-  approveStep(dto: ApproveDto): Observable<ApprovalResponse> {
-    return this.http.post<ApprovalResponse>(`${environment.apiUrl}approvals/approve`, dto);
+  /** Devuelve el evento al autor con la observación del responsable. */
+  returnToAuthor(eventId: number, observation: string): Observable<ReturnEvent> {
+    return this.eventsService.returnEvent(eventId, observation);
   }
 
-  // Rechazar paso
-  rejectStep(dto: RejectDto): Observable<ApprovalResponse> {
-    return this.http.post<ApprovalResponse>(`${environment.apiUrl}approvals/reject`, dto);
+  /** El autor reenvía el evento corregido para que el flujo continúe. */
+  resubmit(eventId: number): Observable<ReturnEvent> {
+    return this.eventsService.resubmitEvent(eventId);
   }
 
-  // Obtener historial de aprobaciones
-  getApprovalHistory(eventId: string): Observable<ApprovalFlow[]> {
-    return this.http.get<ApprovalFlow[]>(`${environment.apiUrl}approvals/history/${eventId}`);
+  /** Firma el paso actual con la firma que ya quedó registrada en el evento. */
+  signCurrentStep(eventId: number): Observable<ReturnEvent> {
+    return this.eventsService.approveEvent(eventId);
   }
 }

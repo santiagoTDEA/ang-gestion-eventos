@@ -1,4 +1,5 @@
 export interface CreatePersonDto {
+  name: string;
   cedula: string;
   email: string;
   phone: string;
@@ -9,6 +10,7 @@ export interface CreatePersonDto {
 }
 
 export interface UpdatePersonDto {
+  name?: string;
   cedula?: string;
   email?: string;
   phone?: string;
@@ -43,6 +45,7 @@ export interface Role {
 
 export interface PersonSummary {
   id: number;
+  name: string;
   cedula: string;
   email: string;
   phone: string;
@@ -63,6 +66,7 @@ export interface NestedUser {
 
 export interface Person {
   id: number;
+  name: string;
   cedula: string;
   email: string;
   phone: string;

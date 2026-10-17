@@ -1,6 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { ValidateRenderingService } from '../inicio/services/validate-rendering.service';
 import { FacultyService } from './services/faculty.service';
 import { Faculty, ReturnFaculty } from './interfaces/faculty.interfaces';
 import { GenericFormComponent } from '../../../shared/organisms/generic-form/generic-form.component';
@@ -25,6 +26,8 @@ export class FacultyComponent implements OnInit {
   loading = false;
   updateMethod: boolean = false;
   private readonly router: Router = inject(Router);
+  private readonly validateRenderingService = inject(ValidateRenderingService);
+  readonly acceso = this.validateRenderingService.permisosDelModulo('facultades');
   private readonly facultyServices: FacultyService = inject(FacultyService);
   private readonly statusServices: StatusService = inject(StatusService);
   statusOptions: Status[] = []
@@ -79,6 +82,11 @@ export class FacultyComponent implements OnInit {
 
 
   ngOnInit(): void {
+    if (!this.acceso.canView) {
+      this.router.navigate(['/inicio']);
+      return;
+    }
+
     this.statusServices.getStatusOptions().subscribe({
       next: (statuses) => {
         this.statusOptions = statuses;
