@@ -228,7 +228,7 @@
             <div class="flex justify-end mb-4">
                 <button type="button" (click)="toggleView()" class="px-4 py-2 rounded-md bg-[#1c4a30] hover:bg-[#163c27]
                            text-white text-sm font-medium transition-colors duration-200 cursor-pointer">
-                    {{ showTable ? 'Ver formulario' : 'Ver eventos registrados' }}
+                    {{ showTable ? 'Registrar evento' : 'Ver eventos registrados' }}
                 </button>
             </div>
 
@@ -399,8 +399,8 @@
                             @for (meta of approvalsMeta; track meta.title; let index = $index) {
                             <article>
                                 <strong>{{ meta.title }}</strong>
-                                <span>{{ eventForm.value.aprobaciones[index].name || 'Nombre pendiente' }} · {{
-                                    eventForm.value.aprobaciones[index].role || 'Cargo pendiente' }}</span>
+                                <span>{{ approvalPersonName(index) }} · {{
+                                    approvalPersonRole(index) }}</span>
                                 <span>Fecha: {{ eventForm.value.aprobaciones[index].date || '—' }}</span>
                                 <div>{{ eventForm.value.aprobaciones[index].signature || 'Sin firma' }}</div>
                             </article>

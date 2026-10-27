@@ -115,6 +115,8 @@ export class EventsComponent implements OnInit {
 
   persons: { value: string; label: string }[] = [];
   approvalOptions: { value: string; label: string }[][] = [];
+  /** Catálogo id -> datos de la persona, para mostrar el nombre en la vista previa. */
+  private readonly personCatalog = new Map<string, { name: string; roleName: string }>();
   activeStep = 0;
   draftSaved = false;
   previewVisible = false;
@@ -154,7 +156,7 @@ export class EventsComponent implements OnInit {
   ];
   viewRoles: ReturnRole[] = []
   events: ReturnEvent[] = [];
-  showTable = false;
+  showTable = true;
   editingId: number | null = null;
   editingEvent: ReturnEvent | null = null;
   alertaResponse: {
@@ -327,6 +329,14 @@ export class EventsComponent implements OnInit {
   getPersons(): void {
     this.peoplesService.getPeoples().subscribe({
       next: (response: Person[]) => {
+        this.personCatalog.clear();
+        response.forEach(person => {
+          this.personCatalog.set(String(person.id), {
+            name: person.name || person.email,
+            roleName: person.role?.name ?? ''
+          });
+        });
+
         this.persons = response.filter(person =>
           person.status?.statusName?.toLowerCase().trim() === 'activo'
         ).map(type => ({ value: type.id.toString(), label: `${type.name || type.email} - ${type.role?.name ?? ''}` }))
@@ -344,6 +354,37 @@ export class EventsComponent implements OnInit {
       error: (err) => console.error(err),
     });
   }
+
+  /** Nombre de la persona seleccionada en un bloque de aprobación (la vista previa guarda el id). */
+  approvalPersonName(index: number): string {
+    const id = this.eventForm.value.aprobaciones?.[index]?.name;
+    return (id && this.personData(String(id))?.name) || 'Nombre pendiente';
+  }
+
+  /** Cargo/rol de la persona seleccionada en un bloque de aprobación. */
+  approvalPersonRole(index: number): string {
+    const id = this.eventForm.value.aprobaciones?.[index]?.name;
+    return (id && this.personData(String(id))?.roleName) || 'Cargo pendiente';
+  }
+
+  /** Busca la persona en el catálogo cargado; si no está, la toma del evento en edición. */
+  private personData(id: string): { name: string; roleName: string } | null {
+    const fromCatalog = this.personCatalog.get(id);
+    if (fromCatalog) {
+      return fromCatalog;
+    }
+
+    const approval = this.editingEvent?.approvals?.find(item => String(item.person.id) === id);
+    if (approval) {
+      return {
+        name: approval.person.name || approval.person.email,
+        roleName: approval.role?.name ?? ''
+      };
+    }
+
+    return null;
+  }
+
   getFaculties(): void {
     this.facultiesService.getFaculties().subscribe({
       next: (response: ReturnFaculty[]) => {
