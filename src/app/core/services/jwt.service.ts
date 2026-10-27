@@ -19,6 +19,15 @@ interface DecodedToken {
 export class JwtService {
   private role: DecodedToken['role'] | null = null;
 
+  /** Id del usuario autenticado (claim sub del token). */
+  obtenerUserId(token: string): string | null {
+    try {
+      return jwtDecode<DecodedToken>(token).sub ?? null;
+    } catch {
+      return null;
+    }
+  }
+
   cargarDesdeToken(token: string): DecodedToken['role'] | null {
     try {
       const decoded = jwtDecode<DecodedToken>(token);

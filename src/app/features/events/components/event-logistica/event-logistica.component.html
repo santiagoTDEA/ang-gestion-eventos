@@ -1,0 +1,48 @@
+<div class="logistica-formulario">
+    <p class="logistica-formulario__pregunta">
+        ¿El organizador del evento requiere apoyo logístico de la Dirección de Extensión Académica
+        en alguno de los siguientes aspectos? <span>*</span>
+    </p>
+
+    <div class="logistica-formulario__tabla" role="table" aria-label="Apoyos logísticos requeridos">
+        <div class="logistica-formulario__fila logistica-formulario__fila--encabezado" role="row">
+            <strong role="columnheader">ASPECTO</strong>
+            <strong role="columnheader">RESPUESTA</strong>
+        </div>
+
+        @for (aspect of aspects(); track aspect; let index = $index) {
+        <div class="logistica-formulario__fila" role="row"
+            [class.logistica-formulario__fila--error]="form().controls[aspect].invalid && form().controls[aspect].touched">
+            <span role="cell">{{ aspect }}</span>
+            <div class="logistica-formulario__respuestas" role="cell">
+                <label>
+                    <input type="radio" [name]="'logistics-' + index" [value]="'Sí'"
+                        [formControl]="asControl(form().controls[aspect])" />
+                    Sí
+                </label>
+                <label>
+                    <input type="radio" [name]="'logistics-' + index" [value]="'No'"
+                        [formControl]="asControl(form().controls[aspect])" />
+                    No
+                </label>
+            </div>
+        </div>
+        }
+    </div>
+    @if (form().invalid && form().touched) {
+    <small class="eventos__error">Selecciona Sí o No para cada aspecto logístico.</small>
+    }
+
+    <footer class="logistica-formulario__acciones">
+        <button type="button" class="generalidades__boton generalidades__boton--secundario"
+            (click)="back.emit()">← Atrás</button>
+        <div>
+            <button type="button" class="generalidades__boton generalidades__boton--secundario"
+                (click)="saveDraft.emit()">Guardar borrador</button>
+            <button type="button" class="generalidades__boton generalidades__boton--secundario"
+                (click)="preview.emit()">Vista previa</button>
+            <button type="button" class="generalidades__boton generalidades__boton--principal"
+                (click)="next.emit()">Siguiente →</button>
+        </div>
+    </footer>
+</div>

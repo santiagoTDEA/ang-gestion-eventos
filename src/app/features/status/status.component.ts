@@ -1,6 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { ValidateRenderingService } from '../inicio/services/validate-rendering.service';
 import { StatusService } from './services/status.service';
 import { CreateStatusDto, Status } from './interfaces/status.interfaces';
 import { GenericFormComponent } from '../../../shared/organisms/generic-form/generic-form.component';
@@ -20,6 +21,8 @@ export class StatusComponent implements OnInit {
   private readonly statusService: StatusService = inject(StatusService);
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  private readonly validateRenderingService = inject(ValidateRenderingService);
+  readonly acceso = this.validateRenderingService.permisosDelModulo('estados');
   alertaResponse:GenericAlertResponse= { alertVisible: false, alertType: 'success', alertTitle: '', alertMessage: '' };
 
   statuses: Status[] = [];
@@ -30,6 +33,11 @@ export class StatusComponent implements OnInit {
   statusForm!: FormGroup;
 
   ngOnInit(): void {
+    if (!this.acceso.canView) {
+      this.router.navigate(['/inicio']);
+      return;
+    }
+
     this.getStatuses();
     this.buildForm();
   }

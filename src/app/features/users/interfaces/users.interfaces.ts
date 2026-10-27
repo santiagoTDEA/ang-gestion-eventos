@@ -1,7 +1,7 @@
 export interface CreateUserDto {
     username: string;
     password: string;
-    personId: number;
+    personId?: number;
     statusId: number;
 }
 export interface Status {
@@ -26,6 +26,7 @@ export interface Role {
 
 export interface Person {
     id: number;
+    name: string;
     cedula: string;
     email: string;
     phone: string;

@@ -26,6 +26,7 @@
         {{ visibilityTablet ? 'Roles registrados' : 'Registro de Rol' }}
     </span>
 
+            @if (acceso.canCreate || !visibilityTablet) {
     <button type="button" (click)="visibilityRoles()"
         class="flex items-center gap-2 px-4 py-2.5 rounded-lg
                bg-[#eef2fb] hover:bg-[#dde6f9]
@@ -49,6 +50,7 @@
         }
         <span class="hidden xs:inline sm:inline">{{ visibilityTablet ? 'Registro de Rol' : 'Roles registrados' }}</span>
     </button>
+            }
 
 </div>
 
@@ -71,7 +73,7 @@
                     </thead>
                     <tbody>
                         @for (item of viewRoles; track $index) {
-                        <tr class="border-t border-gray-200 hover:bg-gray-50 cursor-pointer" role="button" tabindex="0" (click)="obtenerDatos(item)">
+                        <tr class="border-t border-gray-200 hover:bg-gray-50" [class.cursor-pointer]="acceso.canEdit" role="button" tabindex="0" (click)="acceso.canEdit && obtenerDatos(item)">
                             <td class="px-3 py-2">{{ item.name }}</td>
                             <td class="px-3 py-2">{{ item.description }}</td>
                             <td class="px-3 py-2">
@@ -115,8 +117,8 @@
 
             <div class="md:hidden space-y-3">
                 @for (item of viewRoles; track $index) {
-                <div class="rounded-md border border-gray-200 p-4 hover:bg-gray-50 cursor-pointer" role="button"
-                    tabindex="0" (click)="obtenerDatos(item)">
+                <div class="rounded-md border border-gray-200 p-4 hover:bg-gray-50" [class.cursor-pointer]="acceso.canEdit" role="button"
+                    tabindex="0" (click)="acceso.canEdit && obtenerDatos(item)">
 
                     <div class="flex items-start justify-between gap-2">
                         <h3 class="font-medium text-gray-900 text-base">{{ item.name }}</h3>
@@ -180,7 +182,7 @@
             <span class="roles-form-card__required">* Campos obligatorios</span>
         </div>
 
-        <app-generic-form [disabled]="roleForm.invalid || loading" (formSubmit)=" updateForm? updateRoles() : onSubmit()">
+        <app-generic-form [disabled]="loading" (formSubmit)=" updateForm? updateRoles() : onSubmit()">
 
             <div [formGroup]="roleForm">
 
@@ -233,14 +235,10 @@
                         </app-generic-select>
 
                         @if(visibilityAcceso()){
-                        <div class="flex flex-col gap-2 mt-2 sm:flex-row sm:items-center sm:gap-6">
-                            <app-generic-checkbox label="Crear"
-                                [control]="$any(item.get('crear'))"></app-generic-checkbox>
-                            <app-generic-checkbox label="Editar"
-                                [control]="$any(item.get('editar'))"></app-generic-checkbox>
-                            <app-generic-checkbox label="Leer"
-                                [control]="$any(item.get('leer'))"></app-generic-checkbox>
-                        </div>
+                        <app-generic-select label="Nivel de acceso" placeholder="Selecciona un nivel"
+                            [control]="$any(item.get('nivel'))" [options]="nivelOptions" optionValue="value"
+                            optionLabel="label">
+                        </app-generic-select>
                         }
 
                     </section>

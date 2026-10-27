@@ -1,11 +1,17 @@
-@if (showTopMenu) {
-<app-top-menu [routerUrl]="routerUrl" />
+@if (showSideMenu) {
+<app-side-menu [routerUrl]="routerUrl" />
 }
 
-@if (alertaResponse.alertVisible) {
-<app-generic-alert [type]="alertaResponse.alertType" (closed)="alertaResponse.alertVisible = false">
-    <strong class="block font-semibold">{{ alertaResponse.alertTitle }}</strong>
-    <span>{{ alertaResponse.alertMessage }}</span>
-</app-generic-alert>
-}
-<router-outlet />
+<div class="app-shell" [class.app-shell--with-menu]="showSideMenu">
+    @if (showTopMenu) {
+    <app-top-menu [routerUrl]="routerUrl" />
+    }
+
+    @if (alertaResponse.alertVisible) {
+    <app-generic-alert [type]="alertaResponse.alertType" (closed)="alertaResponse.alertVisible = false">
+        <strong class="block font-semibold">{{ alertaResponse.alertTitle }}</strong>
+        <span>{{ alertaResponse.alertMessage }}</span>
+    </app-generic-alert>
+    }
+    <router-outlet />
+</div>

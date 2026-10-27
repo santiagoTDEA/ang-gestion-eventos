@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import {
   AbstractControl,
   FormArray,
@@ -10,24 +10,32 @@ import {
   ValidatorFn,
   Validators
 } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { debounceTime } from 'rxjs/operators';
 import { GenericAlertComponent } from '../../../shared/atoms/generic-alert/generic-alert.component';
 import { GenericFormComponent } from '../../../shared/organisms/generic-form/generic-form.component';
-import { GenericSelectComponent } from '../../../shared/atoms/generic-select/generic-select.component';
-import { GenericInputComponent } from '../../../shared/atoms/generic-input/generic-input.component';
 import { GenericButtonComponent } from '../../../shared/atoms/generic-button/generic-button.component';
 import { CommonModule } from '@angular/common';
 import { ReturnFaculty } from '../faculty/interfaces/faculty.interfaces';
 import { FacultyService } from '../faculty/services/faculty.service';
-
+import { RolesService } from '../roles/services/roles.service';
+import { ReturnRole } from '../roles/interfaces/roles.interfaces';
+import { Person } from '../peoples/interfaces/people.interfaces';
+import { PeoplesService } from '../peoples/services/peoples.service';
+import { DOCUMENT } from '@angular/common';
+import { NivelAcceso, ValidateRenderingService } from '../inicio/services/validate-rendering.service';
+import { JwtService } from '../../core/services/jwt.service';
+import { Role } from '../inicio/interfaces/inicio.interfaces';
+import { EventsService } from './services/events.service';
+import { Event, ReturnEvent } from './interfaces/events.interfaces';
+import { EventGeneralidadesComponent } from './components/event-generalidades/event-generalidades.component';
+import { EventContenidoComponent } from './components/event-contenido/event-contenido.component';
+import { EventLogisticaComponent } from './components/event-logistica/event-logistica.component';
+import { EventFinancieraComponent } from './components/event-financiera/event-financiera.component';
+import { ApprovalMeta, EventAprobacionesComponent } from './components/event-aprobaciones/event-aprobaciones.component';
 
 const DRAFT_STORAGE_KEY = 'eventDraft';
 
-interface ApprovalMeta {
-  title: string;
-  description: string;
-}
 
 type AlertType = 'success' | 'error' | 'info' | 'warning';
 
@@ -80,25 +88,42 @@ function validDateRange(control: AbstractControl): ValidationErrors | null {
     ReactiveFormsModule,
     GenericAlertComponent,
     GenericFormComponent,
-    GenericSelectComponent,
-    GenericInputComponent,
+    EventGeneralidadesComponent,
+    EventContenidoComponent,
+    EventLogisticaComponent,
+    EventFinancieraComponent,
+    EventAprobacionesComponent,
     GenericButtonComponent,
     CommonModule
   ],
   templateUrl: './events.component.html',
-  styleUrl: './events.component.css'
+  styleUrl: './events.component.css',
+  // Los estilos del formulario se comparten con los componentes de cada paso.
+  encapsulation: ViewEncapsulation.None
 })
 export class EventsComponent implements OnInit {
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
   private readonly facultiesService = inject(FacultyService);
+  private readonly roleServices: RolesService = inject(RolesService);
+  private readonly peoplesService: PeoplesService = inject(PeoplesService);
+  private readonly validateRenderingService: ValidateRenderingService = inject(ValidateRenderingService);
+  private readonly jwtServices: JwtService = inject(JwtService);
+  private readonly eventsService: EventsService = inject(EventsService);
 
+
+  persons: { value: string; label: string }[] = [];
+  approvalOptions: { value: string; label: string }[][] = [];
+  /** Catálogo id -> datos de la persona, para mostrar el nombre en la vista previa. */
+  private readonly personCatalog = new Map<string, { name: string; roleName: string }>();
   activeStep = 0;
   draftSaved = false;
   previewVisible = false;
   reviewSent = false;
   loading = false;
-
+  impirmir: boolean = false;
+  validateRender: NivelAcceso = "write"
   readonly eventTypes = ['Curso', 'Diplomado', 'Seminario', '¿Otro?'];
   readonly eventTypeOptions = this.eventTypes.map(type => ({ value: type, label: type }));
   readonly weekDays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -111,14 +136,15 @@ export class EventsComponent implements OnInit {
     'Constancia de participación',
     '¿Otro?'
   ];
+  private readonly document = inject(DOCUMENT);
 
   facultyOptions: ReturnFaculty[] = [];
 
   readonly approvalsMeta: ApprovalMeta[] = [
-    { title: 'Responsable de elaboración', description: 'Persona que diligenció el formato.' },
-    { title: 'Responsable de revisión', description: 'Enlace de Extensión, director o coordinador de la dependencia.' },
-    { title: 'Responsable de verificación', description: 'Modalidad de Educación Continua.' },
-    { title: 'Responsable de validación', description: 'Dirección de Extensión Académica.' }
+    { title: 'Responsable de elaboración', description: 'Persona que diligenció el formato.', roleName: 'Elaboración' },
+    { title: 'Responsable de revisión', description: 'Enlace de Extensión, director o coordinador de la dependencia.', roleName: 'Revisión' },
+    { title: 'Responsable de verificación', description: 'Modalidad de Educación Continua.', roleName: 'Verificación' },
+    { title: 'Responsable de validación', description: 'Dirección de Extensión Académica.', roleName: 'Validación' }
   ];
 
   readonly steps = [
@@ -128,18 +154,22 @@ export class EventsComponent implements OnInit {
     { number: '04', label: 'Información financiera', description: 'Registra el presupuesto del evento.' },
     { number: '05', label: 'Aprobaciones', description: 'Revisa y envía el evento.' }
   ];
-
+  viewRoles: ReturnRole[] = []
+  events: ReturnEvent[] = [];
+  showTable = true;
+  editingId: number | null = null;
+  editingEvent: ReturnEvent | null = null;
   alertaResponse: {
     alertVisible: boolean;
     alertType: AlertType;
     alertTitle: string;
     alertMessage: string;
   } = {
-    alertVisible: false,
-    alertType: 'success',
-    alertTitle: '',
-    alertMessage: ''
-  };
+      alertVisible: false,
+      alertType: 'success',
+      alertTitle: '',
+      alertMessage: ''
+    };
 
   readonly eventForm: FormGroup;
 
@@ -193,8 +223,28 @@ export class EventsComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.validarModulos();
     this.loadDraft();
     this.getFaculties();
+    this.getRoles();
+    this.getPersons();
+    if (this.canViewEvents) {
+      this.getEvents();
+    }
+    this.openEventFromQuery();
+  }
+
+  /** Si llega ?editar=<id> (por ejemplo desde Aprobaciones), abre ese evento ya cargado en el formulario. */
+  private openEventFromQuery(): void {
+    const id = Number(this.route.snapshot.queryParamMap.get('editar'));
+    if (!id || !this.canEditEvents) {
+      return;
+    }
+
+    this.eventsService.getEventById(id).subscribe({
+      next: (event: ReturnEvent) => this.startEdit(event),
+      error: (err) => console.error(err),
+    });
   }
 
   // --- Getters de acceso rápido a los grupos/arreglos del formulario ---
@@ -239,14 +289,7 @@ export class EventsComponent implements OnInit {
     return this.generalidadesGroup.get('eventType')?.value ?? '';
   }
 
-  /** Casts helper para poder usar [formControl] en elementos nativos (textarea/checkbox/radio). */
-  asControl(control: AbstractControl): FormControl {
-    return control as FormControl;
-  }
 
-  asGroup(control: AbstractControl): FormGroup {
-    return control as FormGroup;
-  }
 
   private createObjectiveControl(value = ''): FormControl {
     return this.fb.control(value, Validators.required);
@@ -265,16 +308,241 @@ export class EventsComponent implements OnInit {
     });
   }
 
-   getFaculties(): void {
-      this.facultiesService.getFaculties().subscribe({
-        next: (response: ReturnFaculty[]) => {
-          
-          this.facultyOptions = response;
-        },
-        error: (err) => console.error(err),
-      });
+  /** Normaliza texto para comparar sin importar mayúsculas ni tildes. */
+  private normalize(value?: string): string {
+    return (value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  }
+
+
+  validarModulos(): void {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+    const Roles = this.jwtServices.cargarDesdeToken(token) as Role | null;
+
+    this.validateRender = this.validateRenderingService.devolverAccesosPermitidos("eventos", Roles);
+  }
+
+  getPersons(): void {
+    this.peoplesService.getPeoples().subscribe({
+      next: (response: Person[]) => {
+        this.personCatalog.clear();
+        response.forEach(person => {
+          this.personCatalog.set(String(person.id), {
+            name: person.name || person.email,
+            roleName: person.role?.name ?? ''
+          });
+        });
+
+        this.persons = response.filter(person =>
+          person.status?.statusName?.toLowerCase().trim() === 'activo'
+        ).map(type => ({ value: type.id.toString(), label: `${type.name || type.email} - ${type.role?.name ?? ''}` }))
+
+        // Opciones por bloque de aprobación (mismo orden que approvalsMeta)
+        this.approvalOptions = this.approvalsMeta.map(meta =>
+          response
+            .filter(person =>
+              person.status?.statusName?.toLowerCase().trim() === 'activo' &&
+              this.normalize(person.role?.name) === this.normalize(meta.roleName)
+            )
+            .map(person => ({ value: person.id.toString(), label: `${person.name || person.email} - ${person.role?.name ?? ''}` }))
+        );
+      },
+      error: (err) => console.error(err),
+    });
+  }
+
+  /** Nombre de la persona seleccionada en un bloque de aprobación (la vista previa guarda el id). */
+  approvalPersonName(index: number): string {
+    const id = this.eventForm.value.aprobaciones?.[index]?.name;
+    return (id && this.personData(String(id))?.name) || 'Nombre pendiente';
+  }
+
+  /** Cargo/rol de la persona seleccionada en un bloque de aprobación. */
+  approvalPersonRole(index: number): string {
+    const id = this.eventForm.value.aprobaciones?.[index]?.name;
+    return (id && this.personData(String(id))?.roleName) || 'Cargo pendiente';
+  }
+
+  /** Busca la persona en el catálogo cargado; si no está, la toma del evento en edición. */
+  private personData(id: string): { name: string; roleName: string } | null {
+    const fromCatalog = this.personCatalog.get(id);
+    if (fromCatalog) {
+      return fromCatalog;
     }
-  
+
+    const approval = this.editingEvent?.approvals?.find(item => String(item.person.id) === id);
+    if (approval) {
+      return {
+        name: approval.person.name || approval.person.email,
+        roleName: approval.role?.name ?? ''
+      };
+    }
+
+    return null;
+  }
+
+  getFaculties(): void {
+    this.facultiesService.getFaculties().subscribe({
+      next: (response: ReturnFaculty[]) => {
+
+        this.facultyOptions = response;
+      },
+      error: (err) => console.error(err),
+    });
+  }
+
+
+  /** Observación abierta con la que se devolvió el evento que se está editando. */
+  get editingReturnedObservation() {
+    const event = this.editingEvent;
+    if (event?.workflowStatus !== 'devuelto') {
+      return null;
+    }
+    return [...(event.observations ?? [])]
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .find(item => !item.resolvedAt) ?? null;
+  }
+
+  get canEditEvents(): boolean {
+    return this.validateRender === 'all' || this.validateRender === 'update';
+  }
+
+  get canViewEvents(): boolean {
+    return this.validateRender === 'view' || this.validateRender === 'all' || this.validateRender === 'update';
+  }
+
+  getEvents(): void {
+    this.eventsService.getEvents().subscribe({
+      next: (events: ReturnEvent[]) => {
+        this.events = events;
+      },
+      error: (err) => console.error(err),
+    });
+  }
+
+  toggleView(): void {
+    this.showTable = !this.showTable;
+    if (this.showTable) {
+      if (this.editingId !== null) {
+        this.finishEdit();
+      }
+      this.getEvents();
+    }
+  }
+
+  startEdit(event: ReturnEvent): void {
+    if (!this.canEditEvents) {
+      return;
+    }
+
+    if (this.editingId === null) {
+      this.saveDraft();
+    }
+
+    const objectives = event.objectives.length >= 3
+      ? event.objectives
+      : [...event.objectives, ...Array(3 - event.objectives.length).fill('')];
+    this.resizeArray(this.objectivesArray, objectives.length, () => this.createObjectiveControl());
+    this.resizeArray(this.modulesArray, event.modules.length, () => this.createModuleControl());
+
+    const approvals = this.approvalsMeta.map((meta, index) => {
+      const approval = event.approvals.find(item => this.normalize(item.role?.name) === this.normalize(meta.roleName))
+        ?? event.approvals[index];
+      return {
+        name: approval ? String(approval.person.id) : '',
+        role: approval?.role.id ?? '',
+        date: approval?.date ?? '',
+        signature: approval?.signature ?? ''
+      };
+    });
+
+    this.eventForm.reset({}, { emitEvent: false });
+    this.eventForm.patchValue({
+      generalidades: {
+        eventType: event.eventType,
+        otherEventType: event.otherEventType ?? '',
+        name: event.name,
+        faculty: event.faculty.id,
+        academicProgram: event.academicProgram,
+        teacherProfile: event.teacherProfile,
+        duration: event.duration,
+        startTime: event.startTime.slice(0, 5),
+        endTime: event.endTime.slice(0, 5),
+        selectedDays: event.selectedDays,
+        selectedModality: event.modality,
+        startDate: event.startDate,
+        endDate: event.endDate,
+        minimumCapacity: event.minimumCapacity,
+        maximumCapacity: event.maximumCapacity,
+        participantProfile: event.participantProfile
+      },
+      contenido: {
+        presentation: event.presentation,
+        scope: event.scope,
+        generalObjective: event.generalObjective,
+        objectives,
+        competencies: event.competencies,
+        modules: event.modules
+      },
+      logistica: event.logistics,
+      financiera: {
+        costPerParticipant: event.costPerParticipant,
+        confirmedMinimumCapacity: event.confirmedMinimumCapacity,
+        financialObservations: event.financialObservations
+      },
+      aprobaciones: approvals
+    }, { emitEvent: false });
+
+    this.updateOtherEventTypeValidation(this.eventTypeValue, this.generalidadesGroup.get('otherEventType')!);
+    this.eventForm.markAsPristine();
+    this.eventForm.markAsUntouched();
+
+    this.editingId = event.id;
+    this.editingEvent = event;
+    this.activeStep = 0;
+    this.reviewSent = false;
+    this.showTable = false;
+  }
+
+  /** Termina la edición y restaura el borrador de creación que hubiera guardado. */
+  finishEdit(): void {
+    this.editingId = null;
+    this.editingEvent = null;
+    this.resetForm();
+    this.loadDraft();
+  }
+
+  cancelEdit(): void {
+    this.finishEdit();
+    this.showTable = true;
+    this.getEvents();
+  }
+
+  private resizeArray(array: FormArray, length: number, factory: () => FormControl): void {
+    while (array.length < length) {
+      array.push(factory(), { emitEvent: false });
+    }
+    while (array.length > length) {
+      array.removeAt(array.length - 1, { emitEvent: false });
+    }
+  }
+
+  asignarRoles(name: string): ReturnRole | undefined {
+    return this.viewRoles.find(role => role.name === name);
+  }
+
+  getRoles(): void {
+    this.roleServices.getRoles().subscribe({
+      next: (roles) => {
+        console.log(roles);
+        this.viewRoles = roles;
+      }
+    });
+  }
 
   /** otherEventType solo es obligatorio si eventType === '¿Otro?'. */
   private watchOtherEventType(): void {
@@ -330,6 +598,9 @@ export class EventsComponent implements OnInit {
   }
 
   saveDraft(): void {
+    if (this.editingId !== null) {
+      return;
+    }
     localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(this.eventForm.getRawValue()));
     this.draftSaved = true;
   }
@@ -342,18 +613,7 @@ export class EventsComponent implements OnInit {
     this.generalidadesGroup.get('eventType')!.setValue(type);
   }
 
-  toggleDay(day: string): void {
-    const control = this.generalidadesGroup.get('selectedDays')!;
-    const current: string[] = control.value ?? [];
-    control.setValue(current.includes(day) ? current.filter(d => d !== day) : [...current, day]);
-    control.markAsTouched();
-  }
 
-  toggleModality(modality: string): void {
-    const control = this.generalidadesGroup.get('selectedModality')!;
-    control.setValue(control.value === modality ? '' : modality);
-    control.markAsTouched();
-  }
 
   private readonly stepGroups: Array<() => AbstractControl> = [
     () => this.generalidadesGroup,
@@ -383,68 +643,159 @@ export class EventsComponent implements OnInit {
     }
   }
 
-  addObjective(): void {
-    this.objectivesArray.push(this.createObjectiveControl());
-  }
 
-  removeObjective(index: number): void {
-    if (this.objectivesArray.length > 1) {
-      this.objectivesArray.removeAt(index);
-    }
-  }
 
-  addModule(): void {
-    this.modulesArray.push(this.createModuleControl());
-  }
 
-  removeModule(index: number): void {
-    this.modulesArray.removeAt(index);
-  }
 
   togglePreview(): void {
+    this.impirmir = !this.impirmir;
     this.previewVisible = !this.previewVisible;
   }
 
   closePreview(): void {
+    this.impirmir = false;
     this.previewVisible = false;
   }
 
+
+
   printPreview(): void {
-    window.print();
+    this.document.defaultView?.print();
   }
 
-  clearSignature(index: number): void {
-    this.approvalsArray.at(index).get('signature')!.setValue('');
-  }
+
 
   /** Se mantiene por compatibilidad con el template: ahora delega en la validez del FormGroup. */
   get isFormComplete(): boolean {
     return this.eventForm.valid;
   }
 
+  /** Asigna a cada bloque de aprobación el id del rol que le corresponde según approvalsMeta. */
+  private assignApprovalRoles(): string[] {
+    const missing: string[] = [];
+    this.approvalsMeta.forEach((meta, index) => {
+      const role = this.viewRoles.find(r => this.normalize(r.name) === this.normalize(meta.roleName));
+      if (!role) {
+        missing.push(meta.roleName);
+        return;
+      }
+      this.approvalsArray.at(index).get('role')?.setValue(role.id);
+    });
+    return missing;
+  }
+
+  private showAlert(type: AlertType, title: string, message: string): void {
+    this.alertaResponse = { alertVisible: true, alertType: type, alertTitle: title, alertMessage: message };
+  }
+
+  private resetForm(): void {
+    this.modulesArray.clear({ emitEvent: false });
+    while (this.objectivesArray.length > 3) {
+      this.objectivesArray.removeAt(this.objectivesArray.length - 1, { emitEvent: false });
+    }
+
+    this.eventForm.reset({
+      generalidades: { selectedDays: [] },
+      contenido: { objectives: ['', '', ''] }
+    }, { emitEvent: false });
+
+    this.activeStep = 0;
+    this.draftSaved = false;
+  }
+
   sendForReview(): void {
-    if (this.eventForm.invalid) {
-      this.eventForm.markAllAsTouched();
-      this.alertaResponse = {
-        alertVisible: true,
-        alertType: 'error',
-        alertTitle: 'Formulario incompleto',
-        alertMessage: 'Completa todos los campos obligatorios de los 5 pasos antes de enviar.'
-      };
+    const missingRoles = this.assignApprovalRoles();
+    if (missingRoles.length > 0) {
+      this.showAlert('error', 'Formulario incompleto', `No se encontraron los roles: ${missingRoles.join(', ')}.`);
       return;
     }
 
-    console.log(this.eventForm.getRawValue());
+    if (this.eventForm.invalid) {
+      this.eventForm.markAllAsTouched();
+      this.showAlert('error', 'Formulario incompleto', 'Completa todos los campos obligatorios de los 5 pasos antes de enviar.');
+      return;
+    }
 
-    this.reviewSent = true;
+    this.loading = true;
+    const payload = this.buildEventPayload();
 
-    // Criterio 3: al enviar exitosamente se elimina el borrador guardado.
-    localStorage.removeItem(DRAFT_STORAGE_KEY);
-    this.alertaResponse = {
-      alertVisible: true,
-      alertType: 'success',
-      alertTitle: 'Formulario enviado',
-      alertMessage: 'El formato fue enviado para revisión correctamente.'
+    if (this.editingId !== null) {
+      this.eventsService.updateEvent(this.editingId, payload).subscribe({
+        next: () => {
+          this.loading = false;
+          this.finishEdit();
+          this.showTable = true;
+          this.getEvents();
+          this.showAlert('success', 'Evento actualizado', 'El evento fue actualizado correctamente.');
+        },
+        error: (err) => this.handleSendError(err, 'No se pudo actualizar el evento')
+      });
+      return;
+    }
+
+    this.eventsService.postCreateEvent(payload).subscribe({
+      next: () => {
+        this.loading = false;
+        this.reviewSent = true;
+        if (this.canViewEvents) {
+          this.getEvents();
+        }
+        // Criterio 3: al enviar exitosamente se elimina el borrador guardado.
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+        this.resetForm();
+        this.showAlert('success', 'Formulario enviado', 'El formato fue enviado para revisión correctamente.');
+      },
+      error: (err) => this.handleSendError(err, 'No se pudo enviar el formulario')
+    });
+  }
+
+  private handleSendError(err: { error?: { message?: string | string[] } }, title: string): void {
+    this.loading = false;
+    const message = err?.error?.message;
+    this.showAlert(
+      'error',
+      title,
+      Array.isArray(message) ? message.join(' ') : (message ?? 'Ocurrió un error al procesar el evento.')
+    );
+  }
+
+  /** Transforma el valor del formulario al contrato esperado por el backend (POST /events). */
+  private buildEventPayload(): Event {
+    const { generalidades, contenido, logistica, financiera, aprobaciones } = this.eventForm.getRawValue();
+
+    return {
+      eventType: generalidades.eventType,
+      otherEventType: generalidades.eventType === '¿Otro?' ? generalidades.otherEventType : undefined,
+      name: generalidades.name,
+      facultyId: Number(generalidades.faculty),
+      academicProgram: generalidades.academicProgram,
+      teacherProfile: generalidades.teacherProfile,
+      duration: Number(generalidades.duration),
+      startTime: generalidades.startTime,
+      endTime: generalidades.endTime,
+      selectedDays: generalidades.selectedDays,
+      modality: generalidades.selectedModality,
+      startDate: generalidades.startDate,
+      endDate: generalidades.endDate,
+      minimumCapacity: Number(generalidades.minimumCapacity),
+      maximumCapacity: Number(generalidades.maximumCapacity),
+      participantProfile: generalidades.participantProfile,
+      presentation: contenido.presentation,
+      scope: contenido.scope,
+      generalObjective: contenido.generalObjective,
+      objectives: contenido.objectives,
+      competencies: contenido.competencies,
+      modules: contenido.modules,
+      logistics: logistica,
+      costPerParticipant: Number(financiera.costPerParticipant),
+      confirmedMinimumCapacity: Number(financiera.confirmedMinimumCapacity),
+      financialObservations: financiera.financialObservations,
+      approvals: aprobaciones.map((approval: { name: string; role: string; date: string; signature: string }) => ({
+        personId: Number(approval.name),
+        roleId: approval.role,
+        date: approval.date,
+        signature: approval.signature
+      }))
     };
   }
 

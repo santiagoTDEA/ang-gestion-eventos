@@ -29,6 +29,7 @@
             <div class="w-16 shrink-0"></div>
         </div>
 
+        @if (acceso.canCreate || (acceso.canEdit && updateMethod)) {
         <section class="status-form-card">
         <div class="status-form-card__heading">
             <div>
@@ -63,6 +64,7 @@
 
         </app-generic-form>
         </section>
+        }
 
         <!-- LISTADO -->
         <section class="status-list mt-14">
@@ -70,8 +72,8 @@
 
             <div class="status-list__items rounded-md border border-gray-200 divide-y divide-gray-200">
                 @for (item of statuses; track $index) {
-                <div class="flex items-center justify-between px-4 py-4 hover:bg-gray-50 cursor-pointer"
-                    role="button" tabindex="0" (click)="obtenerDatos(item)">
+                <div class="flex items-center justify-between px-4 py-4 hover:bg-gray-50"
+                    role="button" tabindex="0" (click)="acceso.canEdit && obtenerDatos(item)">
                     <span class="text-sm text-gray-800">{{ item.statusName }}</span>
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                         stroke="currentColor" class="w-4 h-4 text-gray-400">

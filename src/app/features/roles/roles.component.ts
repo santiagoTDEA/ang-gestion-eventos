@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { ValidateRenderingService } from '../inicio/services/validate-rendering.service';
 import { Access, Role, ModuleOption, ReturnRole } from './interfaces/roles.interfaces';
 import { modulosAplicacion } from '../../../environments/environment';
 import { GenericFormComponent } from '../../../shared/organisms/generic-form/generic-form.component';
@@ -12,6 +13,18 @@ import { RolesService } from './services/roles.service';
 import { DatePipe } from '@angular/common';
 import { GenericAlertResponse } from '../../../shared/atoms/generic-alert/utils/style';
 import { GenericAlertComponent } from '../../../shared/atoms/generic-alert/generic-alert.component';
+
+/**
+ * Nivel de acceso por módulo. Es jerárquico: cada nivel incluye a los de abajo,
+ * por eso se elige uno solo y se guardan las acciones ya expandidas.
+ */
+type NivelAcceso = 'leer' | 'editar' | 'crear';
+
+const ACCIONES_POR_NIVEL: Record<NivelAcceso, string[]> = {
+  leer: ['leer'],
+  editar: ['editar', 'leer'],
+  crear: ['crear', 'editar', 'eliminar', 'leer'],
+};
 
 @Component({
   selector: 'app-roles',
@@ -30,6 +43,8 @@ export class RolesComponent {
 
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  private readonly validateRenderingService = inject(ValidateRenderingService);
+  readonly acceso = this.validateRenderingService.permisosDelModulo('roles');
 
   roleForm!: FormGroup;
   loading = false;
@@ -37,6 +52,12 @@ export class RolesComponent {
   moduleOptions: ModuleOption[] = [];
 
   ngOnInit(): void {
+    if (!this.acceso.canView) {
+      this.router.navigate(['/inicio']);
+      return;
+    }
+    this.visibilityTablet = !this.acceso.canCreate;
+
     this.getRoles();
     this.moduleOptions = modulosAplicacion;
     this.roleForm = this.fb.group({
@@ -49,6 +70,20 @@ export class RolesComponent {
     });
   }
 
+  readonly nivelOptions = [
+    { value: 'leer', label: 'Solo leer' },
+    { value: 'editar', label: 'Editar (incluye leer)' },
+    { value: 'crear', label: 'Acceso completo (crear, editar y leer)' },
+  ];
+
+  /** Nivel más alto contenido en las acciones guardadas del rol. */
+  private nivelDesdeAcciones(acciones: string[]): NivelAcceso | null {
+    if (acciones.includes('crear')) return 'crear';
+    if (acciones.includes('editar')) return 'editar';
+    if (acciones.includes('leer')) return 'leer';
+    return null;
+  }
+
   get accesos(): FormArray {
     return this.roleForm.get('accesos') as FormArray;
   }
@@ -56,9 +91,7 @@ export class RolesComponent {
   createAccesoGroup(): FormGroup {
     return this.fb.group({
       modulo: [null, Validators.required],
-      crear: [false],
-      editar: [false],
-      leer: [false],
+      nivel: [null as NivelAcceso | null, Validators.required],
     });
   }
 
@@ -75,11 +108,7 @@ export class RolesComponent {
   private buildAccesosPayload(): Access[] {
     return this.accesos.controls.map((group) => {
       const value = group.value;
-      const acciones: string[] = [];
-
-      if (value.crear) acciones.push('crear');
-      if (value.editar) acciones.push('editar');
-      if (value.leer) acciones.push('leer');
+      const acciones = ACCIONES_POR_NIVEL[value.nivel as NivelAcceso] ?? [];
 
       return { modulo: value.modulo, acciones };
     });
@@ -103,8 +132,15 @@ export class RolesComponent {
 
   }
 
+  isFormValid(): boolean {
+    const { name, description, modulesFull } = this.roleForm.controls;
+    if (name.invalid || description.invalid) return false;
+    if (modulesFull.value) return true;
+    return this.accesos.valid;
+  }
+
   onSubmit(): void {
-    if (this.roleForm.invalid) {
+    if (!this.isFormValid()) {
       this.roleForm.markAllAsTouched();
       return;
     }
@@ -163,11 +199,11 @@ export class RolesComponent {
       return;
     }
 
-    if (this.roleForm.invalid) {
+    if (!this.isFormValid()) {
       this.roleForm.markAllAsTouched();
       return;
     }
-     const validteExist = this.verificarQueExistanAccesos(this.buildAccesosPayload(), this.roleForm.value.permissionsFull);
+    const validteExist = this.verificarQueExistanAccesos(this.buildAccesosPayload(), this.roleForm.value.permissionsFull);
     if (!validteExist) {
       this.alertaResponse = {
         alertVisible: true,
@@ -239,9 +275,7 @@ export class RolesComponent {
         const group = this.createAccesoGroup();
         group.patchValue({
           modulo: acceso.modulo,
-          crear: acceso.acciones.includes('crear'),
-          editar: acceso.acciones.includes('editar'),
-          leer: acceso.acciones.includes('leer'),
+          nivel: this.nivelDesdeAcciones(acceso.acciones),
         });
         this.accesos.push(group);
       });
