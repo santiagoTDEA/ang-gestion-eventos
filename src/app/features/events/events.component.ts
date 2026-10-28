@@ -114,6 +114,7 @@ export class EventsComponent implements OnInit {
 
 
   persons: { value: string; label: string }[] = [];
+  personNames: Record<string, string> = {};
   approvalOptions: { value: string; label: string }[][] = [];
   activeStep = 0;
   draftSaved = false;
@@ -329,6 +330,10 @@ export class EventsComponent implements OnInit {
           person.status?.statusName?.toLowerCase().trim() === 'activo'
         ).map(type => ({ value: type.id.toString(), label: `${type.name || type.email} - ${type.role?.name ?? ''}` }))
 
+        this.personNames = Object.fromEntries(
+          response.map(person => [person.id.toString(), person.name || person.email])
+        );
+
         // Opciones por bloque de aprobación (mismo orden que approvalsMeta)
         this.approvalOptions = this.approvalsMeta.map(meta =>
           response
@@ -342,6 +347,19 @@ export class EventsComponent implements OnInit {
       error: (err) => console.error(err),
     });
   }
+  
+    /** Nombre de la persona elegida en un bloque de aprobación (el control guarda su id). */
+  approvalPersonName(index: number): string {
+    const personId = this.approvalsArray.at(index).get('name')?.value;
+    return personId ? (this.personNames[String(personId)] ?? '') : '';
+  }
+
+  /** Nombre del rol de un bloque de aprobación (el control guarda su id). */
+  approvalRoleName(index: number): string {
+    const roleId = this.approvalsArray.at(index).get('role')?.value;
+    return this.viewRoles.find(role => String(role.id) === String(roleId))?.name ?? this.approvalsMeta[index].roleName;
+  }
+
   getFaculties(): void {
     this.facultiesService.getFaculties().subscribe({
       next: (response: ReturnFaculty[]) => {
