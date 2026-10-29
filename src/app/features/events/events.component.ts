@@ -154,7 +154,7 @@ export class EventsComponent implements OnInit {
   ];
   viewRoles: ReturnRole[] = []
   events: ReturnEvent[] = [];
-  showTable = false;
+  showTable = true;
   editingId: number | null = null;
   editingEvent: ReturnEvent | null = null;
   alertaResponse: {
