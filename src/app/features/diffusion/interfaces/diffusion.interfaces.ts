@@ -43,8 +43,10 @@ export interface DiffusionRequest {
     modality: string;
     startDate: string;
     endDate: string;
-    startTime: string;
-    endTime: string;
+    /** Horario por día (1 = Lunes ... 7 = Domingo). Las solicitudes antiguas traen startTime/endTime. */
+    schedules?: { dayOfWeek: number; startTime: string; endTime: string }[];
+    startTime?: string;
+    endTime?: string;
     participantProfile: string;
     presentation: string;
   };

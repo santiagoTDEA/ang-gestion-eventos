@@ -41,25 +41,9 @@
         }
     </div>
 
-    <div class="generalidades__grid generalidades__grid--tres">
-        <app-generic-input label="Duración total (horas)" type="number" placeholder="Ej. 40" icon="none"
-            [control]="form().controls['duration']">
-        </app-generic-input>
-
-        <app-generic-input label="Hora de inicio" type="time" icon="none"
-            [control]="form().controls['startTime']">
-        </app-generic-input>
-
-        <app-generic-input label="Hora de fin" type="time" icon="none"
-            [control]="form().controls['endTime']">
-        </app-generic-input>
-    </div>
-    @if (form().hasError('endTimeBeforeStartTime') &&
-    (form().controls['startTime'].touched ||
-    form().controls['endTime'].touched)) {
-    <small class="generalidades__error">La hora de fin no puede ser anterior a la hora de
-        inicio.</small>
-    }
+    <app-generic-input label="Duración total (horas)" type="number" placeholder="Ej. 40" icon="none"
+        [control]="form().controls['duration']">
+    </app-generic-input>
 
     <div class="generalidades__campo generalidades__campo--completo">
         <label>Días de la semana <span>*</span></label>
@@ -75,6 +59,24 @@
         <small class="generalidades__error">Selecciona al menos un día.</small>
         }
     </div>
+
+    @for (day of orderedSelectedDays; track day) {
+    <div class="generalidades__grid generalidades__grid--dos">
+        <app-generic-input [label]="'Hora de inicio · ' + day" type="time" icon="none"
+            [control]="scheduleGroup(day).controls['startTime']">
+        </app-generic-input>
+
+        <app-generic-input [label]="'Hora de fin · ' + day" type="time" icon="none"
+            [control]="scheduleGroup(day).controls['endTime']">
+        </app-generic-input>
+    </div>
+    @if (scheduleGroup(day).hasError('endTimeBeforeStartTime') &&
+    (scheduleGroup(day).controls['startTime'].touched ||
+    scheduleGroup(day).controls['endTime'].touched)) {
+    <small class="generalidades__error">{{ day }}: la hora de fin debe ser posterior a la hora de
+        inicio.</small>
+    }
+    }
 
     <div class="generalidades__campo generalidades__campo--completo">
         <label>Modalidad <span>*</span></label>

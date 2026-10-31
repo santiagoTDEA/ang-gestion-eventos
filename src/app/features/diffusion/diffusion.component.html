@@ -90,7 +90,7 @@
             <div class="diffusion__cuerpo">
                 <dl class="diffusion__datos">
                     <div><dt>Fechas</dt><dd>{{ request.eventSnapshot.startDate | date:'dd/MM/yyyy' }} - {{ request.eventSnapshot.endDate | date:'dd/MM/yyyy' }}</dd></div>
-                    <div><dt>Horario</dt><dd>{{ request.eventSnapshot.startTime.slice(0, 5) }} - {{ request.eventSnapshot.endTime.slice(0, 5) }}</dd></div>
+                    <div><dt>Horario</dt><dd>{{ scheduleLabel(request.eventSnapshot) }}</dd></div>
                     <div><dt>Modalidad</dt><dd>{{ request.eventSnapshot.modality }}</dd></div>
                     <div><dt>Facultad</dt><dd>{{ request.eventSnapshot.faculty }}</dd></div>
                     <div class="diffusion__datos-ancho"><dt>Público objetivo</dt><dd>{{ request.eventSnapshot.participantProfile }}</dd></div>

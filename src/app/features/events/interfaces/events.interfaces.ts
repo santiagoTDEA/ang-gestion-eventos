@@ -4,6 +4,13 @@ export interface EventApproval {
     date: string;
 }
 
+/** Horario de un día de la semana (tabla event_schedules). dayOfWeek: 1 = Lunes ... 7 = Domingo. */
+export interface EventSchedule {
+    dayOfWeek: number;
+    startTime: string;
+    endTime: string;
+}
+
 export interface Event {
     eventType: string;
     otherEventType?: string;
@@ -12,9 +19,7 @@ export interface Event {
     academicProgram: string;
     teacherProfile: string;
     duration: number;
-    startTime: string;
-    endTime: string;
-    selectedDays: string[];
+    schedules: EventSchedule[];
     modality: string;
     startDate: string;
     endDate: string;

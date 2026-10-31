@@ -45,8 +45,27 @@ export class EventGeneralidadesComponent {
   toggleDay(day: string): void {
     const control = this.form().get('selectedDays')!;
     const current: string[] = control.value ?? [];
-    control.setValue(current.includes(day) ? current.filter(d => d !== day) : [...current, day]);
+    const selected = !current.includes(day);
+    control.setValue(selected ? [...current, day] : current.filter(d => d !== day));
     control.markAsTouched();
+
+    // El horario del día solo existe (y se valida) mientras el día está seleccionado.
+    const schedule = this.form().get(['schedules', day])!;
+    if (selected) {
+      schedule.enable();
+    } else {
+      schedule.reset({ startTime: '', endTime: '' });
+      schedule.disable();
+    }
+  }
+
+  /** Días seleccionados en el orden de la semana, para mostrar sus horarios. */
+  get orderedSelectedDays(): string[] {
+    return this.weekDays().filter(day => this.selectedDays.includes(day));
+  }
+
+  scheduleGroup(day: string): FormGroup {
+    return this.form().get(['schedules', day]) as FormGroup;
   }
 
   toggleModality(modality: string): void {

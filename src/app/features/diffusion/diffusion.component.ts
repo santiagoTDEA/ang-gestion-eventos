@@ -67,6 +67,20 @@ export class DiffusionComponent implements OnInit {
     this.loadRequests();
   }
 
+  /** Horario del evento: "Lun 08:00-10:00 · Mié 14:00-16:00" (o el horario único de solicitudes antiguas). */
+  scheduleLabel(snapshot: DiffusionRequest['eventSnapshot']): string {
+    if (snapshot.schedules?.length) {
+      const days = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+      return snapshot.schedules
+        .map(item => `${days[item.dayOfWeek - 1]} ${item.startTime.slice(0, 5)}-${item.endTime.slice(0, 5)}`)
+        .join(' · ');
+    }
+
+    return snapshot.startTime && snapshot.endTime
+      ? `${snapshot.startTime.slice(0, 5)} - ${snapshot.endTime.slice(0, 5)}`
+      : '—';
+  }
+
   get selected(): DiffusionRequest | null {
     return this.requests.find(request => request.id === this.selectedId) ?? null;
   }
