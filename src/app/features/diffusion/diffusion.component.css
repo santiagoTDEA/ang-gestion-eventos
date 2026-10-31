@@ -22,10 +22,16 @@
     border: 0;
     border-radius: 6px;
     background: transparent;
-    color: #315340;
-    font-size: 14px;
-    font-weight: 600;
+    color: #507361;
     cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.diffusion__volver:hover {
+    background: rgba(255, 255, 255, 0.72);
+    color: #174d2f;
 }
 
 .diffusion__volver svg {
@@ -41,65 +47,69 @@
 /* Resumen */
 .diffusion__resumen {
     margin-bottom: 20px;
-    padding: 28px;
+    padding: 27px 30px 25px;
     border-radius: 18px;
-    background: linear-gradient(135deg, #0b3d27 0%, #0f5a38 100%);
+    background: linear-gradient(110deg, #063e25 0%, #0d5a34 100%);
     color: #fff;
-    box-shadow: 0 10px 28px rgba(11, 61, 39, 0.25);
+    box-shadow: 0 16px 28px rgba(8, 68, 37, 0.16);
 }
 
 .diffusion__insignia {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 14px;
-    padding: 6px 14px;
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    gap: 6px;
+    padding: 5px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.12);
-    font-size: 12px;
+    color: #e8f5eb;
+    font-size: 10px;
     font-weight: 700;
 }
 
 .diffusion__insignia span {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
-    background: #4ade80;
+    background: #45d783;
 }
 
 .diffusion__resumen h1 {
-    margin: 0 0 10px;
-    font-size: clamp(1.5rem, 4vw, 2.1rem);
+    max-width: 760px;
+    margin: 14px 0 7px;
+    font-size: clamp(20px, 3vw, 25px);
+    line-height: 1.2;
+    font-weight: 800;
 }
 
 .diffusion__descripcion {
-    max-width: 640px;
-    margin: 0 0 18px;
-    color: #d6eadf;
-    font-size: 14px;
-    line-height: 1.5;
+    max-width: 620px;
+    margin: 0;
+    color: #d5ebdc;
+    font-size: 12px;
+    line-height: 1.45;
 }
 
 .diffusion__metadatos {
     display: flex;
     flex-wrap: wrap;
-    gap: 28px;
+    gap: 30px;
+    margin-top: 17px;
 }
 
 .diffusion__metadatos div {
-    display: flex;
-    flex-direction: column;
+    display: grid;
     gap: 2px;
 }
 
 .diffusion__metadatos span {
-    color: #b9d6c6;
-    font-size: 12px;
+    color: #aed0b9;
+    font-size: 10px;
 }
 
 .diffusion__metadatos strong {
-    font-size: 18px;
+    color: #fff;
+    font-size: 11px;
 }
 
 .diffusion__subtitulo {
@@ -548,6 +558,7 @@
 
     .diffusion__resumen {
         padding: 22px 20px;
+        border-radius: 14px;
     }
 
     .diffusion__estados {

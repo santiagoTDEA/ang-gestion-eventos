@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, inject } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { modulosAplicacion } from '../../../environments/environment';
 import { JwtService } from '../../../app/core/services/jwt.service';
 import { Role } from '../../../app/features/inicio/interfaces/inicio.interfaces';
@@ -20,6 +20,7 @@ interface MenuEntry {
 interface MenuSection {
   label: string;
   items: MenuEntry[];
+  shortLabel: string;
 }
 
 /** Cómo se agrupan los módulos en el menú. Los módulos que no estén aquí caen en "Otros". */
@@ -40,7 +41,6 @@ const MENU_GROUPS: MenuGroup[] = [
   styleUrl: './side-menu.component.css'
 })
 export class SideMenuComponent implements OnChanges {
-  private readonly router = inject(Router);
   private readonly jwtService = inject(JwtService);
   private readonly validateRenderingService = inject(ValidateRenderingService);
 
@@ -58,11 +58,6 @@ export class SideMenuComponent implements OnChanges {
 
   isActive(path: string): boolean {
     return this.currentPath === path || this.currentPath.startsWith(`${path}/`);
-  }
-
-  logout(): void {
-    localStorage.removeItem('accessToken');
-    this.router.navigate(['/']);
   }
 
   private buildSections(): MenuSection[] {
@@ -88,6 +83,13 @@ export class SideMenuComponent implements OnChanges {
       .filter(group => group.modules.length > 0)
       .map(group => ({
         label: group.label,
+        shortLabel: group.label
+          .split(/\s+/)
+          .filter(Boolean)
+          .map(word => word[0])
+          .join('')
+          .slice(0, 3)
+          .toUpperCase(),
         items: group.modules.map(module => ({
           number: String(++counter).padStart(2, '0'),
           label: module.label,

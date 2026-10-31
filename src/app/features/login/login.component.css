@@ -4,3 +4,33 @@
 .text-title {
     color: var(--text-title);
 }
+
+.login-link {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: #1c4a30;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+}
+
+.login-link:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.change-password-header {
+    margin-bottom: 1rem;
+    color: #1c4a30;
+    font-size: 1.125rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.password-error {
+    margin: -0.25rem 0 0.5rem;
+    color: #b42318;
+    font-size: 0.75rem;
+}

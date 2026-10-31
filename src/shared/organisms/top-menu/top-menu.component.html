@@ -1,7 +1,6 @@
 <header class="top-menu" (click)="$event.stopPropagation()">
     <div class="top-menu__inner">
         <a class="top-menu__brand" routerLink="/inicio" aria-label="Ir al inicio">
-            <span class="top-menu__brand-mark">GE</span>
             <span class="top-menu__brand-name">{{ moduleTitle }}</span>
         </a>
 
@@ -18,7 +17,7 @@
             </button>
 
             <button type="button" class="top-menu__avatar" (click)="toggleUserMenu()" aria-label="Abrir menú de usuario"
-                title="Menú de usuario">S.O</button>
+                title="Menú de usuario">{{ userInitials }}</button>
 
             @if (showNotifications) {
             <div class="top-menu__popover top-menu__notifications">
