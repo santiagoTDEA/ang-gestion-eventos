@@ -1,0 +1,284 @@
+<main class="certificates">
+    <section class="certificates__contenido certificates__pantalla">
+        @if (alertaResponse.alertVisible) {
+        <app-generic-alert [type]="alertaResponse.alertType" (closed)="alertaResponse.alertVisible = false">
+            <strong class="block font-semibold">{{ alertaResponse.alertTitle }}</strong>
+            <span>{{ alertaResponse.alertMessage }}</span>
+        </app-generic-alert>
+        }
+
+        <button type="button" class="certificates__volver" (click)="goBack()" aria-label="Volver al inicio">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M15.75 19.5 8.25 12l7.5-7.5" />
+            </svg>
+            Volver al inicio
+        </button>
+
+        <article class="certificates__resumen">
+            <div class="certificates__insignia"><span></span> Módulo 6 · Certificados</div>
+            <h1>Certificados</h1>
+            <p class="certificates__descripcion">
+                Genera los certificados de los eventos que ya terminaron. Escoge el evento y si los quieres para
+                todos los inscritos o para una sola persona; la plantilla se llena sola con sus datos.
+            </p>
+            <div class="certificates__metadatos">
+                <div><span>Eventos finalizados</span><strong>{{ events.length }}</strong></div>
+                @if (selectedEvent; as event) {
+                <div><span>Inscritos del evento</span><strong>{{ participants.length }}</strong></div>
+                <div><span>Certificados a generar</span><strong>{{ selectedParticipants.length }}</strong></div>
+                }
+            </div>
+        </article>
+
+        <!-- Paso 1: evento -->
+        <section class="certificates__tarjeta" aria-label="Evento">
+            <header class="certificates__tarjeta-cabecera">
+                <div>
+                    <span class="certificates__paso">1</span>
+                    <h2>Escoge el evento</h2>
+                </div>
+            </header>
+            <div class="certificates__cuerpo">
+                @if (loadingEvents) {
+                <p class="certificates__vacio">Cargando eventos…</p>
+                } @else if (events.length === 0) {
+                <p class="certificates__vacio">
+                    Todavía no hay eventos finalizados. Un evento aparece aquí cuando tiene la aprobación completa y
+                    ya pasó la hora de fin de su último día.
+                </p>
+                } @else {
+                <label class="certificates__campo">
+                    <span class="certificates__etiqueta">Evento</span>
+                    <select [formControl]="eventControl">
+                        <option [ngValue]="null" disabled>Selecciona un evento</option>
+                        @for (event of events; track event.id) {
+                        <option [ngValue]="event.id">
+                            {{ event.name }} — {{ event.registeredCount }} {{ event.registeredCount === 1 ? 'inscrito' : 'inscritos' }}
+                        </option>
+                        }
+                    </select>
+                </label>
+                }
+
+                @if (selectedEvent; as event) {
+                <dl class="certificates__datos">
+                    <div><dt>Tipo</dt><dd>{{ event.eventType }}</dd></div>
+                    <div><dt>Facultad</dt><dd>{{ event.faculty }}</dd></div>
+                    <div><dt>Fechas</dt><dd>{{ event.startDate | date:'dd/MM/yyyy' }} - {{ event.endDate | date:'dd/MM/yyyy' }}</dd></div>
+                    <div><dt>Intensidad</dt><dd>{{ event.duration }} horas</dd></div>
+                    <div><dt>Modalidad</dt><dd>{{ event.modality }}</dd></div>
+                    <div><dt>Finalizó</dt><dd>{{ event.endsAt | date:'dd/MM/yyyy HH:mm' }}</dd></div>
+                </dl>
+                }
+            </div>
+        </section>
+
+        @if (selectedEvent) {
+        <!-- Paso 2: a quién -->
+        <section class="certificates__tarjeta" aria-label="Personas a certificar">
+            <header class="certificates__tarjeta-cabecera">
+                <div>
+                    <span class="certificates__paso">2</span>
+                    <h2>¿A quién certificar?</h2>
+                </div>
+            </header>
+            <div class="certificates__cuerpo">
+                @if (loadingParticipants) {
+                <p class="certificates__vacio">Cargando inscritos…</p>
+                } @else if (participants.length === 0) {
+                <p class="certificates__vacio">Este evento no tiene personas inscritas.</p>
+                } @else {
+                <div class="certificates__opciones" role="radiogroup" aria-label="Alcance">
+                    <label class="certificates__opcion"
+                        [class.certificates__opcion--activa]="scopeControl.value === 'todos'">
+                        <input type="radio" name="alcance" [checked]="scopeControl.value === 'todos'"
+                            [disabled]="generating" (change)="setScope('todos')" />
+                        <span>
+                            <strong>Todos los inscritos</strong>
+                            <small>{{ participants.length }} {{ participants.length === 1 ? 'certificado' : 'certificados' }}</small>
+                        </span>
+                    </label>
+                    <label class="certificates__opcion"
+                        [class.certificates__opcion--activa]="scopeControl.value === 'persona'">
+                        <input type="radio" name="alcance" [checked]="scopeControl.value === 'persona'"
+                            [disabled]="generating" (change)="setScope('persona')" />
+                        <span>
+                            <strong>Una persona</strong>
+                            <small>Escoge a quién en la lista</small>
+                        </span>
+                    </label>
+                </div>
+
+                @if (scopeControl.value === 'persona') {
+                <label class="certificates__campo certificates__campo--persona">
+                    <span class="certificates__etiqueta">Persona inscrita</span>
+                    <select [formControl]="participantControl">
+                        <option [ngValue]="null" disabled>Selecciona una persona</option>
+                        @for (participant of participants; track participant.id) {
+                        <option [ngValue]="participant.id">
+                            {{ participant.fullName }} — {{ participant.documentType }} {{ participant.documentNumber }}
+                        </option>
+                        }
+                    </select>
+                </label>
+                }
+
+                @if (scopeControl.value === 'todos' && participants.length > 1) {
+                <p class="certificates__subtitulo">¿Cómo los quieres?</p>
+                <div class="certificates__opciones" role="radiogroup" aria-label="Formato de descarga">
+                    <label class="certificates__opcion"
+                        [class.certificates__opcion--activa]="outputControl.value === 'combined'">
+                        <input type="radio" name="formato" value="combined" [formControl]="outputControl" />
+                        <span>
+                            <strong>Todos juntos en un PDF</strong>
+                            <small>Un archivo con {{ participants.length }} hojas, para imprimir o archivar</small>
+                        </span>
+                    </label>
+                    <label class="certificates__opcion"
+                        [class.certificates__opcion--activa]="outputControl.value === 'separate'">
+                        <input type="radio" name="formato" value="separate" [formControl]="outputControl" />
+                        <span>
+                            <strong>Un PDF por persona</strong>
+                            <small>{{ participants.length }} archivos en un ZIP, para entregar a cada uno</small>
+                        </span>
+                    </label>
+                </div>
+                }
+                }
+            </div>
+        </section>
+
+        <!-- Paso 3: datos de la plantilla -->
+        <section class="certificates__tarjeta" aria-label="Datos de la plantilla">
+            <header class="certificates__tarjeta-cabecera">
+                <div>
+                    <span class="certificates__paso">3</span>
+                    <h2>Datos de la plantilla</h2>
+                </div>
+                <p>Se guardan en este navegador para los próximos certificados.</p>
+            </header>
+            <div class="certificates__cuerpo" [formGroup]="settingsForm">
+                <label class="certificates__campo certificates__campo--ciudad">
+                    <span class="certificates__etiqueta">Ciudad <span>*</span></span>
+                    <input type="text" formControlName="city" maxlength="60" placeholder="Ej. Medellín" />
+                    @if (settingsForm.controls.city.touched && settingsForm.controls.city.invalid) {
+                    <small class="certificates__error">Escribe la ciudad.</small>
+                    }
+                    @if (isVirtual) {
+                    <small class="certificates__ayuda">El evento es virtual: el certificado dirá «Realizado de manera virtual».</small>
+                    }
+                </label>
+
+                <div class="certificates__firmantes" formArrayName="signers">
+                    @for (signer of signersArray.controls; track $index; let index = $index) {
+                    <fieldset class="certificates__firmante" [formGroupName]="index">
+                        <legend>Firmante {{ index + 1 }}</legend>
+                        <label class="certificates__campo">
+                            <span class="certificates__etiqueta">Nombre <span>*</span></span>
+                            <input type="text" formControlName="name" maxlength="80"
+                                [placeholder]="index === 0 ? 'Ej. Bertha Cecilia Rosero Melo' : 'Ej. Andrés Felipe Montoya Rendón'" />
+                            @if (signer.controls.name.touched && signer.controls.name.invalid) {
+                            <small class="certificates__error">Escribe el nombre del firmante.</small>
+                            }
+                        </label>
+                        <label class="certificates__campo">
+                            <span class="certificates__etiqueta">Cargo <span>*</span></span>
+                            <input type="text" formControlName="role" maxlength="80" />
+                            @if (signer.controls.role.touched && signer.controls.role.invalid) {
+                            <small class="certificates__error">Escribe el cargo.</small>
+                            }
+                        </label>
+                        <div class="certificates__firma">
+                            @if (signatures[index]; as signature) {
+                            <img [src]="signature" alt="Firma del firmante {{ index + 1 }}" />
+                            <button type="button" class="certificates__enlace" [disabled]="generating"
+                                (click)="removeSignature(index)">
+                                Quitar firma
+                            </button>
+                            } @else {
+                            <label class="certificates__enlace">
+                                Subir imagen de la firma (opcional)
+                                <input #firma type="file" accept="image/png,image/jpeg,image/webp" hidden
+                                    [disabled]="generating" (change)="onSignatureSelected(index, firma)" />
+                            </label>
+                            }
+                        </div>
+                    </fieldset>
+                    }
+                </div>
+            </div>
+        </section>
+
+        <!-- Vista previa -->
+        <section class="certificates__tarjeta" aria-label="Vista previa">
+            <header class="certificates__tarjeta-cabecera">
+                <div>
+                    <span class="certificates__paso">4</span>
+                    <h2>Vista previa y descarga</h2>
+                </div>
+                <div class="certificates__acciones">
+                    <button type="button" class="certificates__btn certificates__btn--secundario"
+                        [disabled]="selectedParticipants.length === 0 || generating" (click)="print()">
+                        Imprimir
+                    </button>
+                    <button type="button" class="certificates__btn certificates__btn--primario"
+                        [disabled]="selectedParticipants.length === 0 || generating" (click)="download()">
+                        {{ downloadLabel }}
+                    </button>
+                </div>
+            </header>
+            <div class="certificates__cuerpo">
+                @if (progress; as avance) {
+                <div class="certificates__progreso" role="status" aria-live="polite">
+                    <div class="certificates__progreso-texto">
+                        <strong>Generando {{ avance.done }} de {{ avance.total }}…</strong>
+                        <button type="button" class="certificates__enlace" (click)="cancelGeneration()">Cancelar</button>
+                    </div>
+                    <div class="certificates__barra" role="progressbar" [attr.aria-valuenow]="progressPercent"
+                        aria-valuemin="0" aria-valuemax="100">
+                        <span [style.width.%]="progressPercent"></span>
+                    </div>
+                    <small>Deja esta pestaña abierta y a la vista hasta que termine: si cambias de pestaña, la
+                        generación se pausa y sigue cuando vuelvas.</small>
+                </div>
+                }
+
+                @if (previewData; as data) {
+                <div class="certificates__vista-previa">
+                    <app-certificate-template [data]="data" />
+                </div>
+                <p class="certificates__ayuda">
+                    @if (scopeControl.value === 'todos' && participants.length > 1) {
+                    Muestra con la primera persona de la lista; los demás certificados salen iguales con sus datos.
+                    }
+                    «Descargar» genera los archivos PDF directamente. «Imprimir» abre el diálogo de impresión del
+                    navegador.
+                </p>
+                } @else {
+                <p class="certificates__vacio">
+                    {{ scopeControl.value === 'persona' ? 'Selecciona una persona para ver su certificado.' : 'No hay personas para certificar.' }}
+                </p>
+                }
+            </div>
+        </section>
+        }
+    </section>
+
+    <!-- Aquí se dibuja, fuera de la vista, cada certificado que se pasa a PDF -->
+    <div #renderHost class="certificates__render" aria-hidden="true" [style.width.px]="renderSize.width">
+        @if (renderData; as data) {
+        <app-certificate-template [data]="data" />
+        }
+    </div>
+
+    <!-- Hojas que se imprimen: una por certificado -->
+    @if (printing) {
+    <section class="certificates__impresion" aria-hidden="true">
+        @for (certificate of certificates; track $index) {
+        <div class="certificates__hoja">
+            <app-certificate-template [data]="certificate" />
+        </div>
+        }
+    </section>
+    }
+</main>

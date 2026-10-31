@@ -16,6 +16,8 @@ export interface ModuleOption {
     value: string;
     label: string;
     icono: string;
+    /** Solo lo ven los roles con permisos y módulos completos; no se asigna por accesos. */
+    soloAccesoTotal?: boolean;
 }
 
 export interface ReturnRole {

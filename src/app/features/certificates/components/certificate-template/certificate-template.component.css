@@ -1,0 +1,137 @@
+/*
+ * Todas las medidas van en cqw (1 % del ancho del certificado): la plantilla se ve
+ * igual en la vista previa y en la hoja A4 horizontal impresa.
+ */
+:host {
+    display: block;
+    container-type: inline-size;
+}
+
+.certificado {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 297 / 210;
+    overflow: hidden;
+    background: #fff;
+    color: #3f3f46;
+    font-family: 'Segoe UI', 'Open Sans', Arial, sans-serif;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.certificado__curvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 24%;
+}
+
+.certificado__ondas {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 38%;
+}
+
+.certificado__contenido {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    padding: 6.5cqw 8cqw 0;
+    text-align: center;
+}
+
+.certificado__logo {
+    width: 28cqw;
+    height: auto;
+    margin-bottom: 1.4cqw;
+}
+
+.certificado__intro {
+    margin: 0 0 3.2cqw;
+    color: #52525b;
+    font-size: 2cqw;
+}
+
+.certificado__nombre {
+    margin: 0;
+    color: #1f1f23;
+    font-size: 2.9cqw;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    line-height: 1.15;
+    text-transform: uppercase;
+}
+
+.certificado__documento {
+    margin: 0.3cqw 0 3.6cqw;
+    color: #1f1f23;
+    font-size: 2.1cqw;
+    font-weight: 700;
+}
+
+.certificado__participo {
+    margin: 0 0 2.2cqw;
+    color: #52525b;
+    font-size: 2.2cqw;
+}
+
+.certificado__evento {
+    max-width: 82cqw;
+    margin: 0 0 3.4cqw;
+    color: #52525b;
+    font-size: 3.4cqw;
+    font-weight: 800;
+    line-height: 1.15;
+}
+
+.certificado__detalle {
+    margin: 0;
+    color: #71717a;
+    font-size: 1.9cqw;
+    line-height: 1.45;
+}
+
+.certificado__firmas {
+    display: flex;
+    justify-content: center;
+    gap: 12cqw;
+    margin-top: auto;
+    margin-bottom: 11cqw;
+}
+
+.certificado__firma {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 26cqw;
+}
+
+.certificado__firma-imagen {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    height: 7cqw;
+    margin-bottom: -1.2cqw;
+}
+
+.certificado__firma-imagen img {
+    max-width: 24cqw;
+    max-height: 7cqw;
+    object-fit: contain;
+}
+
+.certificado__firma strong {
+    color: #27272a;
+    font-size: 1.75cqw;
+    font-weight: 700;
+}
+
+.certificado__firma span {
+    color: #3f3f46;
+    font-size: 1.55cqw;
+}

@@ -1,0 +1,125 @@
+<main class="profile">
+    <section class="profile__contenido">
+        @if (alertaResponse.alertVisible) {
+        <app-generic-alert [type]="alertaResponse.alertType" (closed)="alertaResponse.alertVisible = false">
+            <strong class="block font-semibold">{{ alertaResponse.alertTitle }}</strong>
+            <span>{{ alertaResponse.alertMessage }}</span>
+        </app-generic-alert>
+        }
+
+        <button type="button" class="profile__volver" (click)="goBack()" aria-label="Volver al inicio">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M15.75 19.5 8.25 12l7.5-7.5" />
+            </svg>
+            Volver al inicio
+        </button>
+
+        <article class="profile__resumen">
+            <div class="profile__insignia"><span></span> Tu cuenta</div>
+            <h1>Mi perfil</h1>
+            <p class="profile__descripcion">
+                Consulta los datos de tu cuenta y cambia tu contraseña cuando lo necesites. Para cambiarla te
+                pediremos la actual.
+            </p>
+        </article>
+
+        <!-- Datos de la cuenta -->
+        <section class="profile__tarjeta" aria-label="Mi cuenta">
+            <header class="profile__tarjeta-cabecera">
+                <h2>Mi cuenta</h2>
+            </header>
+            <div class="profile__cuerpo">
+                @if (loadingProfile) {
+                <p class="profile__vacio">Cargando tus datos…</p>
+                } @else if (profile) {
+                <div class="profile__cuenta">
+                    <span class="profile__avatar" aria-hidden="true">{{ initials }}</span>
+                    <dl class="profile__datos">
+                        <div><dt>Nombre</dt><dd>{{ profile.name || '—' }}</dd></div>
+                        <div><dt>Usuario</dt><dd>{{ profile.username }}</dd></div>
+                        <div><dt>Correo</dt><dd>{{ profile.email || '—' }}</dd></div>
+                        <div><dt>Rol</dt><dd>{{ profile.role?.name || 'Sin rol' }}</dd></div>
+                    </dl>
+                </div>
+                }
+            </div>
+        </section>
+
+        <!-- Cambiar contraseña -->
+        <section class="profile__tarjeta" aria-label="Cambiar contraseña">
+            <header class="profile__tarjeta-cabecera">
+                <h2>Cambiar contraseña</h2>
+            </header>
+            <form class="profile__cuerpo profile__formulario" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+                <label class="profile__campo">
+                    <span class="profile__etiqueta">Contraseña actual <span>*</span></span>
+                    <span class="profile__clave">
+                        <input [type]="visible.currentPassword ? 'text' : 'password'" formControlName="currentPassword"
+                            autocomplete="current-password" maxlength="255"
+                            [class.profile__invalido]="showError('currentPassword')" />
+                        <button type="button" class="profile__ojo" (click)="toggleVisible('currentPassword')"
+                            [attr.aria-label]="visible.currentPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+                            {{ visible.currentPassword ? 'Ocultar' : 'Mostrar' }}
+                        </button>
+                    </span>
+                    @if (showError('currentPassword')) {
+                    <small class="profile__error">
+                        {{ form.controls.currentPassword.hasError('incorrect') ? 'La contraseña actual no es correcta.' : 'Escribe tu contraseña actual.' }}
+                    </small>
+                    }
+                </label>
+
+                <label class="profile__campo">
+                    <span class="profile__etiqueta">Contraseña nueva <span>*</span></span>
+                    <span class="profile__clave">
+                        <input [type]="visible.newPassword ? 'text' : 'password'" formControlName="newPassword"
+                            autocomplete="new-password" maxlength="255"
+                            [class.profile__invalido]="showError('newPassword') || sameAsCurrent" />
+                        <button type="button" class="profile__ojo" (click)="toggleVisible('newPassword')"
+                            [attr.aria-label]="visible.newPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+                            {{ visible.newPassword ? 'Ocultar' : 'Mostrar' }}
+                        </button>
+                    </span>
+                    @if (form.controls.newPassword.touched && form.controls.newPassword.hasError('required')) {
+                    <small class="profile__error">Escribe la contraseña nueva.</small>
+                    } @else if (sameAsCurrent) {
+                    <small class="profile__error">La contraseña nueva debe ser distinta de la actual.</small>
+                    }
+                </label>
+
+                <ul class="profile__reglas" aria-label="Requisitos de la contraseña nueva">
+                    @for (rule of rules; track rule.key) {
+                    <li [class.profile__regla--ok]="ruleMet(rule)">
+                        <span aria-hidden="true">{{ ruleMet(rule) ? '✓' : '•' }}</span>
+                        {{ rule.label }}
+                    </li>
+                    }
+                </ul>
+
+                <label class="profile__campo">
+                    <span class="profile__etiqueta">Confirmar contraseña nueva <span>*</span></span>
+                    <span class="profile__clave">
+                        <input [type]="visible.confirmPassword ? 'text' : 'password'" formControlName="confirmPassword"
+                            autocomplete="new-password" maxlength="255"
+                            [class.profile__invalido]="showError('confirmPassword') || mismatch" />
+                        <button type="button" class="profile__ojo" (click)="toggleVisible('confirmPassword')"
+                            [attr.aria-label]="visible.confirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+                            {{ visible.confirmPassword ? 'Ocultar' : 'Mostrar' }}
+                        </button>
+                    </span>
+                    @if (showError('confirmPassword')) {
+                    <small class="profile__error">Confirma la contraseña nueva.</small>
+                    } @else if (mismatch) {
+                    <small class="profile__error">No coincide con la contraseña nueva.</small>
+                    }
+                </label>
+
+                <div class="profile__acciones">
+                    <button type="submit" class="profile__btn profile__btn--primario" [disabled]="saving">
+                        {{ saving ? 'Guardando…' : 'Cambiar contraseña' }}
+                    </button>
+                </div>
+            </form>
+        </section>
+    </section>
+</main>

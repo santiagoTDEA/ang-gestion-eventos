@@ -1,0 +1,164 @@
+<main class="recovery">
+    <section class="recovery__tarjeta">
+        <header class="recovery__cabecera">
+            <img src="images/tdea-logo.png" alt="TdeA Institución Universitaria" class="recovery__logo" />
+            <h1>Recuperar cuenta</h1>
+            @if (step !== 'listo') {
+            <ol class="recovery__pasos" aria-label="Pasos">
+                <li [class.recovery__paso--activo]="step === 'datos'"
+                    [class.recovery__paso--hecho]="step === 'codigo' || step === 'clave'">1. Tu cuenta</li>
+                <li [class.recovery__paso--activo]="step === 'codigo'" [class.recovery__paso--hecho]="step === 'clave'">
+                    2. Código</li>
+                <li [class.recovery__paso--activo]="step === 'clave'">3. Contraseña</li>
+            </ol>
+            }
+        </header>
+
+        @if (error) {
+        <p class="recovery__mensaje recovery__mensaje--error" role="alert">{{ error }}</p>
+        }
+
+        @switch (step) {
+        @case ('datos') {
+        <form class="recovery__formulario" [formGroup]="accountForm" (ngSubmit)="requestCode()" novalidate>
+            <p class="recovery__texto">
+                Escribe tu nombre de usuario y el correo registrado en tu cuenta. Te enviaremos un código para
+                crear una contraseña nueva.
+            </p>
+
+            <label class="recovery__campo">
+                <span>Nombre de usuario</span>
+                <input type="text" formControlName="username" autocomplete="username" maxlength="100"
+                    placeholder="Escribe tu usuario"
+                    [class.recovery__invalido]="showError(accountForm.controls.username)" />
+                @if (showError(accountForm.controls.username)) {
+                <small class="recovery__error">Escribe tu usuario, sin espacios.</small>
+                }
+            </label>
+
+            <label class="recovery__campo">
+                <span>Correo registrado</span>
+                <input type="email" formControlName="email" autocomplete="email" maxlength="150"
+                    placeholder="nombre@universidad.edu.co"
+                    [class.recovery__invalido]="showError(accountForm.controls.email)" />
+                @if (showError(accountForm.controls.email)) {
+                <small class="recovery__error">Escribe un correo válido.</small>
+                }
+            </label>
+
+            <button type="submit" class="recovery__btn" [disabled]="loading">
+                {{ loading ? 'Enviando…' : 'Enviar código' }}
+            </button>
+        </form>
+        }
+
+        @case ('codigo') {
+        <form class="recovery__formulario" [formGroup]="codeForm" (ngSubmit)="verifyCode()" novalidate>
+            <p class="recovery__texto">
+                {{ info }}
+                @if (maskedEmail) { Revisa <b>{{ maskedEmail }}</b> (y la carpeta de correo no deseado). }
+            </p>
+
+            <label class="recovery__campo">
+                <span>Código de 6 dígitos</span>
+                <input class="recovery__codigo" type="text" formControlName="code" inputmode="numeric"
+                    autocomplete="one-time-code" maxlength="6" placeholder="••••••"
+                    [class.recovery__invalido]="showError(codeForm.controls.code)" />
+                @if (showError(codeForm.controls.code)) {
+                <small class="recovery__error">El código tiene 6 dígitos.</small>
+                }
+            </label>
+
+            <p class="recovery__vigencia" [class.recovery__vigencia--vencida]="expiresIn === 0">
+                @if (expiresIn > 0) {
+                El código vence en <b>{{ expiresLabel }}</b>.
+                } @else {
+                El código venció. Solicita uno nuevo.
+                }
+            </p>
+
+            <button type="submit" class="recovery__btn" [disabled]="loading || expiresIn === 0">
+                {{ loading ? 'Verificando…' : 'Verificar código' }}
+            </button>
+
+            <div class="recovery__acciones">
+                <button type="button" class="recovery__enlace" [disabled]="loading || resendIn > 0"
+                    (click)="requestCode()">
+                    {{ resendIn > 0 ? 'Reenviar código en ' + resendIn + ' s' : 'Reenviar código' }}
+                </button>
+                <button type="button" class="recovery__enlace" (click)="changeAccount()">Cambiar usuario o
+                    correo</button>
+            </div>
+        </form>
+        }
+
+        @case ('clave') {
+        <form class="recovery__formulario" [formGroup]="passwordForm" (ngSubmit)="savePassword()" novalidate>
+            <p class="recovery__texto">Código verificado. Escribe tu contraseña nueva.</p>
+
+            <label class="recovery__campo">
+                <span>Contraseña nueva</span>
+                <span class="recovery__clave">
+                    <input [type]="visible.newPassword ? 'text' : 'password'" formControlName="newPassword"
+                        autocomplete="new-password" maxlength="255"
+                        [class.recovery__invalido]="showError(passwordForm.controls.newPassword)" />
+                    <button type="button" class="recovery__ojo" (click)="toggleVisible('newPassword')"
+                        [attr.aria-label]="visible.newPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+                        {{ visible.newPassword ? 'Ocultar' : 'Mostrar' }}
+                    </button>
+                </span>
+            </label>
+
+            <ul class="recovery__reglas" aria-label="Requisitos de la contraseña">
+                @for (rule of rules; track rule.key) {
+                <li [class.recovery__regla--ok]="ruleMet(rule)">
+                    <span aria-hidden="true">{{ ruleMet(rule) ? '✓' : '•' }}</span>{{ rule.label }}
+                </li>
+                }
+            </ul>
+
+            <label class="recovery__campo">
+                <span>Confirmar contraseña nueva</span>
+                <span class="recovery__clave">
+                    <input [type]="visible.confirmPassword ? 'text' : 'password'" formControlName="confirmPassword"
+                        autocomplete="new-password" maxlength="255"
+                        [class.recovery__invalido]="showError(passwordForm.controls.confirmPassword) || mismatch" />
+                    <button type="button" class="recovery__ojo" (click)="toggleVisible('confirmPassword')"
+                        [attr.aria-label]="visible.confirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+                        {{ visible.confirmPassword ? 'Ocultar' : 'Mostrar' }}
+                    </button>
+                </span>
+                @if (showError(passwordForm.controls.confirmPassword)) {
+                <small class="recovery__error">Confirma la contraseña nueva.</small>
+                } @else if (mismatch) {
+                <small class="recovery__error">No coincide con la contraseña nueva.</small>
+                }
+            </label>
+
+            <button type="submit" class="recovery__btn" [disabled]="loading">
+                {{ loading ? 'Guardando…' : 'Guardar contraseña' }}
+            </button>
+
+            @if (error) {
+            <div class="recovery__acciones">
+                <button type="button" class="recovery__enlace" (click)="changeAccount()">Solicitar un código
+                    nuevo</button>
+            </div>
+            }
+        </form>
+        }
+
+        @case ('listo') {
+        <div class="recovery__formulario recovery__listo">
+            <span class="recovery__check" aria-hidden="true">✓</span>
+            <p class="recovery__texto">{{ info }}</p>
+            <a routerLink="/" class="recovery__btn">Ir a iniciar sesión</a>
+        </div>
+        }
+        }
+
+        @if (step !== 'listo') {
+        <a routerLink="/" class="recovery__volver">← Volver al inicio de sesión</a>
+        }
+    </section>
+</main>

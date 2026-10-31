@@ -253,7 +253,7 @@
 
         @if (showSignatureModal && currentStep) {
         <div class="approvals__modal-fondo" (click)="closeSignatureModal()">
-            <div class="approvals__modal" (click)="$event.stopPropagation()">
+            <div class="approvals__modal approvals__modal--firma" (click)="$event.stopPropagation()">
                 <header class="approvals__modal-header">
                     <h3>Confirmar firma</h3>
                     <button type="button" class="approvals__modal-close" (click)="closeSignatureModal()"

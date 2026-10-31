@@ -109,6 +109,18 @@
     <small class="generalidades__error">La fecha de terminación no puede ser anterior a la fecha de
         inicio.</small>
     }
+    @if (form().getError('dateNotInSelectedDays'); as error) {
+    @if (form().controls['startDate'].touched || form().controls['endDate'].touched) {
+    @if (error.startDay) {
+    <small class="generalidades__error">La fecha de inicio cae {{ error.startDay }}, que no está entre los días
+        seleccionados.</small>
+    }
+    @if (error.endDay) {
+    <small class="generalidades__error">La fecha de terminación cae {{ error.endDay }}, que no está entre los días
+        seleccionados.</small>
+    }
+    }
+    }
 
     <div class="generalidades__grid generalidades__grid--dos">
         <app-generic-input label="Cupo mínimo" type="number" placeholder="Ej. 15" icon="none"

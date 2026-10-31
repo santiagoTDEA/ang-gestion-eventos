@@ -2,6 +2,7 @@ import { Component, HostListener, OnChanges, OnDestroy, OnInit, inject, Input } 
 import { Router, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { AppNotification, NotificationsService } from '../../../app/core/services/notifications.service';
+import { CurrentUserService, UserProfile } from '../../../app/core/services/current-user.service';
 
 interface MenuItem {
   label: string;
@@ -19,7 +20,11 @@ interface MenuItem {
 export class TopMenuComponent implements OnInit, OnChanges, OnDestroy {
   private readonly router = inject(Router);
   private readonly notificationsService = inject(NotificationsService);
+  private readonly currentUserService = inject(CurrentUserService);
   private refreshTimer?: ReturnType<typeof setInterval>;
+  /** Token con el que se cargó el perfil; si cambia (otro login) se vuelve a pedir. */
+  private profileToken: string | null = null;
+  profile: UserProfile | null = null;
   @Input() routerUrl: string = '';
   searchTerm = '';
   showNotifications = false;
@@ -38,12 +43,14 @@ export class TopMenuComponent implements OnInit, OnChanges, OnDestroy {
   ];
 
   ngOnInit(): void {
+    this.loadProfile();
     this.loadNotifications();
     this.refreshTimer = setInterval(() => this.loadNotifications(), 60000);
   }
 
   /** Al cambiar de ruta se vuelven a consultar las notificaciones del usuario. */
   ngOnChanges(): void {
+    this.loadProfile();
     this.loadNotifications();
   }
 
@@ -54,7 +61,36 @@ export class TopMenuComponent implements OnInit, OnChanges, OnDestroy {
   /** Nombre del módulo que se muestra en la barra superior. */
   get moduleTitle(): string {
     const module = this.routerUrl.split('?')[0].split('/')[1];
+    if (module === 'mi-perfil') return 'Mi perfil';
     return !module || module === 'inicio' ? 'Panel general' : `Gestión de ${module}`;
+  }
+
+  /** Nombre a mostrar: el de la persona o, si no tiene, el usuario. */
+  get displayName(): string {
+    return this.profile?.name || this.profile?.username || '';
+  }
+
+  /** Iniciales del nombre para el avatar (máximo dos letras). */
+  get initials(): string {
+    const words = this.displayName.trim().split(/\s+/).filter(Boolean);
+    if (!words.length) {
+      return '';
+    }
+    const letters = words.length > 1 ? words[0][0] + words[words.length - 1][0] : words[0].slice(0, 2);
+    return letters.toUpperCase();
+  }
+
+  loadProfile(): void {
+    const token = localStorage.getItem('accessToken');
+    if (!token || token === this.profileToken) {
+      return;
+    }
+
+    this.profileToken = token;
+    this.currentUserService.getProfile().subscribe({
+      next: profile => (this.profile = profile),
+      error: () => (this.profileToken = null)
+    });
   }
 
   loadNotifications(): void {
@@ -130,6 +166,8 @@ export class TopMenuComponent implements OnInit, OnChanges, OnDestroy {
 
   logout(): void {
     localStorage.removeItem('accessToken');
+    this.profile = null;
+    this.profileToken = null;
     this.router.navigate(['/']);
   }
 

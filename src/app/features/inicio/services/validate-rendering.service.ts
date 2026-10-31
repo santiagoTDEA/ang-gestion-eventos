@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { JwtService } from '../../../core/services/jwt.service';
 import { Role } from '../interfaces/inicio.interfaces';
 import { ModuleOption } from '../../roles/interfaces/roles.interfaces';
+import { modulosAplicacion } from '../../../../environments/environment';
 export type NivelAcceso = 'all' | 'view' | 'write' | 'update' | 'none';
 
 /** Qué puede hacer el usuario en un módulo, derivado de su nivel de acceso. */
@@ -24,7 +25,14 @@ export class ValidateRenderingService {
 
     if (permission.permissionsFull && permission.modulesFull) return modulos;
 
-    return modulos.filter(modulo => permission.accesos?.some(acceso => acceso.modulo === modulo.value)) ?? [];
+    return modulos.filter(modulo =>
+      !modulo.soloAccesoTotal && permission.accesos?.some(acceso => acceso.modulo === modulo.value)
+    ) ?? [];
+  }
+
+  /** Módulos que solo ven los roles con permisos y módulos completos. */
+  private esSoloAccesoTotal(modulo: string): boolean {
+    return modulosAplicacion.some(item => item.value === modulo && item.soloAccesoTotal);
   }
 
 
@@ -49,6 +57,7 @@ export class ValidateRenderingService {
   ): NivelAcceso {
     if (!permission) return 'none';
     if (permission?.permissionsFull && permission?.modulesFull) return 'all';
+    if (this.esSoloAccesoTotal(modulo)) return 'none';
     const acciones =
       permission?.accesos?.find(a => a.modulo === modulo)?.acciones ?? [];
 

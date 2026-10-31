@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { GenericButtonComponent } from '../../../shared/atoms/generic-button/generic-button.component';
 import { GenericFormComponent } from "../../../shared/organisms/generic-form/generic-form.component";
 import { GenericInputComponent } from "../../../shared/atoms/generic-input/generic-input.component";
@@ -11,7 +11,7 @@ import { GenericAlertResponse } from '../../../shared/atoms/generic-alert/utils/
 import { GenericAlertComponent } from '../../../shared/atoms/generic-alert/generic-alert.component';
 @Component({
   selector: 'app-login',
-  imports: [GenericButtonComponent, GenericFormComponent, GenericInputComponent, GenericAlertComponent],
+  imports: [GenericButtonComponent, GenericFormComponent, GenericInputComponent, GenericAlertComponent, RouterLink],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
 })

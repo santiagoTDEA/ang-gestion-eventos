@@ -1,0 +1,602 @@
+:host {
+    display: block;
+}
+
+.registrations {
+    min-height: 100vh;
+    padding: 24px 16px 56px;
+    font-family: 'Manrope', Arial, sans-serif;
+}
+
+.registrations__contenido {
+    width: min(100%, 960px);
+    margin: 0 auto;
+}
+
+.registrations__volver {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 12px;
+    padding: 7px 10px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #315340;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.registrations__volver svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Resumen */
+.registrations__resumen {
+    margin-bottom: 20px;
+    padding: 28px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #0b3d27 0%, #0f5a38 100%);
+    color: #fff;
+    box-shadow: 0 10px 28px rgba(11, 61, 39, 0.25);
+}
+
+.registrations__insignia {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    padding: 6px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.registrations__insignia span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4ade80;
+}
+
+.registrations__resumen h1 {
+    margin: 0 0 10px;
+    font-size: clamp(1.5rem, 4vw, 2.1rem);
+}
+
+.registrations__descripcion {
+    max-width: 640px;
+    margin: 0 0 18px;
+    color: #d6eadf;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.registrations__metadatos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 28px;
+}
+
+.registrations__metadatos div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.registrations__metadatos span {
+    color: #b9d6c6;
+    font-size: 12px;
+}
+
+.registrations__metadatos strong {
+    font-size: 18px;
+}
+
+/* Tarjetas */
+.registrations__tarjeta {
+    margin-bottom: 20px;
+    overflow: hidden;
+    border: 1px solid #dfebe2;
+    border-radius: 14px;
+    background: #fff;
+}
+
+.registrations__tarjeta-cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e5efe8;
+    background: #f7fbf8;
+}
+
+.registrations__tarjeta-cabecera > div:first-child {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+}
+
+.registrations__tarjeta-cabecera h2 {
+    margin: 0;
+    color: #0b4a2e;
+    font-size: 1.1rem;
+}
+
+.registrations__tarjeta-cabecera p {
+    width: 100%;
+    margin: 0;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.registrations__paso {
+    display: inline-grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #0f5a38;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.registrations__cuerpo {
+    padding: 18px 20px;
+}
+
+.registrations__vacio {
+    margin: 0;
+    padding: 18px;
+    border-radius: 10px;
+    background: #f7fbf8;
+    color: #6b7280;
+    text-align: center;
+}
+
+/* Campos */
+.registrations__campo {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    color: #315340;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.registrations__etiqueta span {
+    color: #dc2626;
+}
+
+.registrations__campo select,
+.registrations__campo input,
+.registrations__buscar {
+    width: 100%;
+    min-height: 40px;
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #fff;
+    color: #1f2937;
+    font: inherit;
+    font-weight: 500;
+}
+
+.registrations__campo select:focus,
+.registrations__campo input:focus,
+.registrations__buscar:focus {
+    border-color: #1caa63;
+    outline: 2px solid rgba(28, 170, 99, 0.18);
+}
+
+.registrations__campo input[type='file'] {
+    padding: 6px 8px;
+}
+
+.registrations__invalido {
+    border-color: #dc2626 !important;
+}
+
+.registrations__error {
+    color: #dc2626;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Evento seleccionado */
+.registrations__evento {
+    display: grid;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.registrations__datos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 12px;
+    margin: 0;
+}
+
+.registrations__datos dt {
+    color: #789080;
+    font-size: 12px;
+}
+
+.registrations__datos dd {
+    margin: 2px 0 0;
+    color: #1f2937;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.registrations__cupo {
+    padding: 14px;
+    border: 1px solid #cfe7d8;
+    border-radius: 10px;
+    background: #f0faf4;
+}
+
+.registrations__cupo-texto {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 6px;
+    margin-bottom: 8px;
+    color: #0b4a2e;
+    font-size: 14px;
+}
+
+.registrations__cupo-texto span {
+    color: #1c6b43;
+    font-weight: 700;
+}
+
+.registrations__barra {
+    height: 10px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #dcebe1;
+}
+
+.registrations__barra span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: #1caa63;
+    transition: width 0.3s ease;
+}
+
+.registrations__cupo--lleno {
+    border-color: #fcd9a8;
+    background: #fff8ec;
+}
+
+.registrations__cupo--lleno .registrations__cupo-texto span {
+    color: #b45309;
+}
+
+.registrations__cupo--lleno .registrations__barra span {
+    background: #f59e0b;
+}
+
+/* Aviso del último cupo */
+.registrations__aviso {
+    margin-bottom: 20px;
+    padding: 16px 18px;
+    border: 1px solid #fcd9a8;
+    border-left: 5px solid #f59e0b;
+    border-radius: 10px;
+    background: #fff8ec;
+    color: #78350f;
+}
+
+.registrations__aviso p {
+    margin: 6px 0;
+    font-size: 14px;
+}
+
+.registrations__aviso ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 18px;
+    margin: 0;
+    padding: 0;
+    font-size: 13px;
+    list-style: none;
+}
+
+/* Botón que alterna entre la tabla de inscritos y el formulario */
+.registrations__barra-acciones {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+}
+
+.registrations__alternar {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: 1px solid #d5deef;
+    border-radius: 8px;
+    background: #eef2fb;
+    color: #1c4a30;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.registrations__alternar:hover {
+    background: #dde6f9;
+    color: #163c27;
+}
+
+.registrations__alternar svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Pestañas */
+.registrations__pestanas {
+    display: inline-flex;
+    padding: 3px;
+    border: 1px solid #dce7df;
+    border-radius: 10px;
+    background: #fff;
+}
+
+.registrations__pestanas button {
+    padding: 7px 14px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #315340;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.registrations__pestanas .registrations__pestana--activa {
+    background: #063e25;
+    color: #fff;
+}
+
+/* Formulario */
+.registrations__formulario {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 18px;
+}
+
+.registrations__acciones {
+    display: flex;
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+}
+
+/* Excel */
+.registrations__excel {
+    display: grid;
+    gap: 14px;
+}
+
+.registrations__pasos-excel {
+    margin: 0;
+    padding-left: 20px;
+    color: #4b5f53;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.registrations__subida {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+    padding: 14px;
+    border: 1px dashed #b7d3c2;
+    border-radius: 10px;
+    background: #f7fbf8;
+}
+
+.registrations__subida .registrations__campo {
+    flex: 1 1 240px;
+}
+
+.registrations__resultado {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.registrations__resultado div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 12px;
+    border-radius: 10px;
+    background: #f3f4f6;
+}
+
+.registrations__resultado span {
+    color: #6b7280;
+    font-size: 12px;
+}
+
+.registrations__resultado strong {
+    color: #1f2937;
+    font-size: 20px;
+}
+
+.registrations__resultado .registrations__resultado--ok {
+    background: #dcfce7;
+}
+
+.registrations__resultado .registrations__resultado--error {
+    background: #fee2e2;
+}
+
+.registrations__resultado .registrations__resultado--alerta {
+    background: #fef3c7;
+}
+
+/* Tabla de inscritos */
+.registrations__buscar {
+    width: min(100%, 300px);
+}
+
+.registrations__tabla-contenedor {
+    overflow-x: auto;
+}
+
+.registrations__tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.registrations__tabla th {
+    padding: 10px;
+    border-bottom: 1px solid #e5efe8;
+    color: #789080;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.registrations__tabla td {
+    padding: 10px;
+    border-bottom: 1px solid #f0f4f1;
+    color: #1f2937;
+    white-space: nowrap;
+}
+
+.registrations__tabla tbody tr:hover {
+    background: #f7fbf8;
+}
+
+.registrations__chip {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 8px;
+    background: #eef2fb;
+    color: #374151;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.registrations__quitar {
+    border: 0;
+    background: transparent;
+    color: #9ca3af;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.registrations__quitar:hover:not(:disabled) {
+    color: #dc2626;
+}
+
+/* Botones */
+.registrations__btn {
+    min-height: 40px;
+    padding: 0 16px;
+    border: 1px solid #dce7df;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.registrations__btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.registrations__btn--primario {
+    border-color: #0b4226;
+    background: #063e25;
+    color: #fff;
+}
+
+.registrations__btn--primario:hover:not(:disabled) {
+    background: #0b5a34;
+}
+
+.registrations__btn--secundario {
+    background: #fff;
+    color: #315340;
+}
+
+.registrations__btn--secundario:hover:not(:disabled) {
+    background: #edf6ef;
+}
+
+.registrations__excel > .registrations__btn {
+    justify-self: start;
+}
+
+@media (max-width: 700px) {
+    .registrations {
+        padding: 16px 12px 40px;
+    }
+
+    .registrations__resumen {
+        padding: 22px 20px;
+    }
+
+    .registrations__cuerpo,
+    .registrations__tarjeta-cabecera {
+        padding: 14px 16px;
+    }
+
+    .registrations__formulario {
+        grid-template-columns: 1fr;
+    }
+
+    .registrations__resultado {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .registrations__pestanas,
+    .registrations__buscar {
+        width: 100%;
+    }
+
+    .registrations__pestanas button {
+        flex: 1;
+    }
+
+    .registrations__subida,
+    .registrations__subida .registrations__btn,
+    .registrations__acciones .registrations__btn,
+    .registrations__excel > .registrations__btn {
+        width: 100%;
+    }
+
+    .registrations__subida {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

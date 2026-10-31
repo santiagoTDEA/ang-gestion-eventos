@@ -1,0 +1,62 @@
+@let certificado = data();
+<article class="certificado">
+    <!-- Curvas decorativas superiores -->
+    <svg class="certificado__curvas" viewBox="0 0 1000 220" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0 50 C 160 90, 280 120, 350 140" fill="none" stroke="#6d4bb0" stroke-width="2.2" />
+        <path d="M250 70 C 360 20, 520 15, 640 70 C 720 105, 840 170, 1000 120" fill="none" stroke="#c7e27a"
+            stroke-width="2" />
+        <path d="M640 85 C 700 60, 740 30, 780 0" fill="none" stroke="#6d4bb0" stroke-width="2" />
+        <path d="M600 110 C 720 150, 860 180, 1000 140" fill="none" stroke="#d8eca0" stroke-width="1.6" />
+    </svg>
+
+    <!-- Fondo inferior -->
+    <svg class="certificado__ondas" viewBox="0 0 1000 260" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+            <linearGradient id="certificado-onda-1" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#ffffff" stop-opacity="0" />
+                <stop offset="0.45" stop-color="#e3f6f3" stop-opacity="0.85" />
+                <stop offset="1" stop-color="#d6e4ff" />
+            </linearGradient>
+            <linearGradient id="certificado-onda-2" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#f3c7f0" />
+                <stop offset="0.45" stop-color="#bfeee8" />
+                <stop offset="1" stop-color="#5b7cf0" />
+            </linearGradient>
+        </defs>
+        <path d="M0 40 C 250 10, 600 30, 1000 0 L1000 260 L0 260 Z" fill="url(#certificado-onda-1)" />
+        <path d="M0 160 C 220 150, 380 200, 1000 230 L1000 260 L0 260 Z" fill="#f3d6f6" opacity="0.45" />
+        <path d="M0 225 C 300 190, 650 250, 1000 205 L1000 260 L0 260 Z" fill="url(#certificado-onda-2)"
+            opacity="0.85" />
+    </svg>
+
+    <div class="certificado__contenido">
+        <img class="certificado__logo" src="images/tdea-logo.png" alt="TdeA Institución Universitaria" />
+
+        <p class="certificado__intro">Certifica que:</p>
+
+        <h2 class="certificado__nombre">{{ certificado.fullName }}</h2>
+        <p class="certificado__documento">Documento de identidad: {{ certificado.documentNumber }}</p>
+
+        <p class="certificado__participo">Participó en el {{ certificado.eventType }}:</p>
+        <h3 class="certificado__evento">{{ certificado.eventName }}</h3>
+
+        <p class="certificado__detalle">
+            {{ certificado.placeAndDate }},<br />
+            con una intensidad total de {{ certificado.duration }} {{ certificado.duration === 1 ? 'hora' : 'horas' }}.
+        </p>
+
+        <div class="certificado__firmas">
+            @for (firmante of certificado.signers; track $index) {
+            <div class="certificado__firma">
+                <div class="certificado__firma-imagen">
+                    @if (firmante.signature) {
+                    <img [src]="firmante.signature" alt="" />
+                    }
+                </div>
+                <strong>{{ firmante.name }}</strong>
+                <span>{{ firmante.role }}</span>
+            </div>
+            }
+        </div>
+    </div>
+</article>

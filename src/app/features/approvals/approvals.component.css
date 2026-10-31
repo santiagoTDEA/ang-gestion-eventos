@@ -412,6 +412,62 @@
     width: min(100%, 700px);
 }
 
+/* Confirmar firma: más grande y con letra legible en desktop y tablet */
+.approvals__modal--firma {
+    width: min(100%, 640px);
+}
+
+.approvals__modal--firma .approvals__modal-header {
+    padding: 22px 30px;
+}
+
+.approvals__modal--firma .approvals__modal-header h3 {
+    margin: 0;
+    color: #173b26;
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.approvals__modal--firma .approvals__modal-close {
+    width: 40px;
+    height: 40px;
+    font-size: 28px;
+}
+
+.approvals__modal--firma .approvals__modal-body {
+    padding: 30px;
+}
+
+.approvals__modal--firma .approvals__modal-body p {
+    margin: 0;
+    color: #1f2937;
+    font-size: 19px;
+    line-height: 1.55;
+}
+
+.approvals__modal--firma .approvals__signature-text {
+    margin: 16px 0 6px;
+    color: #173b26;
+    font-size: 30px;
+    line-height: 1.2;
+}
+
+.approvals__modal--firma .approvals__signature-code {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.approvals__modal--firma .approvals__modal-footer {
+    gap: 14px;
+    padding: 20px 30px;
+}
+
+.approvals__modal--firma .approvals__btn {
+    min-height: 50px;
+    padding: 0 26px;
+    font-size: 16px;
+}
+
 .approvals__modal-header {
     display: flex;
     align-items: center;
@@ -827,4 +883,26 @@
     color: #6b7280;
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     font-size: 11px;
+}
+
+/* En celular el modal de firma conserva la letra grande pero con menos relleno */
+@media (max-width: 600px) {
+    .approvals__modal--firma .approvals__modal-header,
+    .approvals__modal--firma .approvals__modal-body,
+    .approvals__modal--firma .approvals__modal-footer {
+        padding-right: 20px;
+        padding-left: 20px;
+    }
+
+    .approvals__modal--firma .approvals__modal-header h3 {
+        font-size: 19px;
+    }
+
+    .approvals__modal--firma .approvals__modal-body p {
+        font-size: 17px;
+    }
+
+    .approvals__modal--firma .approvals__signature-text {
+        font-size: 26px;
+    }
 }

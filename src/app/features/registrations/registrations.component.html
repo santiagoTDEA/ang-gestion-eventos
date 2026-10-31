@@ -1,0 +1,344 @@
+<main class="registrations">
+    <section class="registrations__contenido">
+        @if (alertaResponse.alertVisible) {
+        <app-generic-alert [type]="alertaResponse.alertType" (closed)="alertaResponse.alertVisible = false">
+            <strong class="block font-semibold">{{ alertaResponse.alertTitle }}</strong>
+            <span>{{ alertaResponse.alertMessage }}</span>
+        </app-generic-alert>
+        }
+
+        <button type="button" class="registrations__volver" (click)="goBack()" aria-label="Volver al inicio">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M15.75 19.5 8.25 12l7.5-7.5" />
+            </svg>
+            Volver al inicio
+        </button>
+
+        <article class="registrations__resumen">
+            <div class="registrations__insignia"><span></span> Módulo 5 · Inscripciones</div>
+            <h1>Inscripciones</h1>
+            <p class="registrations__descripcion">
+                Escoge un evento con la aprobación completa e inscribe a las personas una por una con el formulario
+                o en bloque con la plantilla de Excel. Nadie queda inscrito por encima del cupo máximo del evento.
+            </p>
+            <div class="registrations__metadatos">
+                <div><span>Eventos aprobados</span><strong>{{ events.length }}</strong></div>
+                <div><span>Personas inscritas</span><strong>{{ totalRegistered }}</strong></div>
+                @if (selectedEvent; as event) {
+                <div><span>Cupos libres del evento</span><strong>{{ event.availableSlots }}</strong></div>
+                }
+            </div>
+        </article>
+
+        <!-- Paso 1: evento -->
+        <section class="registrations__tarjeta" aria-label="Evento">
+            <header class="registrations__tarjeta-cabecera">
+                <div>
+                    <span class="registrations__paso">1</span>
+                    <h2>Escoge el evento</h2>
+                </div>
+            </header>
+
+            <div class="registrations__cuerpo">
+                @if (loadingEvents) {
+                <p class="registrations__vacio">Cargando eventos…</p>
+                } @else if (events.length === 0) {
+                <p class="registrations__vacio">
+                    Todavía no hay eventos con la aprobación completa. Cuando un evento termine su flujo de
+                    aprobación aparecerá aquí.
+                </p>
+                } @else {
+                <label class="registrations__campo">
+                    Evento
+                    <select [formControl]="eventControl">
+                        <option [ngValue]="null" disabled>Selecciona un evento</option>
+                        @for (event of events; track event.id) {
+                        <option [ngValue]="event.id">
+                            {{ event.name }} — {{ event.registeredCount }}/{{ event.maximumCapacity }} cupos
+                        </option>
+                        }
+                    </select>
+                </label>
+                }
+
+                @if (selectedEvent; as event) {
+                <div class="registrations__evento">
+                    <dl class="registrations__datos">
+                        <div><dt>Tipo</dt><dd>{{ event.eventType }}</dd></div>
+                        <div><dt>Facultad</dt><dd>{{ event.faculty }}</dd></div>
+                        <div><dt>Fechas</dt><dd>{{ event.startDate | date:'dd/MM/yyyy' }} - {{ event.endDate | date:'dd/MM/yyyy' }}</dd></div>
+                        <div><dt>Horario</dt><dd>{{ event.startTime.slice(0, 5) }} - {{ event.endTime.slice(0, 5) }}</dd></div>
+                        <div><dt>Modalidad</dt><dd>{{ event.modality }}</dd></div>
+                        <div><dt>Cupo mínimo</dt><dd>{{ event.minimumCapacity }}</dd></div>
+                    </dl>
+
+                    <div class="registrations__cupo" [class.registrations__cupo--lleno]="isFull">
+                        <div class="registrations__cupo-texto">
+                            <strong>{{ event.registeredCount }} de {{ event.maximumCapacity }} cupos ocupados</strong>
+                            <span>{{ isFull ? 'Cupo completo' : event.availableSlots + ' disponibles' }}</span>
+                        </div>
+                        <div class="registrations__barra" role="progressbar" [attr.aria-valuenow]="event.registeredCount"
+                            aria-valuemin="0" [attr.aria-valuemax]="event.maximumCapacity">
+                            <span [style.width.%]="occupancy"></span>
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+        </section>
+
+        @if (lastSlot; as slot) {
+        <aside class="registrations__aviso" role="status">
+            <strong>Se llenó el cupo del evento</strong>
+            <p>
+                <b>{{ slot.firstNames }} {{ slot.lastNames }}</b> fue la persona <b>#{{ slot.position }}</b> y ocupó el
+                último cupo.
+                @if (slot.rowNumber) { (fila {{ slot.rowNumber }} del Excel) }
+            </p>
+            <ul>
+                <li>{{ documentLabel(slot.documentType) }}: {{ slot.documentNumber }}</li>
+                <li>Correo: {{ slot.email }}</li>
+                <li>Teléfono: {{ slot.phone }}</li>
+            </ul>
+        </aside>
+        }
+
+        @if (selectedEvent && acceso.canCreate) {
+        <div class="registrations__barra-acciones">
+            <button type="button" class="registrations__alternar" (click)="toggleForm()">
+                @if (showForm) {
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.008v.008H3.75V6.75Zm0 5.25h.008v.008H3.75V12Zm0 5.25h.008v.008H3.75v-.008Z" />
+                </svg>
+                Ver inscritos
+                } @else {
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                Inscribir personas
+                }
+            </button>
+        </div>
+        }
+
+        <!-- Paso 2: inscribir -->
+        @if (selectedEvent && acceso.canCreate && showForm) {
+        <section class="registrations__tarjeta" aria-label="Inscribir personas">
+            <header class="registrations__tarjeta-cabecera">
+                <div>
+                    <span class="registrations__paso">2</span>
+                    <h2>Inscribe personas</h2>
+                </div>
+                <div class="registrations__pestanas" role="tablist">
+                    <button type="button" role="tab" [attr.aria-selected]="mode === 'formulario'"
+                        [class.registrations__pestana--activa]="mode === 'formulario'"
+                        (click)="setMode('formulario')">Formulario</button>
+                    <button type="button" role="tab" [attr.aria-selected]="mode === 'excel'"
+                        [class.registrations__pestana--activa]="mode === 'excel'"
+                        (click)="setMode('excel')">Cargar Excel</button>
+                </div>
+            </header>
+
+            <div class="registrations__cuerpo">
+                @if (isFull) {
+                <p class="registrations__vacio">
+                    El evento ya llenó su cupo máximo. Para inscribir a alguien más primero hay que quitar una
+                    inscripción.
+                </p>
+                } @else if (mode === 'formulario') {
+                <form class="registrations__formulario" [formGroup]="form" (ngSubmit)="submitForm()" novalidate>
+                    <label class="registrations__campo">
+                        <span class="registrations__etiqueta">Tipo de documento <span>*</span></span>
+                        <select formControlName="documentType"
+                            [class.registrations__invalido]="hasError('documentType', 'required')">
+                            <option [ngValue]="null" disabled>Selecciona</option>
+                            @for (type of documentTypes; track type.value) {
+                            <option [ngValue]="type.value">{{ type.value }} · {{ type.label }}</option>
+                            }
+                        </select>
+                        @if (hasError('documentType', 'required')) {
+                        <small class="registrations__error">Selecciona el tipo de documento.</small>
+                        }
+                    </label>
+
+                    <label class="registrations__campo">
+                        <span class="registrations__etiqueta">Número de documento <span>*</span></span>
+                        <input type="text" formControlName="documentNumber" inputmode="text" maxlength="20"
+                            placeholder="Ej. 1037654321"
+                            [class.registrations__invalido]="form.controls.documentNumber.touched && form.controls.documentNumber.invalid" />
+                        @if (hasError('documentNumber', 'required')) {
+                        <small class="registrations__error">Escribe el número de documento.</small>
+                        } @else if (hasError('documentNumber', 'numericDocument')) {
+                        <small class="registrations__error">Para CC y TI usa solo números (5 a 12 dígitos).</small>
+                        } @else if (hasError('documentNumber', 'alphanumericDocument')) {
+                        <small class="registrations__error">Usa letras o números, de 5 a 15 caracteres.</small>
+                        }
+                    </label>
+
+                    <label class="registrations__campo">
+                        <span class="registrations__etiqueta">Nombres <span>*</span></span>
+                        <input type="text" formControlName="firstNames" maxlength="100" placeholder="Ej. Santiago"
+                            autocomplete="given-name"
+                            [class.registrations__invalido]="form.controls.firstNames.touched && form.controls.firstNames.invalid" />
+                        @if (hasError('firstNames', 'required')) {
+                        <small class="registrations__error">Escribe los nombres.</small>
+                        } @else if (hasError('firstNames', 'name')) {
+                        <small class="registrations__error">Solo letras, de 2 a 100 caracteres.</small>
+                        }
+                    </label>
+
+                    <label class="registrations__campo">
+                        <span class="registrations__etiqueta">Apellidos <span>*</span></span>
+                        <input type="text" formControlName="lastNames" maxlength="100" placeholder="Ej. Ospina"
+                            autocomplete="family-name"
+                            [class.registrations__invalido]="form.controls.lastNames.touched && form.controls.lastNames.invalid" />
+                        @if (hasError('lastNames', 'required')) {
+                        <small class="registrations__error">Escribe los apellidos.</small>
+                        } @else if (hasError('lastNames', 'name')) {
+                        <small class="registrations__error">Solo letras, de 2 a 100 caracteres.</small>
+                        }
+                    </label>
+
+                    <label class="registrations__campo">
+                        <span class="registrations__etiqueta">Correo electrónico <span>*</span></span>
+                        <input type="email" formControlName="email" maxlength="150" placeholder="nombre@correo.com"
+                            autocomplete="email"
+                            [class.registrations__invalido]="form.controls.email.touched && form.controls.email.invalid" />
+                        @if (hasError('email', 'required')) {
+                        <small class="registrations__error">Escribe el correo electrónico.</small>
+                        } @else if (hasError('email', 'email')) {
+                        <small class="registrations__error">Escribe un correo válido.</small>
+                        }
+                    </label>
+
+                    <label class="registrations__campo">
+                        <span class="registrations__etiqueta">Teléfono <span>*</span></span>
+                        <input type="tel" formControlName="phone" maxlength="20" placeholder="Ej. 3001234567"
+                            autocomplete="tel"
+                            [class.registrations__invalido]="form.controls.phone.touched && form.controls.phone.invalid" />
+                        @if (hasError('phone', 'required')) {
+                        <small class="registrations__error">Escribe el teléfono.</small>
+                        } @else if (hasError('phone', 'phone')) {
+                        <small class="registrations__error">De 7 a 15 dígitos; puede empezar con +.</small>
+                        }
+                    </label>
+
+                    <div class="registrations__acciones">
+                        <button type="submit" class="registrations__btn registrations__btn--primario" [disabled]="working">
+                            {{ working ? 'Inscribiendo…' : 'Inscribir persona' }}
+                        </button>
+                    </div>
+                </form>
+                } @else {
+                <div class="registrations__excel">
+                    <ol class="registrations__pasos-excel">
+                        <li>Descarga la plantilla y llena una persona por fila. Todos los datos son obligatorios.</li>
+                        <li>Carga el archivo .xlsx. Las filas con error no se inscriben y se descargan en un Excel
+                            con la columna «Error» para que las corrijas y las vuelvas a cargar.</li>
+                        <li>Si el archivo trae más personas que cupos libres ({{ selectedEvent.availableSlots }}),
+                            solo se inscriben hasta llenar el cupo.</li>
+                    </ol>
+
+                    <div class="registrations__subida">
+                        <button type="button" class="registrations__btn registrations__btn--secundario"
+                            (click)="downloadTemplate()">
+                            Descargar plantilla
+                        </button>
+                        <label class="registrations__campo">
+                            Archivo Excel (.xlsx)
+                            <input #fileInput type="file"
+                                accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                                (change)="onFileSelected(fileInput)" />
+                        </label>
+                        <button type="button" class="registrations__btn registrations__btn--primario"
+                            [disabled]="working || !selectedFile" (click)="uploadExcel(fileInput)">
+                            {{ working ? 'Cargando…' : 'Cargar personas' }}
+                        </button>
+                    </div>
+                    @if (fileError) {
+                    <small class="registrations__error">{{ fileError }}</small>
+                    }
+
+                    @if (importResult; as result) {
+                    <div class="registrations__resultado">
+                        <div><span>Filas leídas</span><strong>{{ result.totalRows }}</strong></div>
+                        <div class="registrations__resultado--ok"><span>Inscritas</span><strong>{{ result.registered }}</strong></div>
+                        <div class="registrations__resultado--error"><span>Con error</span><strong>{{ result.failed - result.failedByCapacity }}</strong></div>
+                        <div class="registrations__resultado--alerta"><span>Sin cupo</span><strong>{{ result.failedByCapacity }}</strong></div>
+                    </div>
+                    @if (result.failedFile) {
+                    <button type="button" class="registrations__btn registrations__btn--secundario"
+                        (click)="downloadFailedFile()">
+                        Descargar filas con error ({{ result.failed }})
+                    </button>
+                    }
+                    }
+                </div>
+                }
+            </div>
+        </section>
+        }
+
+        <!-- Inscritos -->
+        @if (!showForm && selectedEvent; as event) {
+        <section class="registrations__tarjeta" aria-label="Personas inscritas">
+            <header class="registrations__tarjeta-cabecera">
+                <div>
+                    <h2>Personas inscritas</h2>
+                    <p>{{ event.registeredCount }} de {{ event.maximumCapacity }} cupos</p>
+                </div>
+                @if (registrations.length > 0) {
+                <input type="search" class="registrations__buscar" [formControl]="searchControl"
+                    placeholder="Buscar por nombre, documento o correo" aria-label="Buscar inscritos" />
+                }
+            </header>
+
+            <div class="registrations__cuerpo">
+                @if (loadingRegistrations) {
+                <p class="registrations__vacio">Cargando inscritos…</p>
+                } @else if (registrations.length === 0) {
+                <p class="registrations__vacio">Este evento todavía no tiene personas inscritas.</p>
+                } @else if (filteredRegistrations.length === 0) {
+                <p class="registrations__vacio">Nadie coincide con la búsqueda.</p>
+                } @else {
+                <div class="registrations__tabla-contenedor">
+                    <table class="registrations__tabla">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Documento</th>
+                                <th>Nombre</th>
+                                <th>Correo</th>
+                                <th>Teléfono</th>
+                                <th>Origen</th>
+                                @if (acceso.canCreate) {
+                                <th><span class="sr-only">Acciones</span></th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (item of filteredRegistrations; track item.id) {
+                            <tr>
+                                <td>{{ item.position }}</td>
+                                <td>{{ item.documentType }} {{ item.documentNumber }}</td>
+                                <td>{{ item.firstNames }} {{ item.lastNames }}</td>
+                                <td>{{ item.email }}</td>
+                                <td>{{ item.phone }}</td>
+                                <td><span class="registrations__chip">{{ item.source === 'excel' ? 'Excel' : 'Formulario' }}</span></td>
+                                @if (acceso.canCreate) {
+                                <td>
+                                    <button type="button" class="registrations__quitar" [disabled]="working"
+                                        (click)="remove(item)" aria-label="Quitar inscripción">×</button>
+                                </td>
+                                }
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                }
+            </div>
+        </section>
+        }
+    </section>
+</main>

@@ -105,7 +105,7 @@
 }
 
 .top-menu__icon-button,
-.top-menu__avatar {
+.top-menu__user {
     border: 0;
     cursor: pointer;
 }
@@ -153,8 +153,74 @@
     font-weight: 800;
 }
 
-.top-menu__avatar:hover {
+/* ===== Usuario autenticado: nombre, rol y avatar ===== */
+.top-menu__user {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 3px 3px 3px 10px;
+    border-radius: 999px;
+    background: transparent;
+    text-align: right;
+}
+
+.top-menu__user:hover {
+    background: #edf6ef;
+}
+
+.top-menu__user:hover .top-menu__avatar {
     background: #168b50;
+}
+
+.top-menu__user-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    max-width: 220px;
+    line-height: 1.2;
+}
+
+.top-menu__user-name {
+    overflow: hidden;
+    color: #174d2f;
+    font-size: 13px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.top-menu__user-role {
+    overflow: hidden;
+    color: #789080;
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.top-menu__user-card {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 10px 10px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid #dcebe1;
+}
+
+.top-menu__user-card strong {
+    color: #174d2f;
+    font-size: 14px;
+}
+
+.top-menu__user-card span {
+    color: #1caa63;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.top-menu__user-card small {
+    color: #789080;
+    font-size: 11px;
+    word-break: break-all;
 }
 
 .top-menu__search-results,
@@ -177,7 +243,8 @@
 }
 
 .top-menu__search-results button,
-.top-menu__user-menu button {
+.top-menu__user-menu button,
+.top-menu__user-menu a {
     display: flex;
     align-items: center;
     width: 100%;
@@ -189,11 +256,13 @@
     color: #315340;
     cursor: pointer;
     text-align: left;
+    text-decoration: none;
     font-size: 13px;
 }
 
 .top-menu__search-results button:hover,
-.top-menu__user-menu button:hover {
+.top-menu__user-menu button:hover,
+.top-menu__user-menu a:hover {
     background: #edf6ef;
 }
 
@@ -218,7 +287,8 @@
 }
 
 .top-menu__user-menu {
-    min-width: 170px;
+    min-width: 220px;
+    max-width: calc(100vw - 24px);
 }
 
 @media (max-width: 640px) {
@@ -241,6 +311,15 @@
 
     .top-menu__action-group {
         gap: 4px;
+    }
+
+    /* En mobile solo se ve el avatar; nombre y rol quedan en el menú de usuario. */
+    .top-menu__user-info {
+        display: none;
+    }
+
+    .top-menu__user {
+        padding: 0;
     }
 
     .top-menu__search {

@@ -17,8 +17,16 @@
                 }
             </button>
 
-            <button type="button" class="top-menu__avatar" (click)="toggleUserMenu()" aria-label="Abrir menú de usuario"
-                title="Menú de usuario">S.O</button>
+            <button type="button" class="top-menu__user" (click)="toggleUserMenu()" aria-label="Abrir menú de usuario"
+                title="Menú de usuario">
+                @if (profile) {
+                <span class="top-menu__user-info">
+                    <span class="top-menu__user-name">{{ displayName }}</span>
+                    <span class="top-menu__user-role">{{ profile.role?.name || 'Sin rol' }}</span>
+                </span>
+                }
+                <span class="top-menu__avatar">{{ initials }}</span>
+            </button>
 
             @if (showNotifications) {
             <div class="top-menu__popover top-menu__notifications">
@@ -51,7 +59,23 @@
 
             @if (showUserMenu) {
             <div class="top-menu__popover top-menu__user-menu">
+                @if (profile) {
+                <div class="top-menu__user-card">
+                    <strong>{{ displayName }}</strong>
+                    <span>{{ profile.role?.name || 'Sin rol' }}</span>
+                    @if (profile.email) {
+                    <small>{{ profile.email }}</small>
+                    }
+                </div>
+                } @else {
                 <span class="top-menu__user-label">Sesión activa</span>
+                }
+                <a routerLink="/mi-perfil" (click)="showUserMenu = false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.1a7.5 7.5 0 0 1 15 0A17.9 17.9 0 0 1 12 21.75c-2.68 0-5.22-.58-7.5-1.65Z" />
+                    </svg>
+                    Mi perfil
+                </a>
                 <button type="button" (click)="logout()">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M10 17l5-5-5-5m5 5H3m9-9h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6" />

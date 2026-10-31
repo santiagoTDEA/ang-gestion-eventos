@@ -59,7 +59,8 @@ export class RolesComponent {
     this.visibilityTablet = !this.acceso.canCreate;
 
     this.getRoles();
-    this.moduleOptions = modulosAplicacion;
+    // Los módulos de acceso total no se asignan por accesos: ya los tienen los roles full.
+    this.moduleOptions = modulosAplicacion.filter(modulo => !modulo.soloAccesoTotal);
     this.roleForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
       description: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(255)]],

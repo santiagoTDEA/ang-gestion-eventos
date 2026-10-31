@@ -81,6 +81,35 @@ function validDateRange(control: AbstractControl): ValidationErrors | null {
   return { endDateBeforeStartDate: true };
 }
 
+const WEEK_DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+
+/** Día de la semana ('Lun'...'Dom') de una fecha 'yyyy-mm-dd', leída en hora local. */
+function weekDayOf(date: string): string {
+  return WEEK_DAYS[(new Date(`${date}T00:00:00`).getDay() + 6) % 7];
+}
+
+/** La fecha de inicio y la de terminación deben caer en alguno de los días seleccionados. */
+function datesMatchSelectedDays(control: AbstractControl): ValidationErrors | null {
+  const startDate = control.get('startDate')?.value;
+  const endDate = control.get('endDate')?.value;
+  const selectedDays: string[] = control.get('selectedDays')?.value ?? [];
+
+  if (!selectedDays.length) {
+    return null;
+  }
+
+  const startDay = startDate ? weekDayOf(startDate) : null;
+  const endDay = endDate ? weekDayOf(endDate) : null;
+  const startInvalid = !!startDay && !selectedDays.includes(startDay);
+  const endInvalid = !!endDay && !selectedDays.includes(endDay);
+
+  if (!startInvalid && !endInvalid) {
+    return null;
+  }
+
+  return { dateNotInSelectedDays: { startDay: startInvalid ? startDay : null, endDay: endInvalid ? endDay : null } };
+}
+
 @Component({
   selector: 'app-events',
   standalone: true,
@@ -125,7 +154,7 @@ export class EventsComponent implements OnInit {
   validateRender: NivelAcceso = "write"
   readonly eventTypes = ['Curso', 'Diplomado', 'Seminario', '¿Otro?'];
   readonly eventTypeOptions = this.eventTypes.map(type => ({ value: type, label: type }));
-  readonly weekDays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  readonly weekDays = WEEK_DAYS;
   readonly modalities = ['Presencial', 'Virtual', 'Mixta'];
   readonly logisticsOptions = [
     'Elaboración de piezas publicitarias',
@@ -190,7 +219,7 @@ export class EventsComponent implements OnInit {
         minimumCapacity: ['', [Validators.required, Validators.min(1)]],
         maximumCapacity: ['', [Validators.required, Validators.min(1)]],
         participantProfile: ['', Validators.required]
-      }, { validators: [validTimeRange, validDateRange] }),
+      }, { validators: [validTimeRange, validDateRange, datesMatchSelectedDays] }),
       contenido: this.fb.group({
         presentation: ['', Validators.required],
         scope: ['', Validators.required],

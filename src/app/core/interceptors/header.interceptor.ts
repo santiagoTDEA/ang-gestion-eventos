@@ -38,6 +38,10 @@ export const headerInterceptor: HttpInterceptorFn = (req, next) => {
       if (!(error instanceof HttpErrorResponse)) {
         return throwError(() => error);
       }
+      // Recuperar cuenta muestra sus propios mensajes (intentos que quedan, código vencido...).
+      if (req.url.includes('/auth/recovery/')) {
+        return throwError(() => error);
+      }
       const errorMessage = ERROR_STATUS[error.status] || 'Ocurrió un error desconocido.';
 
       if (error.status === 401) {

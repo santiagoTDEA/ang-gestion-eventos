@@ -9,6 +9,13 @@ import { SideMenuComponent } from '../shared/organisms/side-menu/side-menu.compo
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
 
+/** Rutas sin sesión: no llevan menú lateral ni barra superior. */
+const PUBLIC_ROUTES = ['/', '/recuperar-cuenta'];
+
+function isPublicRoute(url: string): boolean {
+  return PUBLIC_ROUTES.includes(url.split(/[?#]/)[0]);
+}
+
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, GenericAlertComponent, TopMenuComponent, SideMenuComponent],
@@ -19,10 +26,10 @@ export class AppComponent  implements OnInit {
   title = 'ang-gestion-eventos';
   private mediatorAlertService = inject(MediatorAlertService);
   private router = inject(Router);
-  showTopMenu: boolean = this.router.url.split('?')[0] !== '/';
+  showTopMenu: boolean = !isPublicRoute(this.router.url);
   alertaResponse:GenericAlertResponse= { alertVisible: false, alertType: 'success', alertTitle: '', alertMessage: '' };
-  /** El menú lateral se muestra en todas las rutas menos en el login. */
-  showSideMenu: boolean = this.router.url.split('?')[0] !== '/';
+  /** El menú lateral se muestra en todas las rutas menos en las públicas (login y recuperar cuenta). */
+  showSideMenu: boolean = !isPublicRoute(this.router.url);
   routerUrl :string = this.router.url;
   ngOnInit(): void {
     console.log(this.router.url);
@@ -30,8 +37,8 @@ export class AppComponent  implements OnInit {
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe(event => {
         console.log(event.urlAfterRedirects);
-        this.showTopMenu = event.urlAfterRedirects.split('?')[0] !== '/';
-        this.showSideMenu = event.urlAfterRedirects.split('?')[0] !== '/';
+        this.showTopMenu = !isPublicRoute(event.urlAfterRedirects);
+        this.showSideMenu = !isPublicRoute(event.urlAfterRedirects);
         this.routerUrl = event.urlAfterRedirects;
         console.log(this.routerUrl)
       });

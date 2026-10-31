@@ -18,6 +18,11 @@ export const routes: Routes = [
         component: LoginComponent
     },
     {
+        // Pública (sin sesión): el login solo enlaza aquí.
+        path:'recuperar-cuenta',
+        loadComponent: () => import('./features/account-recovery/account-recovery.component').then(m => m.AccountRecoveryComponent)
+    },
+    {
         path:'inicio',
         component: InicioComponent,
         canActivate: [validateSessionGuard]
@@ -35,6 +40,23 @@ export const routes: Routes = [
     {
         path:'difusion',
         component: DiffusionComponent,
+        canActivate: [validateSessionGuard]
+    },
+    {
+        path:'inscripciones',
+        // Se carga al entrar a la ruta: no suma al tamaño inicial de la aplicación.
+        loadComponent: () => import('./features/registrations/registrations.component').then(m => m.RegistrationsComponent),
+        canActivate: [validateSessionGuard]
+    },
+    {
+        // Disponible para todo usuario con sesión: cada quien gestiona su propia cuenta.
+        path:'mi-perfil',
+        loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent),
+        canActivate: [validateSessionGuard]
+    },
+    {
+        path:'certificados',
+        loadComponent: () => import('./features/certificates/certificates.component').then(m => m.CertificatesComponent),
         canActivate: [validateSessionGuard]
     },
     {
