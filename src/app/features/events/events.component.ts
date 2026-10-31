@@ -463,9 +463,9 @@ export class EventsComponent implements OnInit {
     this.resizeArray(this.objectivesArray, objectives.length, () => this.createObjectiveControl());
     this.resizeArray(this.modulesArray, event.modules.length, () => this.createModuleControl());
 
-    // Si el backend aún no devuelve `schedules`, el formulario abre igual con los horarios vacíos.
-    const schedules = (event.schedules ?? []).filter(schedule => this.weekDays[Number(schedule.dayOfWeek) - 1]);
-    const scheduleDays = schedules.map(schedule => this.weekDays[Number(schedule.dayOfWeek) - 1]);
+    // El backend guarda un único horario para todos los días: se muestra en cada día seleccionado.
+    const selectedDays = event.selectedDays ?? [];
+    const dayTimes = { startTime: event.startTime.slice(0, 5), endTime: event.endTime.slice(0, 5) };
 
     const approvals = this.approvalsMeta.map(meta => {
       const approval = event.approvals.find(item => this.normalize(item.role?.name) === this.normalize(meta.roleName));
@@ -486,11 +486,8 @@ export class EventsComponent implements OnInit {
         academicProgram: event.academicProgram,
         teacherProfile: event.teacherProfile,
         duration: event.duration,
-        selectedDays: scheduleDays,
-        schedules: Object.fromEntries(schedules.map((schedule, index) => [
-          scheduleDays[index],
-          { startTime: schedule.startTime.slice(0, 5), endTime: schedule.endTime.slice(0, 5) }
-        ])),
+        selectedDays,
+        schedules: Object.fromEntries(selectedDays.map(day => [day, dayTimes])),
         selectedModality: event.modality,
         startDate: event.startDate,
         endDate: event.endDate,
@@ -806,6 +803,8 @@ export class EventsComponent implements OnInit {
   /** Transforma el valor del formulario al contrato esperado por el backend (POST /events). */
   private buildEventPayload(): Event {
     const { generalidades, contenido, logistica, financiera, aprobaciones } = this.eventForm.getRawValue();
+    const startTimes: string[] = generalidades.selectedDays.map((day: string) => generalidades.schedules[day].startTime);
+    const endTimes: string[] = generalidades.selectedDays.map((day: string) => generalidades.schedules[day].endTime);
 
     return {
       eventType: generalidades.eventType,
@@ -815,11 +814,10 @@ export class EventsComponent implements OnInit {
       academicProgram: generalidades.academicProgram,
       teacherProfile: generalidades.teacherProfile,
       duration: Number(generalidades.duration),
-      schedules: (generalidades.selectedDays as string[]).map(day => ({
-        dayOfWeek: this.weekDays.indexOf(day) + 1,
-        startTime: generalidades.schedules[day].startTime,
-        endTime: generalidades.schedules[day].endTime
-      })),
+      // El backend maneja un único horario: se envía el rango que cubre todos los días seleccionados.
+      startTime: [...startTimes].sort()[0],
+      endTime: [...endTimes].sort().at(-1)!,
+      selectedDays: generalidades.selectedDays,
       modality: generalidades.selectedModality,
       startDate: generalidades.startDate,
       endDate: generalidades.endDate,
