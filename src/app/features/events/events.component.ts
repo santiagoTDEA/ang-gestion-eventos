@@ -59,11 +59,12 @@ function minFormArrayLength(min: number): ValidatorFn {
   };
 }
 
+/** La hora de fin debe ser posterior a la de inicio (CHECK end_time > start_time). */
 function validTimeRange(control: AbstractControl): ValidationErrors | null {
   const startTime = control.get('startTime')?.value;
   const endTime = control.get('endTime')?.value;
 
-  if (!startTime || !endTime || endTime >= startTime) {
+  if (!startTime || !endTime || endTime > startTime) {
     return null;
   }
 
@@ -181,16 +182,25 @@ export class EventsComponent implements OnInit {
         academicProgram: ['', Validators.required],
         teacherProfile: ['', Validators.required],
         duration: ['', [Validators.required, Validators.min(1)]],
-        startTime: ['', Validators.required],
-        endTime: ['', Validators.required],
         selectedDays: [[] as string[], minArrayLength(1)],
+        // Un horario por día; solo se habilita el de los días seleccionados.
+        schedules: this.fb.group(
+          this.weekDays.reduce((group, day) => {
+            group[day] = this.fb.group({
+              startTime: ['', Validators.required],
+              endTime: ['', Validators.required]
+            }, { validators: validTimeRange });
+            group[day].disable({ emitEvent: false });
+            return group;
+          }, {} as Record<string, FormGroup>)
+        ),
         selectedModality: ['', Validators.required],
         startDate: ['', Validators.required],
         endDate: ['', Validators.required],
         minimumCapacity: ['', [Validators.required, Validators.min(1)]],
         maximumCapacity: ['', [Validators.required, Validators.min(1)]],
         participantProfile: ['', Validators.required]
-      }, { validators: [validTimeRange, validDateRange] }),
+      }, { validators: validDateRange }),
       contenido: this.fb.group({
         presentation: ['', Validators.required],
         scope: ['', Validators.required],
@@ -277,6 +287,15 @@ export class EventsComponent implements OnInit {
 
   get selectedDays(): string[] {
     return this.generalidadesGroup.get('selectedDays')?.value ?? [];
+  }
+
+  /** Resumen "Lun 08:00-10:00 · Mié 14:00-16:00" para la vista previa. */
+  get scheduleSummary(): string {
+    const schedules = this.generalidadesGroup.getRawValue().schedules;
+    const summary = this.weekDays
+      .filter(day => this.selectedDays.includes(day))
+      .map(day => `${day} ${schedules[day].startTime || '—'}-${schedules[day].endTime || '—'}`);
+    return summary.length ? summary.join(' · ') : '—';
   }
 
   get selectedModality(): string {
@@ -444,6 +463,10 @@ export class EventsComponent implements OnInit {
     this.resizeArray(this.objectivesArray, objectives.length, () => this.createObjectiveControl());
     this.resizeArray(this.modulesArray, event.modules.length, () => this.createModuleControl());
 
+    // El backend guarda un único horario para todos los días: se muestra en cada día seleccionado.
+    const selectedDays = event.selectedDays ?? [];
+    const dayTimes = { startTime: event.startTime.slice(0, 5), endTime: event.endTime.slice(0, 5) };
+
     const approvals = this.approvalsMeta.map(meta => {
       const approval = event.approvals.find(item => this.normalize(item.role?.name) === this.normalize(meta.roleName));
       return {
@@ -463,9 +486,8 @@ export class EventsComponent implements OnInit {
         academicProgram: event.academicProgram,
         teacherProfile: event.teacherProfile,
         duration: event.duration,
-        startTime: event.startTime.slice(0, 5),
-        endTime: event.endTime.slice(0, 5),
-        selectedDays: event.selectedDays,
+        selectedDays,
+        schedules: Object.fromEntries(selectedDays.map(day => [day, dayTimes])),
         selectedModality: event.modality,
         startDate: event.startDate,
         endDate: event.endDate,
@@ -491,6 +513,7 @@ export class EventsComponent implements OnInit {
     }, { emitEvent: false });
 
     this.updateOtherEventTypeValidation(this.eventTypeValue, this.generalidadesGroup.get('otherEventType')!);
+    this.syncScheduleControls();
     this.eventForm.markAsPristine();
     this.eventForm.markAsUntouched();
 
@@ -585,9 +608,25 @@ export class EventsComponent implements OnInit {
 
       this.eventForm.patchValue(draft, { emitEvent: false });
       this.updateOtherEventTypeValidation(this.eventTypeValue, this.generalidadesGroup.get('otherEventType')!);
+      this.syncScheduleControls();
     } catch {
       // Borrador corrupto o ilegible: se ignora y se continúa con los valores por defecto.
     }
+  }
+
+  /** Habilita el horario de los días seleccionados y deshabilita el del resto. */
+  private syncScheduleControls(): void {
+    const schedules = this.generalidadesGroup.get('schedules') as FormGroup;
+    this.weekDays.forEach(day => {
+      const control = schedules.get(day)!;
+      if (this.selectedDays.includes(day)) {
+        control.enable({ emitEvent: false });
+      } else {
+        control.reset({ startTime: '', endTime: '' }, { emitEvent: false });
+        control.disable({ emitEvent: false });
+      }
+    });
+    this.eventForm.updateValueAndValidity({ emitEvent: false });
   }
 
   saveDraft(): void {
@@ -691,6 +730,7 @@ export class EventsComponent implements OnInit {
       generalidades: { selectedDays: [] },
       contenido: { objectives: ['', '', ''] }
     }, { emitEvent: false });
+    this.syncScheduleControls();
 
     this.activeStep = 0;
     this.draftSaved = false;
@@ -763,6 +803,8 @@ export class EventsComponent implements OnInit {
   /** Transforma el valor del formulario al contrato esperado por el backend (POST /events). */
   private buildEventPayload(): Event {
     const { generalidades, contenido, logistica, financiera, aprobaciones } = this.eventForm.getRawValue();
+    const startTimes: string[] = generalidades.selectedDays.map((day: string) => generalidades.schedules[day].startTime);
+    const endTimes: string[] = generalidades.selectedDays.map((day: string) => generalidades.schedules[day].endTime);
 
     return {
       eventType: generalidades.eventType,
@@ -772,8 +814,9 @@ export class EventsComponent implements OnInit {
       academicProgram: generalidades.academicProgram,
       teacherProfile: generalidades.teacherProfile,
       duration: Number(generalidades.duration),
-      startTime: generalidades.startTime,
-      endTime: generalidades.endTime,
+      // El backend maneja un único horario: se envía el rango que cubre todos los días seleccionados.
+      startTime: [...startTimes].sort()[0],
+      endTime: [...endTimes].sort().at(-1)!,
       selectedDays: generalidades.selectedDays,
       modality: generalidades.selectedModality,
       startDate: generalidades.startDate,
