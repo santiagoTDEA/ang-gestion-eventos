@@ -3,7 +3,7 @@ import { catchError, throwError } from 'rxjs';
 import { MediatorAlertService } from '../services/mediator-alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { AuthSessionService } from '../services/auth-session.service';
 const ERROR_STATUS: Record<number, string> = {
   0: 'No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo.',
   400: 'Los datos enviados no son válidos.',
@@ -23,7 +23,7 @@ const ERROR_STATUS: Record<number, string> = {
 
 export const headerInterceptor: HttpInterceptorFn = (req, next) => {
   const mediatorAlertService = inject(MediatorAlertService);
-  const router = inject(Router);
+  const authSessionService = inject(AuthSessionService);
   const accessToken = localStorage.getItem('accessToken');
   if (accessToken) {
     req = req.clone({
@@ -40,15 +40,14 @@ export const headerInterceptor: HttpInterceptorFn = (req, next) => {
       }
       const errorMessage = ERROR_STATUS[error.status] || 'Ocurrió un error desconocido.';
 
-      if (error.status === 401) {
+      if (error.status === 401 && accessToken) {
         mediatorAlertService.setAlert({
           alertVisible: true,
           alertType: 'error',
           alertTitle: 'Error',
           alertMessage: 'Tu sesión expiró. Inicia sesión nuevamente.'
         });
-        localStorage.removeItem('accessToken');
-        router.navigate(['/']);
+        authSessionService.cerrarSesion();
       }
       mediatorAlertService.setAlert({
         alertVisible: true,

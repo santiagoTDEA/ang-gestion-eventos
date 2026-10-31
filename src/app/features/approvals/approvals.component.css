@@ -641,6 +641,10 @@
     }
 }
 /* ===== Listado de eventos y pasos del workflow ===== */
+.approvals__eventos {
+    margin-top: 18px;
+}
+
 .approvals__subtitulo {
     margin: 0 0 10px;
     font-size: 1rem;

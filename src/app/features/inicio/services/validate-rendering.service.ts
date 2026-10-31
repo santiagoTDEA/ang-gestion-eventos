@@ -24,7 +24,7 @@ export class ValidateRenderingService {
 
     if (permission.permissionsFull && permission.modulesFull) return modulos;
 
-    return modulos.filter(modulo => permission.accesos?.some(acceso => acceso.modulo === modulo.value)) ?? [];
+    return modulos.filter(modulo => permission.accesos?.some(acceso => acceso.module === modulo.value)) ?? [];
   }
 
 
@@ -50,7 +50,7 @@ export class ValidateRenderingService {
     if (!permission) return 'none';
     if (permission?.permissionsFull && permission?.modulesFull) return 'all';
     const acciones =
-      permission?.accesos?.find(a => a.modulo === modulo)?.acciones ?? [];
+      permission?.accesos?.find(a => a.module === modulo)?.acciones ?? [];
 
     // Jerarquía: cada permiso incluye a los que están por debajo.
     //   crear  -> all    (CRUD completo)

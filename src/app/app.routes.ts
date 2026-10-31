@@ -25,41 +25,49 @@ export const routes: Routes = [
     {
         path:'eventos',
         component: EventsComponent,
+        data: { module: 'eventos' },
         canActivate: [validateSessionGuard]
     },
     {
         path:'aprobaciones',
         component: ApprovalsComponent,
+        data: { module: 'aprobaciones' },
         canActivate: [validateSessionGuard]
     },
     {
         path:'difusion',
         component: DiffusionComponent,
+        data: { module: 'difusion' },
         canActivate: [validateSessionGuard]
     },
     {
         path:'facultades',
         component: FacultyComponent ,
+        data: { module: 'facultades' },
         canActivate: [validateSessionGuard]
     },
     {
         path:'roles',
         component: RolesComponent ,
+        data: { module: 'roles' },
         canActivate: [validateSessionGuard]
     },
     {
         path:'usuarios',
         component: UsersComponent ,
+        data: { module: 'usuarios' },
         canActivate: [validateSessionGuard]
     },
     {
         path:'personas',
         component: PeoplesComponent ,
+        data: { module: 'personas' },
         canActivate: [validateSessionGuard]
     },
     {
         path:'estados',
         component: StatusComponent ,
+        data: { module: 'estados' },
         canActivate: [validateSessionGuard]
     },
     {

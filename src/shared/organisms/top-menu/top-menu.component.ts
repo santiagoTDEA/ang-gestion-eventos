@@ -2,6 +2,7 @@ import { Component, HostListener, OnChanges, OnDestroy, OnInit, inject, Input } 
 import { Router, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { AppNotification, NotificationsService } from '../../../app/core/services/notifications.service';
+import { AuthSessionService } from '../../../app/core/services/auth-session.service';
 
 interface MenuItem {
   label: string;
@@ -19,6 +20,7 @@ interface MenuItem {
 export class TopMenuComponent implements OnInit, OnChanges, OnDestroy {
   private readonly router = inject(Router);
   private readonly notificationsService = inject(NotificationsService);
+  private readonly authSessionService = inject(AuthSessionService);
   private refreshTimer?: ReturnType<typeof setInterval>;
   @Input() routerUrl: string = '';
   searchTerm = '';
@@ -55,6 +57,28 @@ export class TopMenuComponent implements OnInit, OnChanges, OnDestroy {
   get moduleTitle(): string {
     const module = this.routerUrl.split('?')[0].split('/')[1];
     return !module || module === 'inicio' ? 'Panel general' : `Gestión de ${module}`;
+  }
+
+  get userInitials(): string {
+    const username = localStorage.getItem('loggedInUsername')?.trim();
+    if (!username) {
+      return 'U';
+    }
+
+    const words = username
+      .replace(/[@._-]+/g, ' ')
+      .split(/\s+/)
+      .filter(Boolean);
+
+    if (words.length === 0) {
+      return 'U';
+    }
+
+    if (words.length >= 2) {
+      return `${words[0][0]}.${words[1][0]}`.toUpperCase();
+    }
+
+    return words[0].slice(0, 2).toUpperCase();
   }
 
   loadNotifications(): void {
@@ -129,8 +153,7 @@ export class TopMenuComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   logout(): void {
-    localStorage.removeItem('accessToken');
-    this.router.navigate(['/']);
+    this.authSessionService.cerrarSesion();
   }
 
   @HostListener('document:click', ['$event'])

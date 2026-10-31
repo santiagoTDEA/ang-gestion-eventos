@@ -90,7 +90,7 @@ export class RolesComponent {
 
   createAccesoGroup(): FormGroup {
     return this.fb.group({
-      modulo: [null, Validators.required],
+      module: [null, Validators.required],
       nivel: [null as NivelAcceso | null, Validators.required],
     });
   }
@@ -110,7 +110,7 @@ export class RolesComponent {
       const value = group.value;
       const acciones = ACCIONES_POR_NIVEL[value.nivel as NivelAcceso] ?? [];
 
-      return { modulo: value.modulo, acciones };
+      return { module: value.module, acciones };
     });
   }
 
@@ -274,7 +274,7 @@ export class RolesComponent {
       item.accesos.forEach(acceso => {
         const group = this.createAccesoGroup();
         group.patchValue({
-          modulo: acceso.modulo,
+          module: acceso.module,
           nivel: this.nivelDesdeAcciones(acceso.acciones),
         });
         this.accesos.push(group);

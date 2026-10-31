@@ -1,9 +1,11 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { inject } from '@angular/core';
 
 import { environment } from '../../../../environments/environment';
-import { LoginCredentials } from '../interfaces/login.interfaces';
+import { ChangePasswordCredentials, LoginCredentials } from '../interfaces/login.interfaces';
+import { JwtService } from '../../../core/services/jwt.service';
 
 export interface LoginResponse {
   accessToken: string;
@@ -22,6 +24,7 @@ export interface LoginErrorResponse {
 export class CredencialLoginService {
 
   private readonly apiUrl = environment.apiUrl;
+  private readonly jwtService = inject(JwtService);
 
   constructor(private readonly http: HttpClient) { }
 
@@ -39,5 +42,37 @@ export class CredencialLoginService {
     } catch (error) {
       throw error;
     }
+  }
+
+  async changePassword(credentials: ChangePasswordCredentials): Promise<unknown> {
+    const response = await firstValueFrom(
+      this.http.post<LoginResponse>(
+        `${this.apiUrl}auth/validate-credentials`,
+        {
+          username: credentials.username,
+          password: credentials.currentPassword
+        }
+      )
+    );
+
+    const userId = this.jwtService.obtenerUserId(response.accessToken);
+    if (!userId) {
+      throw new Error('No se pudo identificar al usuario.');
+    }
+
+    const headers = new HttpHeaders({
+      Authorization: `Bearer ${response.accessToken}`
+    });
+
+    return firstValueFrom(
+      this.http.patch(
+        `${this.apiUrl}auth/users/${userId}`,
+        {
+          username: credentials.username,
+          password: credentials.newPassword
+        },
+        { headers }
+      )
+    );
   }
 }

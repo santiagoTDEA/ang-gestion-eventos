@@ -11,6 +11,7 @@
             <span class="text-2xl font-bold text-title">Gestión de Eventos</span>
         </div>
 
+        @if (mode === 'login') {
         <app-generic-form [disabled]="loginForm.invalid || loading" (formSubmit)="onSubmit(loginForm.getRawValue())">
 
             <app-generic-input label="Nombre de usuario" placeholder="Escribe tu usuario" icon="user"
@@ -19,9 +20,46 @@
             <app-generic-input label="Contraseña" placeholder="Escribe tu contraseña" [type]="typePassword" [icon]="iconoPassword"
                 [control]="loginForm.controls['password']" (iconClick)="handleClick()"></app-generic-input>
 
-            <app-generic-button label="Ingresar" type="submit" [disabled]="loginForm.invalid"
+            <app-generic-button [label]="loading ? 'Ingresando...' : 'Ingresar'" type="submit" [disabled]="loginForm.invalid || loading"
                 customClass="w-full mt-1 rounded-md bg-[#1c4a30] hover:bg-[#163c27] text-white text-sm font-medium py-3"></app-generic-button>
 
         </app-generic-form>
+
+        <button type="button" class="login-link mt-4" (click)="abrirCambioPassword()" [disabled]="loading">
+            Cambiar contraseña
+        </button>
+        } @else {
+        <div class="change-password-header">
+            <span>Cambiar contraseña</span>
+        </div>
+
+        <app-generic-form [disabled]="changePasswordForm.invalid || loading"
+            (formSubmit)="postChangePassword(changePasswordForm.getRawValue())">
+
+            <app-generic-input label="Nombre de usuario" placeholder="Escribe tu usuario" icon="user"
+                [control]="changePasswordForm.controls['username']"></app-generic-input>
+
+            <app-generic-input label="Contraseña actual" placeholder="Escribe tu contraseña actual" type="password"
+                [control]="changePasswordForm.controls['currentPassword']"></app-generic-input>
+
+            <app-generic-input label="Nueva contraseña" placeholder="Escribe la nueva contraseña" type="password"
+                [control]="changePasswordForm.controls['newPassword']"></app-generic-input>
+
+            <app-generic-input label="Confirmar contraseña" placeholder="Repite la nueva contraseña" type="password"
+                [control]="changePasswordForm.controls['confirmPassword']"></app-generic-input>
+
+            @if (changePasswordForm.hasError('passwordMismatch') && changePasswordForm.get('confirmPassword')?.touched) {
+            <p class="password-error">Las contraseñas nuevas no coinciden.</p>
+            }
+
+            <app-generic-button [label]="loading ? 'Actualizando...' : 'Actualizar contraseña'" type="submit"
+                [disabled]="changePasswordForm.invalid || loading"
+                customClass="w-full mt-1 rounded-md bg-[#1c4a30] hover:bg-[#163c27] text-white text-sm font-medium py-3"></app-generic-button>
+        </app-generic-form>
+
+        <button type="button" class="login-link mt-4" (click)="volverAlLogin()" [disabled]="loading">
+            Volver al inicio de sesión
+        </button>
+        }
     </div>
 </div>

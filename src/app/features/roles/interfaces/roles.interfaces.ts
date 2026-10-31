@@ -1,5 +1,5 @@
 export interface Access {
-    modulo: string;
+    module: string;
     acciones: string[];
 }
 
