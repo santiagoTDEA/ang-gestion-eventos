@@ -318,7 +318,7 @@
     list-style: none;
 }
 
-/* Botón que alterna entre la tabla de inscritos y el formulario */
+/* Botón que alterna entre la tabla de asistentes y el formulario */
 .registrations__barra-acciones {
     display: flex;
     justify-content: flex-end;
@@ -459,7 +459,7 @@
     background: #fef3c7;
 }
 
-/* Tabla de inscritos */
+/* Tabla de asistentes */
 .registrations__buscar {
     width: min(100%, 300px);
 }
