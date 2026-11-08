@@ -15,7 +15,7 @@ export class EventsService {
     return this.http.post<ReturnEvent>(`${environment.apiUrl}events`, event);
   }
 
-  updateEvent(id: number, event: Event): Observable<ReturnEvent> {
+  updateEvent(id: number, event: Partial<Event>): Observable<ReturnEvent> {
     return this.http.patch<ReturnEvent>(`${environment.apiUrl}events/${id}`, event);
   }
 

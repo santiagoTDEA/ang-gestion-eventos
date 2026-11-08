@@ -419,7 +419,7 @@ export class EventsComponent implements OnInit {
     return this.validateRender === 'view' || this.validateRender === 'all' || this.validateRender === 'update';
   }
 
-  /** El flujo de aprobación está completo: el evento queda cerrado y ya no se edita. */
+  /** Indica si todas las firmas del flujo de aprobación están completas. */
   isApproved(event: ReturnEvent): boolean {
     return event.approvals.length > 0 && event.approvals.every(step => step.status === 'aprobado');
   }
@@ -429,9 +429,9 @@ export class EventsComponent implements OnInit {
     return event.workflowStatus === 'devuelto' ? 'Devuelto' : 'En aprobación';
   }
 
-  /** Se puede abrir para editar: tiene permiso y todavía no completó las aprobaciones. */
+  /** Se puede abrir para editar si el usuario tiene permiso sobre el módulo. */
   canEditEvent(event: ReturnEvent): boolean {
-    return this.canEditEvents && !this.isApproved(event);
+    return this.canEditEvents;
   }
 
   getEvents(): void {
@@ -455,11 +455,6 @@ export class EventsComponent implements OnInit {
 
   startEdit(event: ReturnEvent): void {
     if (!this.canEditEvents) {
-      return;
-    }
-
-    if (this.isApproved(event)) {
-      this.showAlert('warning', 'Evento aprobado', 'Este evento ya completó el flujo de aprobación y no se puede editar.');
       return;
     }
 
@@ -518,6 +513,14 @@ export class EventsComponent implements OnInit {
       },
       aprobaciones: approvals
     }, { emitEvent: false });
+
+    this.approvalsArray.controls.forEach(control => {
+      if (this.isApproved(event)) {
+        control.disable({ emitEvent: false });
+      } else {
+        control.enable({ emitEvent: false });
+      }
+    });
 
     this.updateOtherEventTypeValidation(this.eventTypeValue, this.generalidadesGroup.get('otherEventType')!);
     this.eventForm.markAsPristine();
@@ -711,6 +714,7 @@ export class EventsComponent implements OnInit {
   }
 
   private resetForm(): void {
+    this.approvalsArray.controls.forEach(control => control.enable({ emitEvent: false }));
     this.modulesArray.clear({ emitEvent: false });
     while (this.objectivesArray.length > 3) {
       this.objectivesArray.removeAt(this.objectivesArray.length - 1, { emitEvent: false });
@@ -742,7 +746,12 @@ export class EventsComponent implements OnInit {
     const payload = this.buildEventPayload();
 
     if (this.editingId !== null) {
-      this.eventsService.updateEvent(this.editingId, payload).subscribe({
+      const updatePayload: Partial<Event> = { ...payload };
+      if (this.editingEvent !== null && this.isApproved(this.editingEvent)) {
+        delete updatePayload.approvals;
+      }
+
+      this.eventsService.updateEvent(this.editingId, updatePayload).subscribe({
         next: () => {
           this.loading = false;
           this.finishEdit();
