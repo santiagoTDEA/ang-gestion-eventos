@@ -5,7 +5,7 @@ export interface Permission {
 }
 
 export interface Access {
-  module: string;
+  modulo: string;
   acciones: string[];
 }
 
@@ -42,7 +42,7 @@ export class PermissionService {
 
 
     const acceso = this.role.accesos?.find(
-      (item) => item.module === permission.module,
+      (item) => item.modulo === permission.module,
     );
 
     if (!acceso) {
@@ -68,7 +68,7 @@ export class PermissionService {
     }
 
     return this.role.accesos?.some(
-      (acceso) => acceso.module === module,
+      (acceso) => acceso.modulo === module,
     ) ?? false;
   }
 }

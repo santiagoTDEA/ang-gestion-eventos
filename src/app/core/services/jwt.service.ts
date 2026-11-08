@@ -8,7 +8,7 @@ interface DecodedToken {
     permissionsFull: boolean;
     modulesFull: boolean;
     accesos: Array<{
-      module: string;
+      modulo: string;
       acciones: string[];
     }>;
   };

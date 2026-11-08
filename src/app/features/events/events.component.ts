@@ -419,7 +419,7 @@ export class EventsComponent implements OnInit {
     return this.validateRender === 'view' || this.validateRender === 'all' || this.validateRender === 'update';
   }
 
-  /** El flujo de aprobación está completo: el evento queda cerrado y ya no se edita. */
+  /** Indica si el flujo de aprobación está completo. */
   isApproved(event: ReturnEvent): boolean {
     return event.approvals.length > 0 && event.approvals.every(step => step.status === 'aprobado');
   }
@@ -429,9 +429,10 @@ export class EventsComponent implements OnInit {
     return event.workflowStatus === 'devuelto' ? 'Devuelto' : 'En aprobación';
   }
 
-  /** Se puede abrir para editar: tiene permiso y todavía no completó las aprobaciones. */
+  /** Se puede abrir para editar cuando el usuario tiene permiso, incluso si ya fue aprobado. */
   canEditEvent(event: ReturnEvent): boolean {
-    return this.canEditEvents && !this.isApproved(event);
+    void event;
+    return this.canEditEvents;
   }
 
   getEvents(): void {
@@ -455,11 +456,6 @@ export class EventsComponent implements OnInit {
 
   startEdit(event: ReturnEvent): void {
     if (!this.canEditEvents) {
-      return;
-    }
-
-    if (this.isApproved(event)) {
-      this.showAlert('warning', 'Evento aprobado', 'Este evento ya completó el flujo de aprobación y no se puede editar.');
       return;
     }
 
@@ -518,6 +514,12 @@ export class EventsComponent implements OnInit {
       },
       aprobaciones: approvals
     }, { emitEvent: false });
+
+    if (this.isApproved(event)) {
+      this.approvalsArray.controls.forEach(control => control.disable({ emitEvent: false }));
+    } else {
+      this.approvalsArray.controls.forEach(control => control.enable({ emitEvent: false }));
+    }
 
     this.updateOtherEventTypeValidation(this.eventTypeValue, this.generalidadesGroup.get('otherEventType')!);
     this.eventForm.markAsPristine();
@@ -716,6 +718,8 @@ export class EventsComponent implements OnInit {
       this.objectivesArray.removeAt(this.objectivesArray.length - 1, { emitEvent: false });
     }
 
+    this.approvalsArray.controls.forEach(control => control.enable({ emitEvent: false }));
+
     this.eventForm.reset({
       generalidades: { selectedDays: [] },
       contenido: { objectives: ['', '', ''] }
@@ -781,19 +785,16 @@ export class EventsComponent implements OnInit {
 
   private handleSendError(err: { error?: { message?: string | string[] } }, title: string): void {
     this.loading = false;
-    const message = err?.error?.message;
-    this.showAlert(
-      'error',
-      title,
-      Array.isArray(message) ? message.join(' ') : (message ?? 'Ocurrió un error al procesar el evento.')
-    );
+    void err;
+    void title;
   }
 
   /** Transforma el valor del formulario al contrato esperado por el backend (POST /events). */
   private buildEventPayload(): Event {
     const { generalidades, contenido, logistica, financiera, aprobaciones } = this.eventForm.getRawValue();
+    const approvedUpdate = this.editingEvent !== null && this.isApproved(this.editingEvent);
 
-    return {
+    const payload: Event = {
       eventType: generalidades.eventType,
       otherEventType: generalidades.eventType === '¿Otro?' ? generalidades.otherEventType : undefined,
       name: generalidades.name,
@@ -820,12 +821,20 @@ export class EventsComponent implements OnInit {
       costPerParticipant: Number(financiera.costPerParticipant),
       confirmedMinimumCapacity: Number(financiera.confirmedMinimumCapacity),
       financialObservations: financiera.financialObservations,
-      approvals: aprobaciones.map((approval: { name: string; role: string; date: string }) => ({
-        personId: Number(approval.name),
-        roleId: approval.role,
-        date: approval.date
-      }))
+      approvals: approvedUpdate
+        ? []
+        : aprobaciones.map((approval: { name: string; role: string; date: string }) => ({
+          personId: Number(approval.name),
+          roleId: approval.role,
+          date: approval.date
+        }))
     };
+
+    if (approvedUpdate) {
+      delete (payload as Partial<Event>).approvals;
+    }
+
+    return payload;
   }
 
   goBack(): void {

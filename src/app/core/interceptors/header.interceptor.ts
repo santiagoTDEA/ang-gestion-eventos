@@ -43,6 +43,10 @@ export const headerInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => error);
       }
       const errorMessage = ERROR_STATUS[error.status] || 'Ocurrió un error desconocido.';
+      const backendMessage = error.error?.message;
+      const specificMessage = Array.isArray(backendMessage)
+        ? backendMessage.join(' ')
+        : backendMessage;
 
       if (error.status === 401) {
         mediatorAlertService.setAlert({
@@ -58,7 +62,7 @@ export const headerInterceptor: HttpInterceptorFn = (req, next) => {
         alertVisible: true,
         alertType: 'error',
         alertTitle: 'Error',
-        alertMessage: errorMessage
+        alertMessage: specificMessage || errorMessage
       });
 
       throw error;

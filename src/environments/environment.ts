@@ -1,7 +1,8 @@
 export const environment = {
   production: false,
-  // apiUrl: 'http://localhost:3000/gestion-eventos/'
-  apiUrl: 'https://nes-gestion-eventos.onrender.com/gestion-eventos/'
+  apiUrl: globalThis.location?.hostname === 'localhost'
+    ? 'http://localhost:3000/gestion-eventos/'
+    : 'https://nes-gestion-eventos.onrender.com/gestion-eventos/'
 };
 
 export const modulosAplicacion = [
