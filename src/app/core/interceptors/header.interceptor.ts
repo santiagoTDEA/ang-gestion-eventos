@@ -57,13 +57,17 @@ export const headerInterceptor: HttpInterceptorFn = (req, next) => {
         });
         localStorage.removeItem('accessToken');
         router.navigate(['/']);
+        throw error;
       }
-      mediatorAlertService.setAlert({
-        alertVisible: true,
-        alertType: 'error',
-        alertTitle: 'Error',
-        alertMessage: specificMessage || errorMessage
-      });
+
+      if (!req.url.includes('/auth/recovery/')) {
+        mediatorAlertService.setAlert({
+          alertVisible: true,
+          alertType: 'error',
+          alertTitle: 'Error',
+          alertMessage: specificMessage || errorMessage
+        });
+      }
 
       throw error;
     })
