@@ -72,7 +72,7 @@ export class RegistrationsComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
 
-  readonly acceso = this.validateRenderingService.permisosDelModulo('inscripciones');
+  readonly acceso = this.validateRenderingService.permisosDelModulo('asistencia');
   readonly documentTypes = DOCUMENT_TYPES;
 
   events: RegistrationEvent[] = [];
@@ -81,7 +81,7 @@ export class RegistrationsComponent implements OnInit {
   readonly searchControl = new FormControl('', { nonNullable: true });
 
   mode: Mode = 'formulario';
-  /** Al entrar se ve la tabla de inscritos; el botón la cambia por el formulario y el Excel. */
+  /** Al entrar se ve la tabla de asistentes; el botón la cambia por el formulario y el Excel. */
   showForm = false;
   loadingEvents = false;
   loadingRegistrations = false;
@@ -90,7 +90,7 @@ export class RegistrationsComponent implements OnInit {
   selectedFile: File | null = null;
   fileError = '';
   importResult: ImportResult | null = null;
-  /** Persona que llenó el cupo en la última inscripción o carga. */
+  /** Persona que llenó el cupo en el último registro o carga. */
   lastSlot: LastSlot | null = null;
 
   readonly form = this.fb.nonNullable.group({
@@ -189,11 +189,11 @@ export class RegistrationsComponent implements OnInit {
           this.showAlert('warning', 'Cupo completo',
             `${name} fue la persona #${result.lastSlot.position} y llenó el cupo del evento.`);
         } else {
-          this.showAlert('success', 'Persona inscrita',
-            `${name} quedó inscrita. Quedan ${result.event.availableSlots} cupos.`);
+          this.showAlert('success', 'Asistencia registrada',
+            `La asistencia de ${name} quedó registrada. Quedan ${result.event.availableSlots} cupos.`);
         }
       },
-      error: err => this.fail(err, 'No se pudo inscribir a la persona')
+      error: err => this.fail(err, 'No se pudo registrar la asistencia')
     });
   }
 
@@ -241,7 +241,7 @@ export class RegistrationsComponent implements OnInit {
         this.showAlert(
           result.failed > 0 ? 'warning' : 'success',
           'Carga terminada',
-          `Se inscribieron ${result.registered} de ${result.totalRows} personas.` +
+          `Se registró la asistencia de ${result.registered} de ${result.totalRows} personas.` +
           (result.failed > 0 ? ` ${result.failed} filas tienen error y se descargaron en un Excel para corregirlas.` : '')
         );
       },
@@ -259,7 +259,7 @@ export class RegistrationsComponent implements OnInit {
 
   downloadTemplate(): void {
     this.registrationsService.getTemplate().subscribe({
-      next: blob => this.saveBlob(blob, 'plantilla-inscripciones.xlsx'),
+      next: blob => this.saveBlob(blob, 'plantilla-asistencia.xlsx'),
       error: err => this.fail(err, 'No se pudo descargar la plantilla')
     });
   }
@@ -275,9 +275,9 @@ export class RegistrationsComponent implements OnInit {
         this.working = false;
         this.lastSlot = null;
         this.loadRegistrations(event.id);
-        this.showAlert('success', 'Inscripción quitada', `${name} ya no está inscrita en el evento.`);
+        this.showAlert('success', 'Asistencia retirada', `Se retiró la asistencia de ${name} del evento.`);
       },
-      error: err => this.fail(err, 'No se pudo quitar la inscripción')
+      error: err => this.fail(err, 'No se pudo retirar la asistencia')
     });
   }
 
@@ -340,7 +340,7 @@ export class RegistrationsComponent implements OnInit {
       },
       error: err => {
         this.loadingRegistrations = false;
-        this.fail(err, 'No se pudieron cargar los inscritos');
+        this.fail(err, 'No se pudieron cargar los asistentes');
       }
     });
   }

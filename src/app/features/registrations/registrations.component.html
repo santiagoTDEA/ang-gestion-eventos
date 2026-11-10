@@ -15,15 +15,15 @@
         </button>
 
         <article class="registrations__resumen">
-            <div class="registrations__insignia"><span></span> Módulo 5 · Inscripciones</div>
-            <h1>Inscripciones</h1>
+            <div class="registrations__insignia"><span></span> Módulo 5 · Asistencia</div>
+            <h1>Asistencia</h1>
             <p class="registrations__descripcion">
-                Escoge un evento con la aprobación completa e inscribe a las personas una por una con el formulario
-                o en bloque con la plantilla de Excel. Nadie queda inscrito por encima del cupo máximo del evento.
+                Escoge un evento con la aprobación completa y registra la asistencia persona a persona con el formulario
+                o en bloque con la plantilla de Excel. No se supera el cupo máximo del evento.
             </p>
             <div class="registrations__metadatos">
                 <div><span>Eventos aprobados</span><strong>{{ events.length }}</strong></div>
-                <div><span>Personas inscritas</span><strong>{{ totalRegistered }}</strong></div>
+                <div><span>Asistentes registrados</span><strong>{{ totalRegistered }}</strong></div>
                 @if (selectedEvent; as event) {
                 <div><span>Cupos libres del evento</span><strong>{{ event.availableSlots }}</strong></div>
                 }
@@ -110,24 +110,24 @@
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.008v.008H3.75V6.75Zm0 5.25h.008v.008H3.75V12Zm0 5.25h.008v.008H3.75v-.008Z" />
                 </svg>
-                Ver inscritos
+                Ver asistentes
                 } @else {
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
-                Inscribir personas
+                Registrar asistencia
                 }
             </button>
         </div>
         }
 
-        <!-- Paso 2: inscribir -->
+        <!-- Paso 2: registrar asistencia -->
         @if (selectedEvent && acceso.canCreate && showForm) {
-        <section class="registrations__tarjeta" aria-label="Inscribir personas">
+        <section class="registrations__tarjeta" aria-label="Registrar asistencia">
             <header class="registrations__tarjeta-cabecera">
                 <div>
                     <span class="registrations__paso">2</span>
-                    <h2>Inscribe personas</h2>
+                    <h2>Registrar asistentes</h2>
                 </div>
                 <div class="registrations__pestanas" role="tablist">
                     <button type="button" role="tab" [attr.aria-selected]="mode === 'formulario'"
@@ -142,8 +142,8 @@
             <div class="registrations__cuerpo">
                 @if (isFull) {
                 <p class="registrations__vacio">
-                    El evento ya llenó su cupo máximo. Para inscribir a alguien más primero hay que quitar una
-                    inscripción.
+                    El evento ya llenó su cupo máximo. Para registrar a alguien más primero hay que retirar una
+                    asistencia.
                 </p>
                 } @else if (mode === 'formulario') {
                 <form class="registrations__formulario" [formGroup]="form" (ngSubmit)="submitForm()" novalidate>
@@ -225,7 +225,7 @@
 
                     <div class="registrations__acciones">
                         <button type="submit" class="registrations__btn registrations__btn--primario" [disabled]="working">
-                            {{ working ? 'Inscribiendo…' : 'Inscribir persona' }}
+                            {{ working ? 'Registrando…' : 'Registrar asistencia' }}
                         </button>
                     </div>
                 </form>
@@ -233,10 +233,10 @@
                 <div class="registrations__excel">
                     <ol class="registrations__pasos-excel">
                         <li>Descarga la plantilla y llena una persona por fila. Todos los datos son obligatorios.</li>
-                        <li>Carga el archivo .xlsx. Las filas con error no se inscriben y se descargan en un Excel
+                        <li>Carga el archivo .xlsx. Las filas con error no se registran y se descargan en un Excel
                             con la columna «Error» para que las corrijas y las vuelvas a cargar.</li>
                         <li>Si el archivo trae más personas que cupos libres ({{ selectedEvent.availableSlots }}),
-                            solo se inscriben hasta llenar el cupo.</li>
+                            solo se registran asistentes hasta llenar el cupo.</li>
                     </ol>
 
                     <div class="registrations__subida">
@@ -262,14 +262,14 @@
                     @if (importResult; as result) {
                     <div class="registrations__resultado">
                         <div><span>Filas leídas</span><strong>{{ result.totalRows }}</strong></div>
-                        <div class="registrations__resultado--ok"><span>Inscritas</span><strong>{{ result.registered }}</strong></div>
+                        <div class="registrations__resultado--ok"><span>Asistencias registradas</span><strong>{{ result.registered }}</strong></div>
                         <div class="registrations__resultado--error"><span>Con error</span><strong>{{ result.failed - result.failedByCapacity }}</strong></div>
                         <div class="registrations__resultado--alerta"><span>Sin cupo</span><strong>{{ result.failedByCapacity }}</strong></div>
                     </div>
                     @if (result.failedFile) {
                     <button type="button" class="registrations__btn registrations__btn--secundario"
                         (click)="downloadFailedFile()">
-                        Descargar filas con error ({{ result.failed }})
+                        Descargar errores de asistencia ({{ result.failed }})
                     </button>
                     }
                     }
@@ -279,25 +279,25 @@
         </section>
         }
 
-        <!-- Inscritos -->
+        <!-- Asistentes -->
         @if (!showForm && selectedEvent; as event) {
-        <section class="registrations__tarjeta" aria-label="Personas inscritas">
+        <section class="registrations__tarjeta" aria-label="Asistentes">
             <header class="registrations__tarjeta-cabecera">
                 <div>
-                    <h2>Personas inscritas</h2>
+                    <h2>Asistentes</h2>
                     <p>{{ event.registeredCount }} de {{ event.maximumCapacity }} cupos</p>
                 </div>
                 @if (registrations.length > 0) {
                 <input type="search" class="registrations__buscar" [formControl]="searchControl"
-                    placeholder="Buscar por nombre, documento o correo" aria-label="Buscar inscritos" />
+                    placeholder="Buscar por nombre, documento o correo" aria-label="Buscar asistentes" />
                 }
             </header>
 
             <div class="registrations__cuerpo">
                 @if (loadingRegistrations) {
-                <p class="registrations__vacio">Cargando inscritos…</p>
+                <p class="registrations__vacio">Cargando asistentes…</p>
                 } @else if (registrations.length === 0) {
-                <p class="registrations__vacio">Este evento todavía no tiene personas inscritas.</p>
+                <p class="registrations__vacio">Este evento todavía no tiene asistentes registrados.</p>
                 } @else if (filteredRegistrations.length === 0) {
                 <p class="registrations__vacio">Nadie coincide con la búsqueda.</p>
                 } @else {
@@ -328,7 +328,7 @@
                                 @if (acceso.canCreate) {
                                 <td>
                                     <button type="button" class="registrations__quitar" [disabled]="working"
-                                        (click)="remove(item)" aria-label="Quitar inscripción">×</button>
+                                        (click)="remove(item)" aria-label="Retirar asistencia">×</button>
                                 </td>
                                 }
                             </tr>

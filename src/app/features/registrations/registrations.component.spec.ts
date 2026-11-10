@@ -60,13 +60,13 @@ describe('RegistrationsComponent', () => {
       expect(service.getEvents).not.toHaveBeenCalled();
     });
 
-    it('sin permiso de crear no muestra el botón de inscribir ni el de quitar', () => {
+    it('sin permiso de crear no muestra el botón de registrar asistencia ni el de retirar', () => {
       create({ canView: true, canCreate: false, canEdit: false, nivel: 'view' });
       component.eventControl.setValue(1);
       fixture.detectChanges();
 
       expect(fixture.nativeElement.querySelector('.registrations__quitar')).toBeNull();
-      expect(text()).not.toContain('Inscribir persona');
+      expect(text()).not.toContain('Registrar asistencia');
     });
   });
 
@@ -105,7 +105,7 @@ describe('RegistrationsComponent', () => {
       expect(fixture.nativeElement.querySelector('form')).toBeNull();
     });
 
-    it('busca inscritos por nombre, documento o correo', () => {
+    it('busca asistentes por nombre, documento o correo', () => {
       create();
       component.registrations = [
         person(1, { firstNames: 'Laura' }),
@@ -171,7 +171,7 @@ describe('RegistrationsComponent', () => {
     });
   });
 
-  describe('inscribir con el formulario', () => {
+  describe('registrar asistencia con el formulario', () => {
     beforeEach(() => {
       create();
       component.eventControl.setValue(1);
@@ -183,7 +183,7 @@ describe('RegistrationsComponent', () => {
       expect(component.form.controls.email.touched).toBeTrue();
     });
 
-    it('inscribe, agrega a la persona y limpia el formulario', () => {
+    it('registra la asistencia, agrega a la persona y limpia el formulario', () => {
       service.register.and.returnValue(of({
         registration: person(2, { firstNames: 'Santiago', lastNames: 'Ospina' }),
         event: event({ registeredCount: 2, availableSlots: 1 }),
@@ -214,11 +214,11 @@ describe('RegistrationsComponent', () => {
     });
 
     it('muestra el mensaje del backend si falla', () => {
-      service.register.and.returnValue(throwError(() => ({ error: { message: 'ya está inscrita' } })));
+      service.register.and.returnValue(throwError(() => ({ error: { message: 'La asistencia ya está registrada.' } })));
       component.form.setValue(validForm);
       component.submitForm();
 
-      expect(component.alertaResponse).toEqual(jasmine.objectContaining({ alertType: 'error', alertMessage: 'ya está inscrita' }));
+      expect(component.alertaResponse).toEqual(jasmine.objectContaining({ alertType: 'error', alertMessage: 'La asistencia ya está registrada.' }));
       expect(component.working).toBeFalse();
     });
   });
@@ -242,7 +242,7 @@ describe('RegistrationsComponent', () => {
       expect(component.selectedFile).toBeNull();
     });
 
-    it('carga el archivo, refresca los inscritos y descarga el Excel de errores', () => {
+    it('carga el archivo, refresca los asistentes y descarga el Excel de errores', () => {
       const result: ImportResult = {
         totalRows: 3, registered: 2, failed: 1, failedByCapacity: 0,
         event: event({ registeredCount: 3, availableSlots: 0 }), capacityReached: true,
@@ -251,7 +251,7 @@ describe('RegistrationsComponent', () => {
       };
       service.importExcel.and.returnValue(of(result));
       const download = spyOn(component, 'downloadFailedFile');
-      const field = input(new File(['x'], 'inscritos.xlsx'));
+      const field = input(new File(['x'], 'asistentes.xlsx'));
 
       component.onFileSelected(field);
       component.uploadExcel(field);
@@ -260,12 +260,12 @@ describe('RegistrationsComponent', () => {
       expect(service.getByEvent).toHaveBeenCalledTimes(2);
       expect(download).toHaveBeenCalled();
       expect(component.lastSlot?.rowNumber).toBe(4);
-      expect(component.alertaResponse.alertMessage).toContain('Se inscribieron 2 de 3 personas');
+      expect(component.alertaResponse.alertMessage).toContain('Se registró la asistencia de 2 de 3 personas');
       expect(component.alertaResponse.alertType).toBe('warning');
     });
   });
 
-  describe('quitar inscripción', () => {
+  describe('quitar asistencia', () => {
     beforeEach(() => {
       create();
       component.eventControl.setValue(1);
@@ -277,14 +277,14 @@ describe('RegistrationsComponent', () => {
       expect(service.remove).not.toHaveBeenCalled();
     });
 
-    it('quita y vuelve a cargar los inscritos', () => {
+    it('retira y vuelve a cargar los asistentes', () => {
       spyOn(window, 'confirm').and.returnValue(true);
       service.remove.and.returnValue(of(undefined));
       component.remove(person(1));
 
       expect(service.remove).toHaveBeenCalledWith(1);
       expect(service.getByEvent).toHaveBeenCalledTimes(2);
-      expect(component.alertaResponse.alertTitle).toBe('Inscripción quitada');
+      expect(component.alertaResponse.alertTitle).toBe('Asistencia retirada');
     });
   });
 });

@@ -8,7 +8,7 @@ export const DOCUMENT_TYPES: { value: DocumentType; label: string }[] = [
   { value: 'PPT', label: 'Permiso por protección temporal' }
 ];
 
-/** Datos básicos para identificar y contactar a una persona inscrita. */
+/** Datos básicos para identificar y contactar a una persona asistente. */
 export interface RegistrationData {
   documentType: DocumentType;
   documentNumber: string;

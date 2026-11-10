@@ -43,7 +43,7 @@ export const routes: Routes = [
         canActivate: [validateSessionGuard]
     },
     {
-        path:'inscripciones',
+        path:'asistencia',
         // Se carga al entrar a la ruta: no suma al tamaño inicial de la aplicación.
         loadComponent: () => import('./features/registrations/registrations.component').then(m => m.RegistrationsComponent),
         canActivate: [validateSessionGuard]

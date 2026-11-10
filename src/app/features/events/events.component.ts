@@ -159,7 +159,7 @@ export class EventsComponent implements OnInit {
   readonly logisticsOptions = [
     'Elaboración de piezas publicitarias',
     'Difusión',
-    'Proceso de inscripción',
+    'Proceso de asistencia',
     'Transmisión (YouTube)',
     'Constancia de participación',
     '¿Otro?'
