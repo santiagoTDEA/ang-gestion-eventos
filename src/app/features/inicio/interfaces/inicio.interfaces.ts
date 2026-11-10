@@ -6,6 +6,7 @@ export interface Access {
 }
 
 export interface Role {
+  name?: string;
   permissionsFull?: boolean;
   modulesFull?: boolean;
   accesos?: Access[];

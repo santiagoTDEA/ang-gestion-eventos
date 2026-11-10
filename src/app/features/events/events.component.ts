@@ -186,6 +186,7 @@ export class EventsComponent implements OnInit {
   showTable = true;
   editingId: number | null = null;
   editingEvent: ReturnEvent | null = null;
+  private currentRole: Role | null = null;
   alertaResponse: {
     alertVisible: boolean;
     alertType: AlertType;
@@ -349,6 +350,7 @@ export class EventsComponent implements OnInit {
     if (!token) return;
     const Roles = this.jwtServices.cargarDesdeToken(token) as Role | null;
 
+    this.currentRole = Roles;
     this.validateRender = this.validateRenderingService.devolverAccesosPermitidos("eventos", Roles);
   }
 
@@ -419,7 +421,7 @@ export class EventsComponent implements OnInit {
     return this.validateRender === 'view' || this.validateRender === 'all' || this.validateRender === 'update';
   }
 
-  /** El flujo de aprobación está completo: el evento queda cerrado y ya no se edita. */
+  /** El flujo de aprobación está completo cuando todos sus pasos están firmados. */
   isApproved(event: ReturnEvent): boolean {
     return event.approvals.length > 0 && event.approvals.every(step => step.status === 'aprobado');
   }
@@ -429,9 +431,20 @@ export class EventsComponent implements OnInit {
     return event.workflowStatus === 'devuelto' ? 'Devuelto' : 'En aprobación';
   }
 
-  /** Se puede abrir para editar: tiene permiso y todavía no completó las aprobaciones. */
+  private get canEditApprovedEvents(): boolean {
+    const roleName = (this.currentRole?.name ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+
+    return roleName === 'verificacion' ||
+      (!!this.currentRole?.permissionsFull && !!this.currentRole?.modulesFull);
+  }
+
+  /** Los eventos aprobados solo pueden editarse con rol de Verificación o administración. */
   canEditEvent(event: ReturnEvent): boolean {
-    return this.canEditEvents && !this.isApproved(event);
+    return this.canEditEvents && (!this.isApproved(event) || this.canEditApprovedEvents);
   }
 
   getEvents(): void {
@@ -458,8 +471,8 @@ export class EventsComponent implements OnInit {
       return;
     }
 
-    if (this.isApproved(event)) {
-      this.showAlert('warning', 'Evento aprobado', 'Este evento ya completó el flujo de aprobación y no se puede editar.');
+    if (!this.canEditEvent(event)) {
+      this.showAlert('warning', 'Evento aprobado', 'Solo los roles de Verificación y administración pueden editar eventos aprobados.');
       return;
     }
 

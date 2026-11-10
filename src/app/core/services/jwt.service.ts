@@ -5,6 +5,7 @@ interface DecodedToken {
   sub: string;
   exp: number;
   role: {
+    name?: string;
     permissionsFull: boolean;
     modulesFull: boolean;
     accesos: Array<{
