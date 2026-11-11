@@ -271,18 +271,24 @@ describe('RegistrationsComponent', () => {
       component.eventControl.setValue(1);
     });
 
-    it('pide confirmación y no quita si se cancela', () => {
-      spyOn(window, 'confirm').and.returnValue(false);
+    it('muestra el modal y no quita si se cierra', () => {
       component.remove(person(1));
+      expect(component.showRemoveModal).toBeTrue();
+      expect(component.registrationToRemove?.id).toBe(1);
+
+      component.closeRemoveModal();
+
+      expect(component.showRemoveModal).toBeFalse();
       expect(service.remove).not.toHaveBeenCalled();
     });
 
-    it('retira y vuelve a cargar los asistentes', () => {
-      spyOn(window, 'confirm').and.returnValue(true);
+    it('confirma el retiro y vuelve a cargar los asistentes', () => {
       service.remove.and.returnValue(of(undefined));
       component.remove(person(1));
+      component.confirmRemove();
 
       expect(service.remove).toHaveBeenCalledWith(1);
+      expect(component.showRemoveModal).toBeFalse();
       expect(service.getByEvent).toHaveBeenCalledTimes(2);
       expect(component.alertaResponse.alertTitle).toBe('Asistencia retirada');
     });

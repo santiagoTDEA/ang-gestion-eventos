@@ -11,6 +11,7 @@ export type NotificationType =
   | 'devuelto'
   | 'reenviado'
   | 'aprobado'
+  | 'cancelado'
   | 'difusion_nueva'
   | 'difusion_estado'
   | 'difusion_revision'

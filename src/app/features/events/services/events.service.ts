@@ -27,6 +27,10 @@ export class EventsService {
     return this.http.post<ReturnEvent>(`${environment.apiUrl}events/${id}/approve`, {});
   }
 
+  cancelEvent(id: number): Observable<ReturnEvent> {
+    return this.http.post<ReturnEvent>(`${environment.apiUrl}events/${id}/cancel`, {});
+  }
+
   returnEvent(id: number, observation: string): Observable<ReturnEvent> {
     return this.http.post<ReturnEvent>(`${environment.apiUrl}events/${id}/return`, { observation });
   }

@@ -39,6 +39,7 @@ export class ApprovalsComponent implements OnInit {
   /** Persona vinculada al usuario autenticado (a quién le toca firmar). */
   private myPersonId: number | null = null;
   private myUserId: string | null = null;
+  private myRoleName = '';
 
   loading = false;
   signing = false;
@@ -64,6 +65,10 @@ export class ApprovalsComponent implements OnInit {
       return;
     }
 
+    const token = localStorage.getItem('accessToken');
+    this.myRoleName = normalize(
+      token ? this.jwtService.cargarDesdeToken(token)?.name : undefined
+    );
     this.loadMyPerson();
     this.loadEvents();
   }
@@ -145,7 +150,10 @@ export class ApprovalsComponent implements OnInit {
         personEmail: approval?.person?.email ?? '',
         signature: approval?.signature ?? '',
         signedAt: approval?.signedAt ?? null,
-        mine: !!approval && approval.person?.id === this.myPersonId
+        mine: !!approval && (
+          approval.person?.id === this.myPersonId ||
+          (state === 'current' && meta.key === 'verificacion' && this.myRoleName === 'verificacion')
+        )
       };
     });
   }
@@ -284,10 +292,10 @@ export class ApprovalsComponent implements OnInit {
     this.loading = true;
     this.approvalService.getEvents().subscribe({
       next: events => {
-        this.events = events;
+        this.events = events.filter(event => event.workflowStatus !== 'cancelado');
         this.loading = false;
         const requestedId = Number(this.route.snapshot.queryParamMap.get('evento'));
-        const firstPending = events.find(event => event.id === requestedId) ?? events.find(event => this.isMyTurn(event)) ?? events[0];
+        const firstPending = this.events.find(event => event.id === requestedId) ?? this.events.find(event => this.isMyTurn(event)) ?? this.events[0];
         if (firstPending) this.selectEvent(firstPending);
       },
       error: err => {

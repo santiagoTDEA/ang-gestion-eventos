@@ -77,6 +77,8 @@ export class RegistrationsComponent implements OnInit {
 
   events: RegistrationEvent[] = [];
   registrations: Registration[] = [];
+  registrationToRemove: Registration | null = null;
+  showRemoveModal = false;
   readonly eventControl = new FormControl<number | null>(null);
   readonly searchControl = new FormControl('', { nonNullable: true });
 
@@ -265,19 +267,40 @@ export class RegistrationsComponent implements OnInit {
   }
 
   remove(registration: Registration): void {
+    if (!this.selectedEvent || this.working) return;
+
+    this.registrationToRemove = registration;
+    this.showRemoveModal = true;
+  }
+
+  closeRemoveModal(): void {
+    if (this.working) return;
+
+    this.showRemoveModal = false;
+    this.registrationToRemove = null;
+  }
+
+  confirmRemove(): void {
     const event = this.selectedEvent;
+    const registration = this.registrationToRemove;
+    if (!event || !registration || this.working) return;
+
     const name = `${registration.firstNames} ${registration.lastNames}`;
-    if (!event || this.working || !confirm(`¿Quitar a ${name} de este evento?`)) return;
 
     this.working = true;
     this.registrationsService.remove(registration.id).subscribe({
       next: () => {
         this.working = false;
+        this.closeRemoveModal();
         this.lastSlot = null;
         this.loadRegistrations(event.id);
         this.showAlert('success', 'Asistencia retirada', `Se retiró la asistencia de ${name} del evento.`);
       },
-      error: err => this.fail(err, 'No se pudo retirar la asistencia')
+      error: err => {
+        this.working = false;
+        this.closeRemoveModal();
+        this.fail(err, 'No se pudo retirar la asistencia');
+      }
     });
   }
 

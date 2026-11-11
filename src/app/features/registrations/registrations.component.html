@@ -340,5 +340,44 @@
             </div>
         </section>
         }
+
+        @if (showRemoveModal && registrationToRemove) {
+        <div class="remove-modal__fondo" role="presentation" (click)="closeRemoveModal()">
+            <section class="remove-modal" role="dialog" aria-modal="true"
+                aria-labelledby="remove-modal-titulo" aria-describedby="remove-modal-descripcion"
+                (click)="$event.stopPropagation()">
+                <header class="remove-modal__encabezado">
+                    <div class="remove-modal__marca">
+                        <div class="remove-modal__icono" aria-hidden="true">!</div>
+                        <span>Confirmación requerida</span>
+                    </div>
+                    <button type="button" class="remove-modal__cerrar" (click)="closeRemoveModal()"
+                        [disabled]="working" aria-label="Cerrar">×</button>
+                </header>
+                <div class="remove-modal__contenido">
+                    <h2 id="remove-modal-titulo">Retirar asistencia</h2>
+                    <p class="remove-modal__introduccion">Confirma si deseas quitar a esta persona del evento.</p>
+                    <div class="remove-modal__persona">
+                        <span>Asistente</span>
+                        <strong>{{ registrationToRemove.firstNames }} {{ registrationToRemove.lastNames }}</strong>
+                    </div>
+                    <div class="remove-modal__aviso" id="remove-modal-descripcion">
+                        <span aria-hidden="true">!</span>
+                        <p>La asistencia se retirará del evento y el cupo volverá a estar disponible.</p>
+                    </div>
+                </div>
+                <footer class="remove-modal__acciones">
+                    <button type="button" class="remove-modal__boton remove-modal__boton--secundario"
+                        (click)="closeRemoveModal()" [disabled]="working">
+                        Mantener asistencia
+                    </button>
+                    <button type="button" class="remove-modal__boton remove-modal__boton--peligro"
+                        (click)="confirmRemove()" [disabled]="working">
+                        {{ working ? 'Retirando…' : 'Retirar asistencia' }}
+                    </button>
+                </footer>
+            </section>
+        </div>
+        }
     </section>
 </main>

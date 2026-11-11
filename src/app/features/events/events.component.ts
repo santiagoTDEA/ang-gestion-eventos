@@ -186,6 +186,8 @@ export class EventsComponent implements OnInit {
   showTable = true;
   editingId: number | null = null;
   editingEvent: ReturnEvent | null = null;
+  showCancelModal = false;
+  eventToCancel: ReturnEvent | null = null;
   private currentRole: Role | null = null;
   alertaResponse: {
     alertVisible: boolean;
@@ -426,17 +428,22 @@ export class EventsComponent implements OnInit {
     return event.approvals.length > 0 && event.approvals.every(step => step.status === 'aprobado');
   }
 
+  isCancelled(event: ReturnEvent): boolean {
+    return event.workflowStatus === 'cancelado';
+  }
+
   statusLabel(event: ReturnEvent): string {
+    if (this.isCancelled(event)) return 'Cancelado';
     if (this.isApproved(event)) return 'Aprobado';
     return event.workflowStatus === 'devuelto' ? 'Devuelto' : 'En aprobación';
   }
 
   private get canEditApprovedEvents(): boolean {
-    const roleName = (this.currentRole?.name ?? '')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase()
-      .trim();
+    return this.canCancelEvents;
+  }
+
+  get canCancelEvents(): boolean {
+    const roleName = this.normalize(this.currentRole?.name);
 
     return roleName === 'verificacion' ||
       (!!this.currentRole?.permissionsFull && !!this.currentRole?.modulesFull);
@@ -444,7 +451,54 @@ export class EventsComponent implements OnInit {
 
   /** Los eventos aprobados solo pueden editarse con rol de Verificación o administración. */
   canEditEvent(event: ReturnEvent): boolean {
-    return this.canEditEvents && (!this.isApproved(event) || this.canEditApprovedEvents);
+    return !this.isCancelled(event) &&
+      this.canEditEvents &&
+      (!this.isApproved(event) || this.canEditApprovedEvents);
+  }
+
+  cancelEvent(event: ReturnEvent): void {
+    if (!this.canCancelEvents || this.isCancelled(event) || this.loading) {
+      return;
+    }
+
+    this.eventToCancel = event;
+    this.showCancelModal = true;
+  }
+
+  closeCancelModal(): void {
+    if (this.loading) {
+      return;
+    }
+
+    this.showCancelModal = false;
+    this.eventToCancel = null;
+  }
+
+  confirmCancelEvent(): void {
+    const event = this.eventToCancel;
+    if (!event || !this.canCancelEvents || this.isCancelled(event) || this.loading) {
+      return;
+    }
+
+    this.loading = true;
+    this.eventsService.cancelEvent(event.id).subscribe({
+      next: updated => {
+        this.events = this.events.map(item => item.id === updated.id ? updated : item);
+        this.loading = false;
+        this.closeCancelModal();
+        this.showAlert('success', 'Evento cancelado', 'El evento fue cancelado y ya no estará disponible en los demás módulos.');
+      },
+      error: err => {
+        this.loading = false;
+        this.closeCancelModal();
+        const message = err?.error?.message;
+        this.showAlert(
+          'error',
+          'No se pudo cancelar el evento',
+          Array.isArray(message) ? message.join(' ') : (message ?? 'Ocurrió un error al cancelar el evento.')
+        );
+      }
+    });
   }
 
   getEvents(): void {
@@ -472,7 +526,13 @@ export class EventsComponent implements OnInit {
     }
 
     if (!this.canEditEvent(event)) {
-      this.showAlert('warning', 'Evento aprobado', 'Solo los roles de Verificación y administración pueden editar eventos aprobados.');
+      this.showAlert(
+        'warning',
+        this.isCancelled(event) ? 'Evento cancelado' : 'Evento aprobado',
+        this.isCancelled(event)
+          ? 'Los eventos cancelados no se pueden editar.'
+          : 'Solo los roles de Verificación y administración pueden editar eventos aprobados.'
+      );
       return;
     }
 

@@ -1201,6 +1201,195 @@ app-events {
     background: #0d5a34;
 }
 
+.cancelacion-modal__fondo {
+    position: fixed;
+    inset: 0;
+    z-index: 210;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(15, 23, 42, 0.62);
+}
+
+.cancelacion-modal {
+    width: min(100%, 480px);
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    background: #fff;
+}
+
+.cancelacion-modal__encabezado {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 26px 0;
+}
+
+.cancelacion-modal__marca {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cancelacion-modal__marca > span,
+.cancelacion-modal__evento span {
+    color: #789080;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.cancelacion-modal__icono {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #fef2f2;
+    color: #dc2626;
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.cancelacion-modal__cerrar {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 0;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+    font-size: 23px;
+    line-height: 1;
+}
+
+.cancelacion-modal__contenido {
+    padding: 18px 26px 24px;
+}
+
+.cancelacion-modal__contenido h2 {
+    margin: 0;
+    color: #172b20;
+    font-size: 21px;
+    font-weight: 800;
+}
+
+.cancelacion-modal__introduccion {
+    margin: 7px 0 16px;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.cancelacion-modal__evento {
+    display: grid;
+    gap: 4px;
+    padding: 12px 14px;
+    border: 1px solid #e2e8f0;
+    border-left: 3px solid #0d5a34;
+    border-radius: 9px;
+    background: #f8fbf9;
+}
+
+.cancelacion-modal__evento strong {
+    overflow-wrap: anywhere;
+    color: #173b26;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.cancelacion-modal__aviso {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    margin-top: 12px;
+    padding: 10px 11px;
+    border: 1px solid #fee2e2;
+    border-radius: 9px;
+    background: #fff7f7;
+}
+
+.cancelacion-modal__aviso > span {
+    display: grid;
+    flex: 0 0 18px;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fee2e2;
+    color: #b91c1c;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.cancelacion-modal__aviso p {
+    margin: 0;
+    color: #8f3d3d;
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.cancelacion-modal__acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 9px;
+    padding: 14px 26px;
+    border-top: 1px solid #e5e7eb;
+    background: #f8fafc;
+}
+
+.cancelacion-modal__boton {
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.cancelacion-modal__boton:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+.cancelacion-modal__boton--secundario {
+    background: #fff;
+    color: #475569;
+}
+
+.cancelacion-modal__boton--peligro {
+    border-color: #dc2626;
+    background: #dc2626;
+    color: #fff;
+}
+
+@media (max-width: 480px) {
+    .cancelacion-modal__fondo {
+        padding: 12px;
+    }
+
+    .cancelacion-modal__encabezado {
+        padding: 18px 18px 0;
+    }
+
+    .cancelacion-modal__contenido {
+        padding: 16px 18px 18px;
+    }
+
+    .cancelacion-modal__acciones {
+        flex-direction: column-reverse;
+        padding: 12px 18px 16px;
+    }
+
+    .cancelacion-modal__boton {
+        width: 100%;
+    }
+}
+
 @media (max-width: 700px) {
     .eventos {
         padding: 16px 12px 40px;

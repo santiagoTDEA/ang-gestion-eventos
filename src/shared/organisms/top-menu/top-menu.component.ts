@@ -119,7 +119,11 @@ export class TopMenuComponent implements OnInit, OnChanges, OnDestroy {
       this.notificationsService.markRead(item.id).subscribe({ error: () => this.loadNotifications() });
     }
 
-    const target = item.type.startsWith('difusion') ? '/difusion' : '/aprobaciones';
+    const target = item.type.startsWith('difusion')
+      ? '/difusion'
+      : item.type === 'cancelado'
+        ? '/eventos'
+        : '/aprobaciones';
     this.router.navigate([target], { queryParams: { evento: item.eventId } });
   }
 

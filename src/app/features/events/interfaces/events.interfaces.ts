@@ -50,7 +50,7 @@ export interface ReturnEvent extends Omit<Event, 'facultyId' | 'approvals'> {
         role: { id: string; name: string };
     }[];
     createdBy?: string | null;
-    workflowStatus: 'en_flujo' | 'devuelto';
+    workflowStatus: 'en_flujo' | 'devuelto' | 'cancelado';
     observations: EventObservation[];
     createdAt: string;
 }
