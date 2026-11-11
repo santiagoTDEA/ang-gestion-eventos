@@ -3,6 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { AppNotification, NotificationsService } from '../../../app/core/services/notifications.service';
 import { CurrentUserService, UserProfile } from '../../../app/core/services/current-user.service';
+import { modulosAplicacion } from '../../../environments/environment';
 
 interface MenuItem {
   label: string;
@@ -58,11 +59,17 @@ export class TopMenuComponent implements OnInit, OnChanges, OnDestroy {
     clearInterval(this.refreshTimer);
   }
 
-  /** Nombre del módulo que se muestra en la barra superior. */
+  /**
+   * Nombre del módulo que se muestra en la barra superior. Sale del nombre visible del
+   * módulo (modulosAplicacion), no de la ruta: p. ej. /inscripciones se muestra como Asistencia.
+   */
   get moduleTitle(): string {
     const module = this.routerUrl.split('?')[0].split('/')[1];
     if (module === 'mi-perfil') return 'Mi perfil';
-    return !module || module === 'inicio' ? 'Panel general' : `Gestión de ${module}`;
+    if (!module || module === 'inicio') return 'Panel general';
+
+    const label = modulosAplicacion.find(item => item.value === module)?.label ?? module;
+    return `Gestión de ${label.toLowerCase()}`;
   }
 
   /** Nombre a mostrar: el de la persona o, si no tiene, el usuario. */
