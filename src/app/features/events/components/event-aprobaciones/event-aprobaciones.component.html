@@ -4,6 +4,12 @@
         diligenciarlo. La firma de cada responsable se aplica cuando le toque aprobar en el módulo de Aprobaciones.
     </p>
 
+    @if (locked()) {
+    <p class="aprobaciones-formulario__nota aprobaciones-formulario__nota--bloqueo" role="note">
+        <strong>Evento aprobado:</strong> los responsables y las firmas no se modifican desde esta edición. Solo se
+        guardan los cambios en los datos del evento; el flujo de aprobación queda igual.
+    </p>
+    }
 
     @for (approval of form().controls; track meta()[$index].title; let index = $index) {
     <article class="aprobaciones-formulario__bloque">
@@ -12,6 +18,12 @@
             <p>{{ meta()[index].description }}</p>
         </div>
 
+        @if (locked()) {
+        <dl class="aprobaciones-formulario__datos aprobaciones-formulario__solo-lectura">
+            <div><dt>Persona</dt><dd>{{ personLabel(index, approval) }}</dd></div>
+            <div><dt>Fecha</dt><dd>{{ asGroup(approval).controls['date'].value || '—' }}</dd></div>
+        </dl>
+        } @else {
         <div class="aprobaciones-formulario__datos">
 
             <app-generic-select label="Persona" placeholder="Selecciona una persona"
@@ -27,6 +39,7 @@
             </app-generic-input>
 
         </div>
+        }
     </article>
     }
 

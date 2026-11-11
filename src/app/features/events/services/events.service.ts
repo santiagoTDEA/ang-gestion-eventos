@@ -35,6 +35,14 @@ export class EventsService {
     return this.http.post<ReturnEvent>(`${environment.apiUrl}events/${id}/resubmit`, {});
   }
 
+  cancelEvent(id: number, reason: string): Observable<ReturnEvent> {
+    return this.http.post<ReturnEvent>(`${environment.apiUrl}events/${id}/cancel`, { reason });
+  }
+
+  reactivateEvent(id: number): Observable<ReturnEvent> {
+    return this.http.post<ReturnEvent>(`${environment.apiUrl}events/${id}/reactivate`, {});
+  }
+
   getEventById(id: number): Observable<ReturnEvent> {
     return this.http.get<ReturnEvent>(`${environment.apiUrl}events/${id}`);
   }

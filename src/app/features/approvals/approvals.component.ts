@@ -283,7 +283,9 @@ export class ApprovalsComponent implements OnInit {
   private loadEvents(): void {
     this.loading = true;
     this.approvalService.getEvents().subscribe({
-      next: events => {
+      next: all => {
+        // Los eventos cancelados solo se ven en el módulo de Eventos.
+        const events = all.filter(event => !event.cancelledAt);
         this.events = events;
         this.loading = false;
         const requestedId = Number(this.route.snapshot.queryParamMap.get('evento'));

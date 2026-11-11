@@ -9,7 +9,6 @@ import { SideMenuComponent } from '../shared/organisms/side-menu/side-menu.compo
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
 
-/** Rutas sin sesión: no llevan menú lateral ni barra superior. */
 const PUBLIC_ROUTES = ['/', '/recuperar-cuenta'];
 
 function isPublicRoute(url: string): boolean {
@@ -23,7 +22,7 @@ function isPublicRoute(url: string): boolean {
   styleUrl: './app.component.css'
 })
 export class AppComponent  implements OnInit {
-  title = 'ang-gestion-eventos';
+  title = 'Eventos TdeA';
   private mediatorAlertService = inject(MediatorAlertService);
   private router = inject(Router);
   showTopMenu: boolean = !isPublicRoute(this.router.url);

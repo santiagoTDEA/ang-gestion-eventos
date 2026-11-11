@@ -8,7 +8,7 @@ export const modulosAplicacion = [
   { value: 'eventos', label: 'Eventos', icono: '🎟️'  },
   { value: 'aprobaciones', label: 'Aprobaciones', icono: '✅' },
   { value: 'difusion', label: 'Difusión', icono: '📣' },
-  { value: 'inscripciones', label: 'Inscripciones', icono: '📝', soloAccesoTotal: true },
+  { value: 'inscripciones', label: 'Asistencia', icono: '📝', soloAccesoTotal: true },
   { value: 'certificados', label: 'Certificados', icono: '🎓', soloAccesoTotal: true },
   { value: 'facultades', label: 'Facultades', icono: '🏛️'  },
   { value: 'usuarios', label: 'Usuarios', icono: '👤' },

@@ -271,20 +271,46 @@ describe('RegistrationsComponent', () => {
       component.eventControl.setValue(1);
     });
 
-    it('pide confirmación y no quita si se cancela', () => {
-      spyOn(window, 'confirm').and.returnValue(false);
+    it('abre el modal de confirmación sin usar el confirm del navegador', () => {
+      const nativeConfirm = spyOn(window, 'confirm');
       component.remove(person(1));
+      fixture.detectChanges();
+
+      expect(nativeConfirm).not.toHaveBeenCalled();
+      expect(component.pendingRemoval?.id).toBe(1);
+      expect(fixture.nativeElement.querySelector('[role="alertdialog"]')).not.toBeNull();
       expect(service.remove).not.toHaveBeenCalled();
     });
 
-    it('quita y vuelve a cargar los inscritos', () => {
-      spyOn(window, 'confirm').and.returnValue(true);
+    it('no quita si se cancela el modal', () => {
+      component.remove(person(1));
+      component.cancelRemoval();
+      fixture.detectChanges();
+
+      expect(component.pendingRemoval).toBeNull();
+      expect(fixture.nativeElement.querySelector('[role="alertdialog"]')).toBeNull();
+      expect(service.remove).not.toHaveBeenCalled();
+    });
+
+    it('quita al confirmar, cierra el modal y vuelve a cargar los inscritos', () => {
       service.remove.and.returnValue(of(undefined));
       component.remove(person(1));
+      component.confirmRemoval();
 
       expect(service.remove).toHaveBeenCalledWith(1);
+      expect(component.pendingRemoval).toBeNull();
       expect(service.getByEvent).toHaveBeenCalledTimes(2);
       expect(component.alertaResponse.alertTitle).toBe('Inscripción quitada');
+    });
+
+    it('cierra el modal y muestra el error si falla', () => {
+      service.remove.and.returnValue(throwError(() => ({ error: { message: 'No existe' } })));
+      component.remove(person(1));
+      component.confirmRemoval();
+
+      expect(component.pendingRemoval).toBeNull();
+      expect(component.alertaResponse.alertType).toBe('error');
+      expect(component.working).toBeFalse();
     });
   });
 });

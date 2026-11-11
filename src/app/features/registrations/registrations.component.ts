@@ -22,6 +22,7 @@ import {
 import { ValidateRenderingService } from '../inicio/services/validate-rendering.service';
 import { GenericAlertComponent } from '../../../shared/atoms/generic-alert/generic-alert.component';
 import { GenericAlertResponse } from '../../../shared/atoms/generic-alert/utils/style';
+import { ConfirmModalComponent } from '../../../shared/molecules/confirm-modal/confirm-modal.component';
 
 type Mode = 'formulario' | 'excel';
 
@@ -61,7 +62,7 @@ function documentNumberValidator(control: AbstractControl): ValidationErrors | n
 @Component({
   selector: 'app-registrations',
   standalone: true,
-  imports: [DatePipe, ReactiveFormsModule, GenericAlertComponent],
+  imports: [DatePipe, ReactiveFormsModule, GenericAlertComponent, ConfirmModalComponent],
   templateUrl: './registrations.component.html',
   styleUrl: './registrations.component.css'
 })
@@ -92,6 +93,8 @@ export class RegistrationsComponent implements OnInit {
   importResult: ImportResult | null = null;
   /** Persona que llenó el cupo en la última inscripción o carga. */
   lastSlot: LastSlot | null = null;
+  /** Persona que se va a quitar; mientras tenga valor se muestra el modal de confirmación. */
+  pendingRemoval: Registration | null = null;
 
   readonly form = this.fb.nonNullable.group({
     documentType: this.fb.control<DocumentType | null>(null, Validators.required),
@@ -259,25 +262,48 @@ export class RegistrationsComponent implements OnInit {
 
   downloadTemplate(): void {
     this.registrationsService.getTemplate().subscribe({
-      next: blob => this.saveBlob(blob, 'plantilla-inscripciones.xlsx'),
+      next: blob => this.saveBlob(blob, 'plantilla-asistencia.xlsx'),
       error: err => this.fail(err, 'No se pudo descargar la plantilla')
     });
   }
 
+  /** Abre el modal para confirmar antes de quitar a la persona. */
   remove(registration: Registration): void {
-    const event = this.selectedEvent;
-    const name = `${registration.firstNames} ${registration.lastNames}`;
-    if (!event || this.working || !confirm(`¿Quitar a ${name} de este evento?`)) return;
+    if (!this.selectedEvent || this.working) return;
+    this.pendingRemoval = registration;
+  }
 
+  get removalMessage(): string {
+    const item = this.pendingRemoval;
+    return item
+      ? `${item.firstNames} ${item.lastNames} (${item.documentType} ${item.documentNumber}) dejará de estar ` +
+        'inscrita en este evento y se liberará su cupo.'
+      : '';
+  }
+
+  cancelRemoval(): void {
+    if (!this.working) this.pendingRemoval = null;
+  }
+
+  confirmRemoval(): void {
+    const event = this.selectedEvent;
+    const registration = this.pendingRemoval;
+    if (!event || !registration || this.working) return;
+
+    const name = `${registration.firstNames} ${registration.lastNames}`;
     this.working = true;
     this.registrationsService.remove(registration.id).subscribe({
       next: () => {
         this.working = false;
+        this.pendingRemoval = null;
         this.lastSlot = null;
         this.loadRegistrations(event.id);
         this.showAlert('success', 'Inscripción quitada', `${name} ya no está inscrita en el evento.`);
       },
-      error: err => this.fail(err, 'No se pudo quitar la inscripción')
+      error: err => {
+        this.pendingRemoval = null;
+        this.fail(err, 'No se pudo quitar la inscripción');
+      }
     });
   }
 

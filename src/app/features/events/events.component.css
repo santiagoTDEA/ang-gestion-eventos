@@ -1461,3 +1461,151 @@ app-events {
     font-size: 12px;
     line-height: 1.45;
 }
+
+/* Cancelación de eventos */
+.eventos__accion {
+    display: inline-grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.eventos__accion svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.eventos__accion:focus-visible {
+    outline: 2px solid #1caa63;
+    outline-offset: 2px;
+}
+
+/* El botón deshabilitado no muestra tooltip; lo lleva su contenedor. */
+.eventos__accion-tip {
+    display: inline-flex;
+}
+
+.eventos__accion:disabled {
+    cursor: not-allowed;
+}
+
+.eventos__accion--cancelar {
+    border-color: #b91c1c;
+    background: #dc2626;
+    color: #fff;
+}
+
+.eventos__accion--cancelar:hover:not(:disabled) {
+    background: #b91c1c;
+}
+
+.eventos__accion--cancelado {
+    border-color: #d1d5db;
+    background: #e5e7eb;
+    color: #6b7280;
+}
+
+.eventos__accion--reactivar {
+    border-color: #0b4226;
+    background: #fff;
+    color: #0b4226;
+}
+
+.eventos__accion--reactivar:hover:not(:disabled) {
+    background: #edf6ef;
+}
+
+.eventos__accion--cancelar:disabled,
+.eventos__accion--reactivar:disabled {
+    opacity: 0.6;
+}
+
+.eventos__fila--cancelada td,
+.eventos__fila--cancelada h4,
+.eventos__fila--cancelada p {
+    color: #9ca3af;
+}
+
+tr.eventos__fila--cancelada:hover {
+    background: transparent;
+}
+
+.eventos__motivo {
+    display: grid;
+    gap: 6px;
+    margin-top: 12px;
+    color: #315340;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.eventos__motivo span span {
+    color: #dc2626;
+}
+
+.eventos__motivo textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    color: #1f2937;
+    font: inherit;
+    font-weight: 400;
+    resize: vertical;
+}
+
+.eventos__motivo textarea:focus {
+    border-color: #1caa63;
+    outline: none;
+}
+
+.eventos__motivo small {
+    color: #dc2626;
+    font-size: 12px;
+    font-weight: 400;
+}
+
+.eventos__motivo-previo {
+    margin-top: 10px !important;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #f3f4f6;
+}
+
+/* Aprobaciones en solo lectura (edición de un evento aprobado) */
+.aprobaciones-formulario__nota--bloqueo {
+    border-color: #fcd34d !important;
+    background: #fffbeb !important;
+    color: #78350f !important;
+}
+
+.aprobaciones-formulario__solo-lectura {
+    margin: 0;
+}
+
+.aprobaciones-formulario__solo-lectura div {
+    display: grid;
+    gap: 4px;
+}
+
+.aprobaciones-formulario__solo-lectura dt {
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.aprobaciones-formulario__solo-lectura dd {
+    margin: 0;
+    color: #1f2937;
+    font-size: 14px;
+}

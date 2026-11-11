@@ -15,8 +15,8 @@
         </button>
 
         <article class="registrations__resumen">
-            <div class="registrations__insignia"><span></span> Módulo 5 · Inscripciones</div>
-            <h1>Inscripciones</h1>
+            <div class="registrations__insignia"><span></span> Módulo 5 · Asistencia</div>
+            <h1>Asistencia</h1>
             <p class="registrations__descripcion">
                 Escoge un evento con la aprobación completa e inscribe a las personas una por una con el formulario
                 o en bloque con la plantilla de Excel. Nadie queda inscrito por encima del cupo máximo del evento.
@@ -341,4 +341,8 @@
         </section>
         }
     </section>
+
+    <app-confirm-modal [open]="!!pendingRemoval" title="¿Quitar a esta persona del evento?"
+        [message]="removalMessage" confirmLabel="Sí, quitar" loadingLabel="Quitando…" variant="danger"
+        [loading]="working" (confirmed)="confirmRemoval()" (cancelled)="cancelRemoval()" />
 </main>

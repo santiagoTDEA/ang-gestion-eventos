@@ -53,6 +53,15 @@ export interface ReturnEvent extends Omit<Event, 'facultyId' | 'approvals'> {
     workflowStatus: 'en_flujo' | 'devuelto';
     observations: EventObservation[];
     createdAt: string;
+    /** Fecha de cancelación; nula si el evento está activo. */
+    cancelledAt?: string | null;
+    cancellationReason?: string | null;
+    cancelledByName?: string | null;
+    /**
+     * Calculado por el servidor: el usuario (administrador o responsable de Verificación
+     * del evento) puede cancelarlo, reactivarlo y editarlo en cualquier estado.
+     */
+    canManage?: boolean;
 }
 
 export interface EventObservation {

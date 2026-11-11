@@ -25,6 +25,8 @@ export class EventAprobacionesComponent {
   readonly editing = input(false);
   readonly reviewSent = input(false);
   readonly loading = input(false);
+  /** Evento ya aprobado: responsables y firmas se muestran sin poder cambiarse. */
+  readonly locked = input(false);
 
   readonly back = output<void>();
   readonly saveDraft = output<void>();
@@ -33,6 +35,12 @@ export class EventAprobacionesComponent {
 
   asGroup(control: AbstractControl): FormGroup {
     return control as FormGroup;
+  }
+
+  /** Nombre de la persona elegida en un bloque, para la vista de solo lectura. */
+  personLabel(index: number, control: AbstractControl): string {
+    const value = String(this.asGroup(control).controls['name'].value ?? '');
+    return this.options()[index]?.find(option => option.value === value)?.label ?? 'Sin asignar';
   }
 
 }

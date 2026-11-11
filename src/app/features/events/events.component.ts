@@ -33,6 +33,7 @@ import { EventContenidoComponent } from './components/event-contenido/event-cont
 import { EventLogisticaComponent } from './components/event-logistica/event-logistica.component';
 import { EventFinancieraComponent } from './components/event-financiera/event-financiera.component';
 import { ApprovalMeta, EventAprobacionesComponent } from './components/event-aprobaciones/event-aprobaciones.component';
+import { ConfirmModalComponent } from '../../../shared/molecules/confirm-modal/confirm-modal.component';
 
 const DRAFT_STORAGE_KEY = 'eventDraft:v2';
 
@@ -123,6 +124,7 @@ function datesMatchSelectedDays(control: AbstractControl): ValidationErrors | nu
     EventFinancieraComponent,
     EventAprobacionesComponent,
     GenericButtonComponent,
+    ConfirmModalComponent,
     CommonModule
   ],
   templateUrl: './events.component.html',
@@ -424,14 +426,131 @@ export class EventsComponent implements OnInit {
     return event.approvals.length > 0 && event.approvals.every(step => step.status === 'aprobado');
   }
 
+  isCancelled(event: ReturnEvent): boolean {
+    return !!event.cancelledAt;
+  }
+
   statusLabel(event: ReturnEvent): string {
+    if (this.isCancelled(event)) return 'Cancelado';
     if (this.isApproved(event)) return 'Aprobado';
     return event.workflowStatus === 'devuelto' ? 'Devuelto' : 'En aprobación';
   }
 
-  /** Se puede abrir para editar: tiene permiso y todavía no completó las aprobaciones. */
+  /**
+   * Se puede abrir para editar:
+   * - nunca si está cancelado (primero se reactiva);
+   * - el administrador y el responsable de Verificación (canManage), en cualquier estado;
+   * - los demás con permiso de edición, mientras no complete las aprobaciones.
+   */
   canEditEvent(event: ReturnEvent): boolean {
+    if (this.isCancelled(event)) return false;
+    if (event.canManage) return true;
     return this.canEditEvents && !this.isApproved(event);
+  }
+
+  /** Editando un evento aprobado: responsables y firmas quedan fijos para no alterar el flujo. */
+  get approvalsLocked(): boolean {
+    return !!this.editingEvent && this.isApproved(this.editingEvent);
+  }
+
+  // --- Cancelar / reactivar ---------------------------------------------------
+
+  cancelTarget: ReturnEvent | null = null;
+  reactivateTarget: ReturnEvent | null = null;
+  actionLoading = false;
+  readonly cancelReasonControl = new FormControl('', {
+    nonNullable: true,
+    validators: [
+      Validators.required,
+      Validators.maxLength(1000),
+      (control: AbstractControl) => String(control.value ?? '').trim().length >= 10 ? null : { minTrimmed: true }
+    ]
+  });
+
+  askCancel(event: ReturnEvent, domEvent?: globalThis.Event): void {
+    domEvent?.stopPropagation();
+    if (!event.canManage || this.isCancelled(event) || this.actionLoading) return;
+
+    this.cancelReasonControl.reset('');
+    this.cancelTarget = event;
+  }
+
+  closeCancel(): void {
+    if (!this.actionLoading) this.cancelTarget = null;
+  }
+
+  confirmCancel(): void {
+    const target = this.cancelTarget;
+    if (!target || this.actionLoading) return;
+
+    if (this.cancelReasonControl.invalid) {
+      this.cancelReasonControl.markAsTouched();
+      return;
+    }
+
+    this.actionLoading = true;
+    this.eventsService.cancelEvent(target.id, this.cancelReasonControl.value.trim()).subscribe({
+      next: (updated) => {
+        this.actionLoading = false;
+        this.cancelTarget = null;
+        this.replaceEvent(updated);
+        this.showAlert('success', 'Evento cancelado', `«${updated.name}» quedó cancelado y ya no aparece en los demás módulos.`);
+      },
+      error: (err) => {
+        this.actionLoading = false;
+        this.cancelTarget = null;
+        this.handleSendError(err, 'No se pudo cancelar el evento');
+      }
+    });
+  }
+
+  askReactivate(event: ReturnEvent, domEvent?: globalThis.Event): void {
+    domEvent?.stopPropagation();
+    if (!event.canManage || !this.isCancelled(event) || this.actionLoading) return;
+
+    this.reactivateTarget = event;
+  }
+
+  closeReactivate(): void {
+    if (!this.actionLoading) this.reactivateTarget = null;
+  }
+
+  confirmReactivate(): void {
+    const target = this.reactivateTarget;
+    if (!target || this.actionLoading) return;
+
+    this.actionLoading = true;
+    this.eventsService.reactivateEvent(target.id).subscribe({
+      next: (updated) => {
+        this.actionLoading = false;
+        this.reactivateTarget = null;
+        this.replaceEvent(updated);
+        this.showAlert('success', 'Evento reactivado', `«${updated.name}» continúa en el estado «${this.statusLabel(updated)}».`);
+      },
+      error: (err) => {
+        this.actionLoading = false;
+        this.reactivateTarget = null;
+        this.handleSendError(err, 'No se pudo reactivar el evento');
+      }
+    });
+  }
+
+  get cancelMessage(): string {
+    return this.cancelTarget
+      ? `«${this.cancelTarget.name}» dejará de verse en Aprobaciones, Difusión, Asistencia y Certificados. ` +
+        'Las firmas y el estado del flujo se conservan por si se reactiva.'
+      : '';
+  }
+
+  get reactivateMessage(): string {
+    return this.reactivateTarget
+      ? `«${this.reactivateTarget.name}» volverá a estar activo en el mismo paso del flujo en que estaba, ` +
+        'con sus firmas, inscritos y solicitudes de difusión.'
+      : '';
+  }
+
+  private replaceEvent(updated: ReturnEvent): void {
+    this.events = this.events.map(item => (item.id === updated.id ? updated : item));
   }
 
   getEvents(): void {
@@ -454,11 +573,16 @@ export class EventsComponent implements OnInit {
   }
 
   startEdit(event: ReturnEvent): void {
-    if (!this.canEditEvents) {
+    if (!this.canEditEvents && !event.canManage) {
       return;
     }
 
-    if (this.isApproved(event)) {
+    if (this.isCancelled(event)) {
+      this.showAlert('warning', 'Evento cancelado', 'Este evento está cancelado; reactívalo antes de editarlo.');
+      return;
+    }
+
+    if (!this.canEditEvent(event)) {
       this.showAlert('warning', 'Evento aprobado', 'Este evento ya completó el flujo de aprobación y no se puede editar.');
       return;
     }
